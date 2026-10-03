@@ -132,7 +132,7 @@
     border: 1px solid rgba(255,255,255,.07);
     border-radius: 16px;
     background: #0a0b0d;
-    box-shadow: 0 15px 38px rgba(0,0,0,.3);
+    box-shadow: none !important;
 }
 
 .profile-panel-header {
