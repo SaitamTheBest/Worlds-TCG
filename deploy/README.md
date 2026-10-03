@@ -29,7 +29,7 @@ sudo ufw enable
 sudo ufw status
 ```
 
-Remplacez 22 si SSH utilise un autre port AVANT d'activer UFW. Autorisez les mêmes ports dans tout pare-feu réseau OVH activé. Les publications Docker peuvent contourner UFW : conservez seulement 80 et 443 dans Compose. Sorties nécessaires : DNS, HTTPS pour les images/certificats et SMTP TCP 587 vers Brevo. Sources : https://docs.docker.com/engine/network/packet-filtering-firewalls/ . Le sous-réseau Docker choisi est `172.30.40.0/24` ; vérifiez qu'il ne chevauche aucun réseau/VPN existant avant le premier déploiement.
+Remplacez 22 si SSH utilise un autre port AVANT d'activer UFW. Autorisez les mêmes ports dans tout pare-feu réseau OVH activé. Les publications Docker peuvent contourner UFW : conservez seulement 80 et 443 dans Compose. Sorties nécessaires : DNS, HTTPS pour les images/certificats et SMTP TCP 587 vers Brevo. Sources : https://docs.docker.com/engine/network/packet-filtering-firewalls/ . Les sous-réseaux Docker sont `172.30.40.0/24` (backend) et `172.30.42.0/24` (proxy). Vérifiez qu'ils ne chevauchent aucun réseau/VPN existant. Caddy possède `172.30.42.2` ; les adresses automatiques du réseau proxy utilisent uniquement `172.30.42.128/25`. Le backend existant est conservé lors de la mise à jour.
 
 ## 2. Domaine et HTTPS
 
@@ -104,6 +104,7 @@ Si le démarrage ou HTTPS échoue, le script tente de rétablir l'image précéd
 node --test .github/scripts/*.test.mjs tests/frontend-regressions.test.cjs
 dotnet run --project tests/RegressionChecks/RegressionChecks.csproj -p:NuGetAudit=false
 node tests/deploy-validation.mjs
+node tests/proxy-network.integration.mjs
 docker build -f web-tcg/Dockerfile -t worlds-tcg:verification .
 docker compose -p worlds-tcg-recovery-test -f tests/password-recovery.compose.yml up -d --wait --wait-timeout 240
 node tests/password-recovery.integration.mjs

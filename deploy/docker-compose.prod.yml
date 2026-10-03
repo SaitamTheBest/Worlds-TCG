@@ -4,6 +4,7 @@ services:
     user: root
     entrypoint: [sh, -c, "mkdir -p /app/wwwroot/uploads/cards /app/wwwroot/uploads/avatars /keys && chown -R 1654:1654 /app/wwwroot/uploads /keys"]
     volumes: [uploads_data:/app/wwwroot/uploads, protection_keys:/keys]
+    network_mode: none
   web-tcg:
     image: ${APP_IMAGE:?}
     restart: unless-stopped
@@ -15,7 +16,7 @@ services:
       Database__User: ${POSTGRES_USER:?}
       Database__Password: ${POSTGRES_PASSWORD:?}
       PublicSite__BaseUrl: https://${APP_DOMAIN:?}
-      ReverseProxy__KnownProxy: 172.30.40.2
+      ReverseProxy__KnownProxy: 172.30.42.2
       DataProtection__KeysPath: /keys
       Email__Host: smtp
       Email__Port: 587
@@ -23,6 +24,7 @@ services:
       Email__FromAddress: ${MAIL_FROM:?}
       Email__FromName: ${MAIL_FROM_NAME:-Worlds TCG}
     volumes: [uploads_data:/app/wwwroot/uploads, protection_keys:/keys]
+    networks: [default, proxy]
     depends_on:
       uploads-init: {condition: service_completed_successfully}
       postgres: {condition: service_healthy}
@@ -66,12 +68,19 @@ services:
       ACME_EMAIL: ${ACME_EMAIL:?}
     volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy_data:/data, caddy_config:/config]
     networks:
-      default: {ipv4_address: 172.30.40.2}
+      proxy: {ipv4_address: 172.30.42.2}
     depends_on: [web-tcg]
 networks:
   default:
     ipam:
       config: [{subnet: 172.30.40.0/24}]
+  # Les adresses automatiques sont séparées de l'adresse fixe du proxy.
+  # Le réseau backend existant reste inchangé sur les VPS déjà déployés.
+  proxy:
+    ipam:
+      config:
+        - subnet: 172.30.42.0/24
+          ip_range: 172.30.42.128/25
 volumes:
   postgres_data:
   uploads_data:

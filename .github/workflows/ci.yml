@@ -36,6 +36,8 @@ jobs:
         run: docker compose --env-file .env.example -f docker-compose.yml config --quiet
       - name: Valider la configuration de production sans secrets réels
         run: node tests/deploy-validation.mjs
+      - name: Vérifier la migration du réseau Caddy
+        run: node tests/proxy-network.integration.mjs
       - name: Construire l'image et le CSS
         run: docker build -f web-tcg/Dockerfile -t worlds-tcg:ci .
       - name: Parcours HTTP et SMTP dans une pile isolée
