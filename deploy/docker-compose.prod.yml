@@ -1,0 +1,81 @@
+services:
+  uploads-init:
+    image: ${APP_IMAGE:?}
+    user: root
+    entrypoint: [sh, -c, "mkdir -p /app/wwwroot/uploads/cards /app/wwwroot/uploads/avatars /keys && chown -R 1654:1654 /app/wwwroot/uploads /keys"]
+    volumes: [uploads_data:/app/wwwroot/uploads, protection_keys:/keys]
+  web-tcg:
+    image: ${APP_IMAGE:?}
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Database__Host: postgres
+      Database__Name: ${POSTGRES_DB:?}
+      Database__User: ${POSTGRES_USER:?}
+      Database__Password: ${POSTGRES_PASSWORD:?}
+      PublicSite__BaseUrl: https://${APP_DOMAIN:?}
+      ReverseProxy__KnownProxy: 172.30.40.2
+      DataProtection__KeysPath: /keys
+      Email__Host: smtp
+      Email__Port: 587
+      Email__EnableSsl: 'false'
+      Email__FromAddress: ${MAIL_FROM:?}
+      Email__FromName: ${MAIL_FROM_NAME:-Worlds TCG}
+    volumes: [uploads_data:/app/wwwroot/uploads, protection_keys:/keys]
+    depends_on:
+      uploads-init: {condition: service_completed_successfully}
+      postgres: {condition: service_healthy}
+      smtp: {condition: service_started}
+    healthcheck:
+      test: [CMD, curl, --fail, --silent, http://localhost:8080/health]
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
+  postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?}
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+    volumes: [postgres_data:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  smtp:
+    image: boky/postfix:5.1.0
+    restart: unless-stopped
+    environment:
+      RELAYHOST: '[${SMTP_HOST:?}]:${SMTP_PORT:-587}'
+      RELAYHOST_USERNAME: ${SMTP_USERNAME:?}
+      RELAYHOST_PASSWORD: ${SMTP_PASSWORD:?}
+      ALLOWED_SENDER_DOMAINS: ${MAIL_DOMAIN:?}
+      POSTFIX_mynetworks: 172.30.40.0/24
+      POSTFIX_smtp_tls_security_level: verify
+    volumes: [mail_queue:/var/spool/postfix]
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports: ['80:80', '443:443']
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?}
+      ACME_EMAIL: ${ACME_EMAIL:?}
+    volumes: [./Caddyfile:/etc/caddy/Caddyfile:ro, caddy_data:/data, caddy_config:/config]
+    networks:
+      default: {ipv4_address: 172.30.40.2}
+    depends_on: [web-tcg]
+networks:
+  default:
+    ipam:
+      config: [{subnet: 172.30.40.0/24}]
+volumes:
+  postgres_data:
+  uploads_data:
+  protection_keys:
+  mail_queue:
+  caddy_data:
+  caddy_config:

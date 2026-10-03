@@ -4,6 +4,21 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # User-specific files
+# Environnement local, fichiers envoyÃ©s et donnÃ©es persistantes.
+.env
+.env.*
+*.env
+!.env.example
+!.env.*.example
+**/wwwroot/uploads/
+node_modules/
+tests/artifacts/
+data/
+backups/
+.aspnet/
+.codex/
+.agents/
+
 *.rsuser
 *.suo
 *.user
@@ -361,3 +376,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Configuration temporaire de déploiement
+deployment-bundle/

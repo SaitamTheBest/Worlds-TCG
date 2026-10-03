@@ -20,6 +20,7 @@ services:
 
         mkdir -p /app/wwwroot/uploads/cards
         mkdir -p /app/wwwroot/uploads/avatars
+        mkdir -p /home/app/.aspnet/DataProtection-Keys
 
         APP_USER_ID=$$(id -u app 2>/dev/null || echo 1654)
         APP_GROUP_ID=$$(id -g app 2>/dev/null || echo 1654)
@@ -27,6 +28,7 @@ services:
         echo "Utilisateur ASP.NET : $${APP_USER_ID}:$${APP_GROUP_ID}"
 
         chown -R "$${APP_USER_ID}:$${APP_GROUP_ID}" /app/wwwroot/uploads
+        chown -R "$${APP_USER_ID}:$${APP_GROUP_ID}" /home/app/.aspnet/DataProtection-Keys
 
         chmod -R u+rwX,g+rX /app/wwwroot/uploads
 
@@ -34,6 +36,7 @@ services:
 
     volumes:
       - uploads_data:/app/wwwroot/uploads
+      - protection_keys:/home/app/.aspnet/DataProtection-Keys
 
     restart: "no"
 
@@ -58,15 +61,16 @@ services:
       ConnectionStrings__DefaultConnection: >-
         Host=postgres;
         Port=5432;
-        Database=${POSTGRES_DB};
-        Username=${POSTGRES_USER};
-        Password=${POSTGRES_PASSWORD}
+        Database=${POSTGRES_DB:?Définir POSTGRES_DB dans .env};
+        Username=${POSTGRES_USER:?Définir POSTGRES_USER dans .env};
+        Password=${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
 
     ports:
       - "${WEB_PORT:-8080}:8080"
 
     volumes:
       - uploads_data:/app/wwwroot/uploads
+      - protection_keys:/home/app/.aspnet/DataProtection-Keys
 
     depends_on:
       uploads-init:
@@ -86,12 +90,12 @@ services:
     restart: unless-stopped
 
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Définir POSTGRES_DB dans .env}
+      POSTGRES_USER: ${POSTGRES_USER:?Définir POSTGRES_USER dans .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Définir POSTGRES_PASSWORD dans .env}
 
     ports:
-      - "5433:5432"
+      - "127.0.0.1:5433:5432"
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -100,7 +104,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+          "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""
         ]
       interval: 5s
       timeout: 5s
@@ -113,6 +117,7 @@ services:
 volumes:
   postgres_data:
   uploads_data:
+  protection_keys:
 
 networks:
   tcg-network:

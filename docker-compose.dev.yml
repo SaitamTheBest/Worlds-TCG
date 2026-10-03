@@ -1,0 +1,15 @@
+# Les mails de développement restent dans Mailpit : http://localhost:8025
+services:
+  web-tcg:
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      PublicSite__BaseUrl: http://localhost:${WEB_PORT:-8080}
+      Email__Host: mailpit
+      Email__Port: 1025
+      Email__EnableSsl: 'false'
+      Email__FromAddress: no-reply@example.test
+    depends_on: [mailpit]
+  mailpit:
+    image: axllent/mailpit:v1.29
+    ports: ['127.0.0.1:8025:8025']
+    networks: [tcg-network]

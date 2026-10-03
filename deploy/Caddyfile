@@ -1,0 +1,9 @@
+{
+    email {$ACME_EMAIL}
+}
+{$APP_DOMAIN} {
+    encode zstd gzip
+    header Referrer-Policy "no-referrer"
+    header X-Content-Type-Options "nosniff"
+    reverse_proxy web-tcg:8080
+}

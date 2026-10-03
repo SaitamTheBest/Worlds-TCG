@@ -141,6 +141,7 @@ await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
 TargetingChecks.Run(Check);
+await PasswordRecoveryChecks.RunAsync(Check);
 var geographyMigration = context.Database.GetMigrations().Last();
 var migrationSql = context.GetService<IMigrator>().GenerateScript("20261001113617_AddGameAndBotSupport",geographyMigration);
 Check(migrationSql.Contains("ParametersJson") && migrationSql.Contains("DEFAULT '{}'"), "migration : nouveau JSON des conditions initialisé avec un objet valide pour les anciennes lignes");

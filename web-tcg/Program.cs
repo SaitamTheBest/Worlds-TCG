@@ -1,3 +1,7 @@
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
+using System.Net;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using web_tcg.Data;
@@ -11,9 +15,15 @@ using web_tcg.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrWhiteSpace(builder.Configuration["Database:Host"]))
+    connectionString = new Npgsql.NpgsqlConnectionStringBuilder
+    {
+        Host = builder.Configuration["Database:Host"], Database = builder.Configuration["Database:Name"],
+        Username = builder.Configuration["Database:User"], Password = builder.Configuration["Database:Password"]
+    }.ConnectionString;
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString ?? throw new InvalidOperationException("Database non configurée.")));
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -59,6 +69,29 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
 });
 
+builder.Services.Configure<DataProtectionTokenProviderOptions>(o => o.TokenLifespan = TimeSpan.FromMinutes(30));
+builder.Services.Configure<SecurityStampValidatorOptions>(o => o.ValidationInterval = TimeSpan.FromMinutes(5));
+var protection = builder.Services.AddDataProtection().SetApplicationName("WorldsTCG");
+if (builder.Configuration["DataProtection:KeysPath"] is { Length: > 0 } keysPath)
+    protection.PersistKeysToFileSystem(new DirectoryInfo(keysPath));
+builder.Services.Configure<MailOptions>(builder.Configuration.GetSection("Email"));
+builder.Services.Configure<PublicSiteOptions>(builder.Configuration.GetSection("PublicSite"));
+builder.Services.AddScoped<ITransactionalEmailSender, TransactionalEmailSender>();
+builder.Services.AddScoped<PasswordRecoveryService>();
+builder.Services.Configure<ForwardedHeadersOptions>(o =>
+{
+    o.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    if (IPAddress.TryParse(builder.Configuration["ReverseProxy:KnownProxy"], out var proxy)) o.KnownProxies.Add(proxy);
+});
+builder.Services.AddRateLimiter(o =>
+{
+    o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.OnRejected = async (context, cancellation) =>
+        await context.HttpContext.Response.WriteAsync("Trop de demandes. Réessayez dans 15 minutes.", cancellation);
+    o.AddPolicy("password-recovery", context => RateLimitPartition.GetFixedWindowLimiter(
+        context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0 }));
+});
 builder.Services.AddSignalR();
 
 builder.Services.AddScoped<BoosterRarityGenerator>();
@@ -185,8 +218,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseRouting();
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -200,6 +235,7 @@ app.Use(async (context, next) =>
     // Ces routes sont accessibles sans authentification
     var publicRoutes = new[] 
     { 
+        "/health",
         "/auth",                  // Page d'authentification
         "/lib",                   // Librairies
         "/css",                   // Styles
@@ -240,6 +276,8 @@ app.Use(async (context, next) =>
 
 app.UseStaticFiles();
 
+app.MapGet("/health", async (ApplicationDbContext db, CancellationToken cancellation) =>
+    await db.Database.CanConnectAsync(cancellation) ? Results.Ok(new { status = "healthy" }) : Results.StatusCode(503));
 app.MapStaticAssets();
 
 app.MapControllerRoute(
