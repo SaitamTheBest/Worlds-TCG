@@ -1,10 +1,7 @@
 services:
   uploads-init:
-    image: ${DOCKER_REGISTRY-}webtcg:latest
-
-    build:
-      context: .
-      dockerfile: web-tcg/Dockerfile
+    # Ce service ne doit pas être détecté comme un deuxième projet .NET par VS.
+    image: busybox:1.37.0
 
     user: "0:0"
 

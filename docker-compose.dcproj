@@ -7,6 +7,13 @@
     <DockerLaunchAction>LaunchBrowser</DockerLaunchAction>
     <DockerServiceUrl>{Scheme}://localhost:{ServicePort}</DockerServiceUrl>
     <DockerServiceName>web-tcg</DockerServiceName>
+    <!-- Le mode Fast ignore les étapes frontend/publish et monte une sortie
+         Windows dont les fichiers statiques ne sont pas utilisables sous Linux. -->
+    <DockerDevelopmentMode>Regular</DockerDevelopmentMode>
+    <DependencyAwareStart>true</DependencyAwareStart>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <AdditionalComposeFilePaths>docker-compose.dev.yml</AdditionalComposeFilePaths>
   </PropertyGroup>
   <ItemGroup>
     <None Include=".env" />
@@ -14,6 +21,7 @@
       <DependentUpon>docker-compose.yml</DependentUpon>
     </None>
     <None Include="docker-compose.yml" />
+    <None Include="docker-compose.dev.yml" />
     <None Include=".dockerignore" />
   </ItemGroup>
 </Project>

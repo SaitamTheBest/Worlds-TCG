@@ -112,3 +112,7 @@ docker compose -p worlds-tcg-recovery-test -f tests/password-recovery.compose.ym
 ```
 
 Le dernier `down -v` vise exclusivement la pile de tests jetable, jamais le projet production `worlds-tcg`.
+
+## Debug Visual Studio
+
+Le projet Compose utilise `DockerDevelopmentMode=Regular`, et le profil Dockerfile utilise `ContainerDevelopmentMode=Regular`. L'image complète génère le CSS Tailwind et publie les fichiers statiques sous Linux avant le démarrage du debugger. En Debug, Visual Studio charge aussi `docker-compose.dev.yml` pour activer Development et Mailpit. Les volumes de données sont conservés. Après changement de ces paramètres, arrêtez le debug, reconstruisez le projet Docker Compose, puis relancez F5. La première reconstruction est plus longue que le mode Fast.

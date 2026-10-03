@@ -17,6 +17,12 @@ async function form(path,fields) {
  return request(path.split('?')[0],{method:'POST',body:new URLSearchParams({...fields,__RequestVerificationToken:value(html,'__RequestVerificationToken')})});
 }
 assert.equal((await request('/health')).status,200);
+for (const name of ['auth','variables','components','output','home','sidebar']) {
+ const response=await request(`/css/${name}.css`);
+ assert.equal(response.status,200,`${name}.css disponible`);
+ assert.match(response.headers.get('content-type') || '',/text\/css/,`${name}.css servi comme CSS`);
+ assert.ok((await response.text()).length>100,`${name}.css non vide`);
+}
 assert.equal((await request('/Auth/ForgotPassword',{method:'POST',body:new URLSearchParams({Email:'missing@example.test'})})).status,400,'CSRF refusé');
 const username='recovery'+Date.now();const address=username+'@example.test';
 const auth=await (await request('/Auth')).text();

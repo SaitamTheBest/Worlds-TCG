@@ -23,7 +23,6 @@
       asp-append-version="true" />
 
 @Html.AntiForgeryToken()
-<link rel="stylesheet" href="~/css/deck-management.css" asp-append-version="true" />
 
 <main class="worlds-home">
     <div class="worlds-home-shell">
@@ -170,8 +169,6 @@
 
             <article class="worlds-card worlds-play-card">
 
-                <div class="worlds-card-accent"></div>
-
                 <header class="worlds-card-header">
 
                     <div>
@@ -194,7 +191,7 @@
                 {
                     <p class="worlds-play-empty">
                         Vous n'avez pas encore de deck prêt à jouer.
-                        Créez un deck pour pouvoir lancer une partie.
+                        Créez un deck dans le <a asp-controller="Deck" asp-action="Manage" class="worlds-link">gestionnaire de decks</a> pour pouvoir lancer une partie.
                     </p>
                 }
                     <div class="worlds-play-body">
@@ -269,8 +266,6 @@
                  ===================================================== -->
 
             <article class="worlds-card worlds-collection">
-
-                <div class="worlds-card-accent"></div>
 
                 <header class="worlds-card-header">
 
@@ -496,125 +491,8 @@
 
         </section>
 
-        <!-- =========================================================
-             GESTION DES DECKS
-             ========================================================= -->
-
-        <section class="worlds-decks">
-
-            <div class="worlds-decks-header">
-
-                <div>
-                    <span class="worlds-kicker">
-                        STRATÉGIE
-                    </span>
-
-                    <h2>
-                        Mes Decks
-                    </h2>
-                </div>
-
-                <button type="button"
-                        id="worldsCreateDeckButton"
-                        class="worlds-btn worlds-btn-gold">
-                    <i data-lucide="plus"></i>
-                    Nouveau deck
-                </button>
-
-            </div>
-
-            <div id="worldsDeckList"
-                 class="worlds-deck-list">
-                <p class="worlds-deck-empty">
-                    Chargement de vos decks...
-                </p>
-            </div>
-
-        </section>
-
     </div>
-
-    <!-- =========================================================
-         MODALE CRÉATION / MODIFICATION DE DECK
-         ========================================================= -->
-
-    <div id="worldsDeckModal"
-         class="worlds-deck-modal"
-         hidden>
-
-        <div class="worlds-deck-modal-backdrop"
-             id="worldsDeckModalBackdrop"></div>
-
-        <div class="worlds-deck-modal-panel" role="dialog" aria-modal="true" aria-labelledby="worldsDeckModalTitle">
-
-            <div class="worlds-deck-modal-header">
-                <h3 id="worldsDeckModalTitle">
-                    Nouveau deck
-                </h3>
-
-                <button type="button"
-                        id="worldsDeckModalClose"
-                        aria-label="Fermer le constructeur de deck"
-                        class="worlds-deck-modal-close">
-                    <i data-lucide="x"></i>
-                </button>
-            </div>
-
-            <div class="worlds-deck-modal-body">
-
-                <input type="hidden" id="worldsDeckId" value="" />
-
-                <div class="worlds-deck-field">
-                    <label for="worldsDeckName">Nom du deck</label>
-                    <input type="text"
-                           id="worldsDeckName"
-                           maxlength="100"
-                           placeholder="Ex. Deck Offensif" />
-                </div>
-
-                <div class="worlds-deck-field">
-                    <label for="worldsDeckLeaderSelect">Leader</label>
-                    <select id="worldsDeckLeaderSelect">
-                        <option value="">Sélectionnez un Leader</option>
-                    </select>
-                </div>
-
-                <div class="worlds-deck-builder-status">
-                    <span id="worldsDeckCountLabel">0 / 40 cartes</span>
-                    <span id="worldsDeckError" class="worlds-deck-error" role="alert"></span>
-                </div>
-
-                <div id="worldsDeckCardGrid"
-                     class="worlds-deck-card-grid">
-                </div>
-
-            </div>
-
-            <div class="worlds-deck-modal-footer">
-                <button type="button"
-                        id="worldsDeckDeleteButton"
-                        class="worlds-btn worlds-btn-ghost"
-                        hidden>
-                    Supprimer
-                </button>
-
-                <button type="button"
-                        id="worldsDeckSaveButton"
-                        class="worlds-btn worlds-btn-gold">
-                    Enregistrer
-                </button>
-            </div>
-
-        </div>
-
-    </div>
-
 </main>
 
 <script src="~/js/pvp-lobby.js"
         asp-append-version="true"></script>
-
-<script src="~/js/card-components.js" asp-append-version="true"></script>
-<script src="~/js/deck-management-page.js"
-        asp-append-version="true"></script>
-

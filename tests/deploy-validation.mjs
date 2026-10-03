@@ -22,5 +22,11 @@ try {
  assert.deepEqual(Object.keys(result.services.smtp.networks),['default']);
  assert.deepEqual(Object.keys(result.services['web-tcg'].networks).sort(),['default','proxy']);
  assert.equal(result.services.smtp.environment.POSTFIX_smtp_tls_security_level,'verify');
+ const development=JSON.parse(execFileSync('docker',['compose','--env-file','.env.example','-f','docker-compose.yml','-f','docker-compose.override.yml','-f','docker-compose.dev.yml','config','--format','json'],{encoding:'utf8'}));
+ assert.ok(!development.services['uploads-init'].build,'VS ne doit pas détecter un deuxième projet .NET');
+ assert.notEqual(development.services['uploads-init'].image,development.services['web-tcg'].image);
+ assert.equal(development.services['web-tcg'].environment.ASPNETCORE_ENVIRONMENT,'Development');
+ assert.ok(development.services['web-tcg'].environment.ConnectionStrings__DefaultConnection);
+ assert.equal(development.services['web-tcg'].depends_on['uploads-init'].condition,'service_completed_successfully');
  console.log('Compose production : secrets avec caractères spéciaux, ports privés et proxy approuvé vérifiés.');
 } finally { rmSync(directory,{recursive:true,force:true}); }
