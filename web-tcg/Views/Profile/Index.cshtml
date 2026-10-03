@@ -1,0 +1,458 @@
+﻿@model web_tcg.Models.Profile.ProfileViewModel
+
+@{
+    ViewData["Title"] = "Profil";
+
+    var selectedIds = Model.ShowcaseCards
+        .OrderBy(x => x.Position)
+        .Select(x => x.CardId)
+        .ToList();
+}
+
+<link rel="stylesheet"
+      href="~/css/card.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/profile.css"
+      asp-append-version="true" />
+
+<main class="profile-page">
+    <div class="profile-shell">
+
+        @if (TempData["ProfileSuccess"] is string success)
+        {
+            <div class="profile-message profile-message-success">
+                <i data-lucide="circle-check"></i>
+                <span>@success</span>
+            </div>
+        }
+
+        @if (TempData["ProfileError"] is string error)
+        {
+            <div class="profile-message profile-message-error">
+                <i data-lucide="circle-alert"></i>
+                <span>@error</span>
+            </div>
+        }
+
+        <section class="profile-header">
+            <div class="profile-user">
+                <div class="profile-avatar-large">
+                    @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+                    {
+                        <img src="@Model.AvatarUrl"
+                             alt="Avatar de @Model.Username" />
+                    }
+                    else
+                    {
+                        <span>
+                            @(string.IsNullOrWhiteSpace(Model.Username)
+                                ? "?"
+                                : Model.Username[..1].ToUpperInvariant())
+                        </span>
+                    }
+                </div>
+
+                <div class="profile-user-main">
+                    <span class="profile-kicker">PROFIL JOUEUR</span>
+
+                    <h1>@Model.Username</h1>
+
+                    <span class="profile-member-since">
+                        Membre depuis @Model.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy")
+                    </span>
+                </div>
+            </div>
+
+            <div class="profile-stats">
+                <div>
+                    <span>SOLDE</span>
+                    <strong>@Model.Balance.ToString("N0")</strong>
+                </div>
+
+                <div>
+                    <span>XP</span>
+                    <strong>@Model.XP.ToString("N0")</strong>
+                </div>
+
+                <div>
+                    <span>CARTES</span>
+                    <strong>@Model.OwnedCards.Count</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-layout">
+
+            <!-- =====================================================
+                 COMPTE
+                 ===================================================== -->
+
+            <div class="profile-column">
+                <article class="profile-panel">
+                    <header class="profile-panel-header">
+                        <div>
+                            <span>COMPTE</span>
+                            <h2>Informations du profil</h2>
+                        </div>
+
+                        <i data-lucide="user-round"></i>
+                    </header>
+
+                    <div class="profile-settings">
+
+                        <form asp-controller="Profile"
+                              asp-action="UpdateUsername"
+                              method="post"
+                              class="profile-setting-block">
+
+                            <div class="profile-setting-copy">
+                                <strong>Pseudo</strong>
+                                <span>Votre nom visible sur Worlds TCG.</span>
+                            </div>
+
+                            <div class="profile-setting-form">
+                                <input type="text"
+                                       name="Username"
+                                       value="@Model.Username"
+                                       minlength="3"
+                                       maxlength="30"
+                                       autocomplete="nickname"
+                                       required />
+
+                                <button type="submit">
+                                    Modifier
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="profile-divider"></div>
+
+                        <div class="profile-setting-block">
+                            <div class="profile-setting-copy">
+                                <strong>Photo de profil</strong>
+                                <span>PNG, JPG ou WebP. Maximum 4 Mo.</span>
+                            </div>
+
+                            <div class="profile-avatar-actions">
+
+                                <form asp-controller="Profile"
+                                      asp-action="UpdateAvatar"
+                                      method="post"
+                                      enctype="multipart/form-data"
+                                      class="profile-avatar-upload">
+
+                                    <label class="profile-file-button">
+                                        <i data-lucide="image-plus"></i>
+
+                                        <span id="profileAvatarFileName">
+                                            Choisir une image
+                                        </span>
+
+                                        <input type="file"
+                                               name="avatar"
+                                               id="profileAvatarInput"
+                                               accept="image/png,image/jpeg,image/webp"
+                                               hidden />
+                                    </label>
+
+                                    <button type="submit"
+                                            class="profile-action-primary">
+                                        Enregistrer
+                                    </button>
+                                </form>
+
+                                @if (!string.IsNullOrWhiteSpace(Model.AvatarUrl))
+                                {
+                                    <form asp-controller="Profile"
+                                          asp-action="RemoveAvatar"
+                                          method="post">
+
+                                        <button type="submit"
+                                                class="profile-action-secondary">
+                                            Supprimer
+                                        </button>
+                                    </form>
+                                }
+
+                            </div>
+                        </div>
+
+                    </div>
+                </article>
+            </div>
+
+            <!-- =====================================================
+                 VITRINE
+                 ===================================================== -->
+
+            <div class="profile-column profile-column-showcase">
+                <article class="profile-panel profile-showcase-panel">
+
+                    <header class="profile-panel-header">
+                        <div>
+                            <span>PERSONNALISATION</span>
+                            <h2>Vitrine de cartes</h2>
+                        </div>
+
+                        <i data-lucide="sparkles"></i>
+                    </header>
+
+                    <p class="profile-panel-description">
+                        Sélectionnez jusqu'à trois cartes de votre collection
+                        pour les afficher sur votre profil.
+                    </p>
+
+                    <div class="profile-showcase">
+
+                        @for (var position = 1; position <= 3; position++)
+                        {
+                            var showcaseCard = Model.ShowcaseCards
+                                .FirstOrDefault(x => x.Position == position);
+
+                            <div class="profile-showcase-slot @(showcaseCard != null ? "has-card" : "")">
+
+                                @if (showcaseCard != null)
+                                {
+                                    <div class="profile-showcase-card-render">
+                                        @await Component.InvokeAsync(
+                                            "Card",
+                                            new
+                                            {
+                                                model = showcaseCard.Card
+                                            }
+                                        )
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="profile-showcase-empty">
+                                        <i data-lucide="plus"></i>
+
+                                        <span>
+                                            Emplacement @position
+                                        </span>
+                                    </div>
+                                }
+
+                            </div>
+                        }
+
+                    </div>
+
+                    <form asp-controller="Profile"
+                          asp-action="UpdateShowcase"
+                          method="post"
+                          id="profileShowcaseForm">
+
+                        <div id="profileShowcaseInputs">
+                            @foreach (var cardId in selectedIds)
+                            {
+                                <input type="hidden"
+                                       name="CardIds"
+                                       value="@cardId" />
+                            }
+                        </div>
+
+                        <div class="profile-showcase-actions">
+                            <span id="profileShowcaseCounter">
+                                @selectedIds.Count / 3 sélectionnées
+                            </span>
+
+                            <button type="submit"
+                                    class="profile-action-primary">
+                                Enregistrer la vitrine
+                            </button>
+                        </div>
+
+                    </form>
+                </article>
+            </div>
+        </section>
+
+        <!-- =========================================================
+             COLLECTION / SÉLECTION DE LA VITRINE
+             ========================================================= -->
+
+        <section class="profile-panel profile-owned-panel">
+
+            <header class="profile-panel-header">
+                <div>
+                    <span>COLLECTION</span>
+                    <h2>Choisir les cartes à afficher</h2>
+                </div>
+
+                <i data-lucide="library"></i>
+            </header>
+
+            <p class="profile-panel-description">
+                Cliquez sur une carte pour l'ajouter ou la retirer de votre vitrine.
+                Vous pouvez sélectionner jusqu'à trois cartes différentes.
+            </p>
+
+            @if (Model.OwnedCards.Count == 0)
+            {
+                <div class="profile-empty">
+                    <i data-lucide="package-open"></i>
+
+                    <span>
+                        Vous ne possédez encore aucune carte.
+                    </span>
+                </div>
+            }
+            else
+            {
+                <div class="profile-owned-grid"
+                     id="profileOwnedCards">
+
+                    @foreach (var item in Model.OwnedCards)
+                    {
+                        var isSelected = selectedIds.Contains(item.CardId);
+
+                        <button type="button"
+                                class="profile-owned-card @(isSelected ? "is-selected" : "")"
+                                data-card-id="@item.CardId"
+                                aria-pressed="@(isSelected ? "true" : "false")">
+
+                            <span class="profile-owned-card-selection">
+                                <i data-lucide="check"></i>
+                            </span>
+
+                            <div class="profile-owned-card-render">
+                                @await Component.InvokeAsync(
+                                    "Card",
+                                    new
+                                    {
+                                        model = item.Card
+                                    }
+                                )
+                            </div>
+
+                        </button>
+                    }
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+</main>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const maxShowcaseCards = 3;
+
+            const ownedCards = [
+                ...document.querySelectorAll(".profile-owned-card")
+            ];
+
+            const inputsContainer =
+                document.getElementById("profileShowcaseInputs");
+
+            const counter =
+                document.getElementById("profileShowcaseCounter");
+
+            let selected = [
+                ...inputsContainer.querySelectorAll('input[name="CardIds"]')
+            ]
+                .map(input => Number(input.value))
+                .filter(id => Number.isFinite(id) && id > 0);
+
+            selected = [...new Set(selected)]
+                .slice(0, maxShowcaseCards);
+
+            function refreshSelection() {
+                ownedCards.forEach(card => {
+                    const cardId =
+                        Number(card.dataset.cardId);
+
+                    const isSelected =
+                        selected.includes(cardId);
+
+                    card.classList.toggle(
+                        "is-selected",
+                        isSelected
+                    );
+
+                    card.setAttribute(
+                        "aria-pressed",
+                        isSelected ? "true" : "false"
+                    );
+                });
+
+                inputsContainer.innerHTML = "";
+
+                selected.forEach(cardId => {
+                    const input =
+                        document.createElement("input");
+
+                    input.type = "hidden";
+                    input.name = "CardIds";
+                    input.value = cardId;
+
+                    inputsContainer.appendChild(input);
+                });
+
+                if (counter) {
+                    counter.textContent =
+                        `${selected.length} / ${maxShowcaseCards} sélectionnées`;
+                }
+            }
+
+            ownedCards.forEach(card => {
+                card.addEventListener("click", event => {
+                    event.preventDefault();
+
+                    const cardId =
+                        Number(card.dataset.cardId);
+
+                    if (!Number.isFinite(cardId))
+                        return;
+
+                    if (selected.includes(cardId)) {
+                        selected =
+                            selected.filter(
+                                id => id !== cardId
+                            );
+
+                        refreshSelection();
+                        return;
+                    }
+
+                    if (selected.length >= maxShowcaseCards)
+                        return;
+
+                    selected.push(cardId);
+
+                    refreshSelection();
+                });
+            });
+
+            const avatarInput =
+                document.getElementById("profileAvatarInput");
+
+            const avatarFileName =
+                document.getElementById("profileAvatarFileName");
+
+            avatarInput?.addEventListener("change", () => {
+                const file =
+                    avatarInput.files?.[0];
+
+                if (!avatarFileName)
+                    return;
+
+                avatarFileName.textContent =
+                    file?.name || "Choisir une image";
+            });
+
+            refreshSelection();
+
+            if (typeof lucide !== "undefined") {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}

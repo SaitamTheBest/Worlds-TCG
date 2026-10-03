@@ -1,0 +1,249 @@
+﻿@model web_tcg.Models.BoosterShop.BoosterShopViewModel
+
+@{
+    ViewData["Title"] = "Boosters";
+    Layout = "_Layout";
+
+    var cardSets = Model.CardSets;
+}
+
+<link rel="stylesheet" href="~/css/booster.css" asp-append-version="true" />
+
+<div class="booster-page">
+
+    <!-- ============================================================
+         EXTENSIONS
+    ============================================================= -->
+
+    <section class="booster-section">
+
+        <div class="booster-section-header">
+
+            <div>
+                <span class="booster-section-kicker">
+                    CATALOGUE
+                </span>
+
+                <h2>
+                    Extensions disponibles
+                </h2>
+
+                <p>
+                    Découvrez les différentes collections du TCG.
+                </p>
+            </div>
+
+            <div class="booster-count">
+                <strong>@cardSets.Count.ToString("00")</strong>
+
+                <span>
+                    @(cardSets.Count > 1 ? "EXTENSIONS" : "EXTENSION")
+                </span>
+            </div>
+
+        </div>
+
+
+        @if (cardSets.Count == 0)
+        {
+            <!-- ====================================================
+                 EMPTY STATE
+            ===================================================== -->
+
+            <div class="booster-empty">
+
+                <div class="booster-empty-icon">
+                    <i data-lucide="package-open"></i>
+                </div>
+
+                <span class="booster-empty-kicker">
+                    CATALOGUE
+                </span>
+
+                <h3>
+                    Aucune extension disponible
+                </h3>
+
+                <p>
+                    Les prochaines extensions seront disponibles prochainement.
+                </p>
+
+            </div>
+        }
+        else
+        {
+            <!-- ====================================================
+                 GRID
+            ===================================================== -->
+
+            <div class="booster-grid">
+
+                @for (var i = 0; i < cardSets.Count; i++)
+                {
+                    var cardSet = cardSets[i];
+                    var isLatest = i == 0;
+
+                    <article class="booster-card @(isLatest ? "booster-card-latest" : "")">
+
+                        <!-- ========================================
+                             LATEST BADGE
+                        ========================================= -->
+                        @if (isLatest)
+                        {
+                            <div class="booster-latest-badge">
+                                <span class="booster-badge-dot"></span>
+                                DERNIÈRE EXTENSION
+                            </div>
+                        }
+
+
+                        <!-- ========================================
+                             IMAGE
+                        ========================================= -->
+
+                        <div class="booster-image-container">
+
+                            <div class="booster-image-background"></div>
+
+                            <div class="booster-image-glow"></div>
+
+                            <div class="booster-image-frame"></div>
+
+                            @if (!string.IsNullOrWhiteSpace(cardSet.BoosterImageUrl))
+                            {
+                                <img src="@cardSet.BoosterImageUrl"
+                                     alt="Booster @cardSet.Name"
+                                     class="booster-image"
+                                     loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="booster-image-placeholder">
+                                    <i data-lucide="package-open"></i>
+
+                                    <span>
+                                        IMAGE INDISPONIBLE
+                                    </span>
+                                </div>
+                            }
+
+                            <div class="booster-image-shine"></div>
+                        </div>
+
+
+                        <!-- ========================================
+                             CONTENT
+                        ========================================= -->
+
+                        <div class="booster-card-content">
+
+                            <div class="booster-card-top">
+
+                                <div>
+                                    <span class="booster-label">
+                                        EXTENSION
+                                    </span>
+
+                                    <h3>
+                                        @cardSet.Name
+                                    </h3>
+                                </div>
+
+                                <span class="booster-code">
+                                    @cardSet.Code
+                                </span>
+
+                            </div>
+
+
+                            <!-- ====================================
+                                 META
+                            ===================================== -->
+
+                            <div class="booster-meta">
+
+                                <div class="booster-meta-item">
+
+                                    <span class="booster-meta-label">
+                                        SORTIE
+                                    </span>
+
+                                    <strong>
+                                        @cardSet.ReleaseDate.ToString("dd.MM.yyyy")
+                                    </strong>
+
+                                </div>
+
+
+                                @if (cardSet.BoosterPrice > 0)
+                                {
+                                    <div class="booster-meta-item booster-price">
+
+                                        <span class="booster-meta-label">
+                                            PRIX
+                                        </span>
+
+                                        <strong>
+                                            @cardSet.BoosterPrice.ToString("0.00")
+                                            <small>€</small>
+                                        </strong>
+
+                                    </div>
+                                }
+
+                            </div>
+
+
+                            <!-- ====================================
+                                 BUTTON
+                            ===================================== -->
+
+                            <form asp-controller="Booster"
+                                  asp-action="Open"
+                                  method="post"
+                                  class="booster-open-form">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden" name="id" value="@cardSet.Id" />
+
+                                <button type="submit" class="booster-open-button">
+
+                                    <span class="booster-open-icon">
+                                        <i data-lucide="package-open"></i>
+                                    </span>
+
+                                    <span>
+                                        Ouvrir le booster
+                                    </span>
+
+                                    <span class="booster-arrow">
+                                        <i data-lucide="arrow-up-right"></i>
+                                    </span>
+
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </article>
+                }
+
+            </div>
+        }
+
+    </section>
+
+</div>
+
+@section Scripts {
+
+    <script>
+        if (typeof lucide !== "undefined") {
+            lucide.createIcons();
+        }
+    </script>
+
+    <script src="~/js/booster.js" asp-append-version="true"></script>
+}

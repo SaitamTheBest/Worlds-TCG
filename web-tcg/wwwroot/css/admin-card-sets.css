@@ -1,0 +1,913 @@
+﻿/* =========================================================
+   ADMIN - CARD SETS
+   Kapital Wars / TCG
+   ========================================================= */
+
+.admin-cardsets-page {
+    position: relative;
+    min-height: calc(100vh - 72px);
+    overflow: hidden;
+    background: radial-gradient( circle at 80% 0%, rgba(244, 196, 48, 0.07), transparent 28% ), radial-gradient( circle at 0% 70%, rgba(244, 196, 48, 0.035), transparent 25% ), #080a0d;
+    color: #fff;
+}
+
+
+/* =========================================================
+   BACKGROUND
+   ========================================================= */
+
+.admin-cardsets-background {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.admin-cardsets-grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient( rgba(255, 255, 255, 0.018) 1px, transparent 1px ), linear-gradient( 90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px );
+    background-size: 55px 55px;
+    mask-image: linear-gradient( to bottom, black, transparent 85% );
+}
+
+.admin-cardsets-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(90px);
+}
+
+.admin-cardsets-glow-1 {
+    width: 360px;
+    height: 360px;
+    top: -160px;
+    right: 5%;
+    background: rgba(244, 196, 48, 0.055);
+}
+
+.admin-cardsets-glow-2 {
+    width: 280px;
+    height: 280px;
+    bottom: 5%;
+    left: -150px;
+    background: rgba(244, 196, 48, 0.025);
+}
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.admin-cardsets-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 35px 36px 90px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.admin-cardsets-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 35px;
+    margin-bottom: 35px;
+}
+
+.admin-cardsets-header-content {
+    flex: 1;
+}
+
+.admin-cardsets-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 30px;
+    color: #777f89;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+    .admin-cardsets-back svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .admin-cardsets-back:hover {
+        color: var(--color-primary-yellow);
+        transform: translateX(-3px);
+    }
+
+.admin-cardsets-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: var(--color-primary-yellow);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+}
+
+.admin-cardsets-eyebrow-line {
+    width: 28px;
+    height: 1px;
+    background: var(--color-primary-yellow);
+}
+
+.admin-cardsets-title-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+    .admin-cardsets-title-row h1 {
+        margin: 0;
+        color: #fff;
+        font-size: clamp(2.3rem, 4vw, 4rem);
+        line-height: 0.98;
+        font-weight: 900;
+        letter-spacing: -0.055em;
+    }
+
+        .admin-cardsets-title-row h1 span {
+            color: var(--color-primary-yellow);
+        }
+
+    .admin-cardsets-title-row p {
+        max-width: 650px;
+        margin: 17px 0 0;
+        color: #7d858f;
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+
+
+/* =========================================================
+   CREATE BUTTON
+   ========================================================= */
+
+.admin-cardsets-create-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 20px;
+    border: 1px solid rgba(244, 196, 48, 0.7);
+    border-radius: 10px;
+    background: var(--color-primary-yellow);
+    color: #0b0d10;
+    font-size: 0.84rem;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 10px 30px rgba(244, 196, 48, 0.08);
+    transition: transform 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+
+    .admin-cardsets-create-btn svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .admin-cardsets-create-btn:hover {
+        background: #f7d13d;
+        color: #080a0d;
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(244, 196, 48, 0.16);
+    }
+
+
+/* =========================================================
+   COUNTER
+   ========================================================= */
+
+.admin-cardsets-counter {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    min-width: 155px;
+    padding: 16px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    background: linear-gradient( 145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018) );
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.22);
+}
+
+.admin-cardsets-counter-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(244, 196, 48, 0.18);
+    border-radius: 9px;
+    background: rgba(244, 196, 48, 0.06);
+    color: var(--color-primary-yellow);
+}
+
+    .admin-cardsets-counter-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+
+.admin-cardsets-counter-label {
+    display: block;
+    margin-bottom: 2px;
+    color: #656d77;
+    font-size: 0.61rem;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+}
+
+.admin-cardsets-counter strong {
+    color: #fff;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+
+/* =========================================================
+   ALERT
+   ========================================================= */
+
+.admin-cardsets-alert {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
+    padding: 15px 18px;
+    border-radius: 11px;
+    background: rgba(16, 185, 129, 0.055);
+}
+
+.admin-cardsets-alert-success {
+    border: 1px solid rgba(16, 185, 129, 0.22);
+}
+
+.admin-cardsets-alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(16, 185, 129, 0.1);
+    color: #34d399;
+}
+
+    .admin-cardsets-alert-icon svg {
+        width: 17px;
+        height: 17px;
+    }
+
+.admin-cardsets-alert strong,
+.admin-cardsets-alert span {
+    display: block;
+}
+
+.admin-cardsets-alert strong {
+    margin-bottom: 2px;
+    color: #d1fae5;
+    font-size: 0.82rem;
+}
+
+.admin-cardsets-alert span {
+    color: #7dd3b0;
+    font-size: 0.78rem;
+}
+
+
+/* =========================================================
+   MAIN PANEL
+   ========================================================= */
+
+.admin-cardsets-panel {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 16px;
+    background: linear-gradient( 145deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012) );
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.3);
+}
+
+.admin-cardsets-panel-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 28px 30px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.admin-cardsets-section-number {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--color-primary-yellow);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+.admin-cardsets-panel-header h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.admin-cardsets-panel-header p {
+    margin: 6px 0 0;
+    color: #69717b;
+    font-size: 0.78rem;
+}
+
+.admin-cardsets-total {
+    text-align: right;
+}
+
+    .admin-cardsets-total span {
+        display: block;
+        margin-bottom: 2px;
+        color: #626a74;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+    }
+
+    .admin-cardsets-total strong {
+        color: var(--color-primary-yellow);
+        font-size: 1.5rem;
+    }
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.admin-cardsets-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.admin-cardsets-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 950px;
+}
+
+    .admin-cardsets-table thead {
+        background: rgba(0, 0, 0, 0.18);
+    }
+
+    .admin-cardsets-table th {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+        color: #626a74;
+        font-size: 0.61rem;
+        font-weight: 800;
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.13em;
+        white-space: nowrap;
+    }
+
+        .admin-cardsets-table th:first-child,
+        .admin-cardsets-table td:first-child {
+            padding-left: 30px;
+        }
+
+        .admin-cardsets-table th:last-child,
+        .admin-cardsets-table td:last-child {
+            padding-right: 30px;
+        }
+
+    .admin-cardsets-table tbody tr {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.045);
+        transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+        .admin-cardsets-table tbody tr:last-child {
+            border-bottom: none;
+        }
+
+        .admin-cardsets-table tbody tr:hover {
+            background: rgba(244, 196, 48, 0.018);
+            box-shadow: inset 3px 0 0 rgba(244, 196, 48, 0.5);
+        }
+
+    .admin-cardsets-table td {
+        padding: 17px 20px;
+        color: #d1d5db;
+        vertical-align: middle;
+    }
+
+
+/* =========================================================
+   BOOSTER IMAGE
+   ========================================================= */
+
+.admin-cardsets-booster {
+    width: 52px;
+    height: 68px;
+}
+
+.admin-cardsets-booster-image {
+    position: relative;
+    width: 52px;
+    height: 68px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 7px;
+    background: radial-gradient( circle at center, rgba(244, 196, 48, 0.08), transparent 65% ), #0b0e12;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+}
+
+    .admin-cardsets-booster-image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.45s ease, filter 0.45s ease;
+    }
+
+.admin-cardsets-table tbody tr:hover
+.admin-cardsets-booster-image img {
+    transform: scale(1.07);
+    filter: brightness(1.08) drop-shadow(0 0 8px rgba(244, 196, 48, 0.15));
+}
+
+.admin-cardsets-image-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: linear-gradient( 135deg, rgba(255, 255, 255, 0.08), transparent 35% );
+}
+
+.admin-cardsets-image-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    color: #454d57;
+}
+
+    .admin-cardsets-image-placeholder svg {
+        width: 20px;
+        height: 20px;
+    }
+
+
+/* =========================================================
+   NAME
+   ========================================================= */
+
+.admin-cardsets-name strong {
+    display: block;
+    margin-bottom: 4px;
+    color: #f4f4f5;
+    font-size: 0.87rem;
+    font-weight: 800;
+}
+
+.admin-cardsets-name span {
+    color: #555e68;
+    font-family: monospace;
+    font-size: 0.65rem;
+}
+
+
+/* =========================================================
+   CODE
+   ========================================================= */
+
+.admin-cardsets-code {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.025);
+    color: #aeb4bb;
+    font-family: monospace;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+    .admin-cardsets-code svg {
+        width: 12px;
+        height: 12px;
+        color: #616a75;
+    }
+
+
+/* =========================================================
+   DATE
+   ========================================================= */
+
+.admin-cardsets-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #9da4ad;
+    font-size: 0.76rem;
+}
+
+    .admin-cardsets-date svg {
+        width: 15px;
+        height: 15px;
+        color: #626b75;
+    }
+
+
+/* =========================================================
+   PRICE
+   ========================================================= */
+
+.admin-cardsets-price strong {
+    color: var(--color-primary-yellow);
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.admin-cardsets-price span {
+    margin-left: 3px;
+    color: #626a74;
+    font-size: 0.65rem;
+}
+
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.admin-cardsets-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 9px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.admin-cardsets-status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+}
+
+.admin-cardsets-status-active {
+    border-color: rgba(16, 185, 129, 0.16);
+    background: rgba(16, 185, 129, 0.07);
+    color: #34d399;
+}
+
+    .admin-cardsets-status-active .admin-cardsets-status-dot {
+        background: #34d399;
+        box-shadow: 0 0 8px rgba(52, 211, 153, 0.6);
+    }
+
+.admin-cardsets-status-inactive {
+    border-color: rgba(107, 114, 128, 0.15);
+    background: rgba(107, 114, 128, 0.06);
+    color: #7b838d;
+}
+
+    .admin-cardsets-status-inactive .admin-cardsets-status-dot {
+        background: #59616b;
+    }
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.admin-cardsets-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.admin-cardsets-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 35px;
+    height: 35px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.025);
+    color: #747c86;
+    text-decoration: none;
+    transition: transform 0.2s ease, color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+    .admin-cardsets-action svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .admin-cardsets-action:hover {
+        transform: translateY(-2px);
+    }
+
+.admin-cardsets-action-edit:hover {
+    border-color: rgba(244, 196, 48, 0.25);
+    background: rgba(244, 196, 48, 0.06);
+    color: var(--color-primary-yellow);
+}
+
+.admin-cardsets-action-delete:hover {
+    border-color: rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.06);
+    color: #f87171;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.admin-cardsets-empty {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    padding: 95px 30px;
+    text-align: center;
+}
+
+.admin-cardsets-empty-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 78px;
+    height: 78px;
+    margin-bottom: 22px;
+    border: 1px solid rgba(244, 196, 48, 0.14);
+    border-radius: 18px;
+    background: radial-gradient( circle, rgba(244, 196, 48, 0.09), transparent 65% );
+    color: rgba(244, 196, 48, 0.75);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+}
+
+    .admin-cardsets-empty-icon svg {
+        width: 30px;
+        height: 30px;
+    }
+
+.admin-cardsets-empty-kicker {
+    margin-bottom: 8px;
+    color: var(--color-primary-yellow);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+.admin-cardsets-empty h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.45rem;
+    font-weight: 800;
+}
+
+.admin-cardsets-empty p {
+    max-width: 440px;
+    margin: 10px 0 0;
+    color: #69717b;
+    font-size: 0.82rem;
+    line-height: 1.7;
+}
+
+.admin-cardsets-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 25px;
+    padding: 11px 17px;
+    border-radius: 8px;
+    background: var(--color-primary-yellow);
+    color: #080a0d;
+    font-size: 0.76rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+    .admin-cardsets-empty-btn svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .admin-cardsets-empty-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(244, 196, 48, 0.15);
+    }
+
+
+/* =========================================================
+   MOBILE CARDS
+   ========================================================= */
+
+.admin-cardsets-mobile-list {
+    display: none;
+}
+
+.admin-cardset-mobile-card {
+    padding: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+    .admin-cardset-mobile-card:last-child {
+        border-bottom: none;
+    }
+
+.admin-cardset-mobile-top {
+    display: flex;
+    gap: 15px;
+}
+
+.admin-cardsets-mobile-image {
+    flex: 0 0 auto;
+    width: 64px;
+    height: 82px;
+}
+
+.admin-cardset-mobile-heading {
+    min-width: 0;
+}
+
+.admin-cardsets-mobile-id {
+    display: block;
+    margin-bottom: 3px;
+    color: #555e68;
+    font-family: monospace;
+    font-size: 0.62rem;
+}
+
+.admin-cardset-mobile-heading h3 {
+    margin: 0 0 8px;
+    color: #f4f4f5;
+    font-size: 1rem;
+    font-weight: 800;
+}
+
+.admin-cardset-mobile-info {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 18px;
+}
+
+    .admin-cardset-mobile-info > div {
+        padding: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.055);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.018);
+    }
+
+    .admin-cardset-mobile-info span {
+        display: block;
+        margin-bottom: 5px;
+        color: #555e68;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .admin-cardset-mobile-info strong {
+        color: #d7d9dc;
+        font-size: 0.75rem;
+    }
+
+        .admin-cardset-mobile-info strong.mobile-status-active {
+            color: #34d399;
+        }
+
+        .admin-cardset-mobile-info strong.mobile-status-inactive {
+            color: #7b838d;
+        }
+
+.admin-cardset-mobile-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+    .admin-cardset-mobile-actions .admin-cardsets-action {
+        flex: 1;
+        width: auto;
+        height: 38px;
+        gap: 7px;
+        font-size: 0.7rem;
+        font-weight: 700;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1100px) {
+
+    .admin-cardsets-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-cardsets-counter {
+        align-self: flex-start;
+    }
+
+    .admin-cardsets-title-row {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-cardsets-create-btn {
+        margin-top: 5px;
+    }
+}
+
+
+@media (max-width: 850px) {
+
+    .admin-cardsets-container {
+        padding: 28px 22px 70px;
+    }
+
+    .admin-cardsets-table-wrapper {
+        display: none;
+    }
+
+    .admin-cardsets-mobile-list {
+        display: block;
+    }
+
+    .admin-cardsets-panel-header {
+        padding: 23px 22px;
+    }
+}
+
+
+@media (max-width: 600px) {
+
+    .admin-cardsets-container {
+        padding: 22px 15px 55px;
+    }
+
+    .admin-cardsets-title-row h1 {
+        font-size: 2.45rem;
+    }
+
+    .admin-cardsets-title-row p {
+        font-size: 0.82rem;
+    }
+
+    .admin-cardsets-create-btn {
+        width: 100%;
+    }
+
+    .admin-cardsets-counter {
+        width: 100%;
+    }
+
+    .admin-cardsets-panel {
+        border-radius: 12px;
+    }
+
+    .admin-cardsets-panel-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .admin-cardsets-total {
+        text-align: left;
+    }
+
+    .admin-cardset-mobile-info {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-cardsets-back {
+        margin-bottom: 22px;
+    }
+}

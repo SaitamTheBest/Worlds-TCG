@@ -1,0 +1,801 @@
+﻿@model web_tcg.Models.Admin.CreateCardSetViewModel
+
+@{
+ViewData["Title"] = "Créer une extension";
+Layout = "_Layout";
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-card-set-create.css"
+      asp-append-version="true" />
+
+<div class="admin-create-set-page">
+
+
+<!-- BACKGROUND -->
+<div class="admin-create-set-background">
+    <div class="admin-create-set-grid"></div>
+    <div class="admin-create-set-glow admin-create-set-glow-1"></div>
+    <div class="admin-create-set-glow admin-create-set-glow-2"></div>
+</div>
+
+<div class="admin-create-set-container">
+
+    <!-- HEADER -->
+    <header class="admin-create-set-header">
+
+        <div>
+
+            <a asp-controller="Admin"
+               asp-action="CardSets"
+               class="admin-create-set-back">
+                <i data-lucide="arrow-left"></i>
+                <span>Extensions</span>
+            </a>
+
+            <div class="admin-create-set-breadcrumb">
+                <span>ADMINISTRATION</span>
+                <i data-lucide="chevron-right"></i>
+                <span>NOUVELLE EXTENSION</span>
+            </div>
+
+            <div class="admin-create-set-title">
+
+                <div class="admin-create-set-title-icon">
+                    <i data-lucide="layers-3"></i>
+                </div>
+
+                <div>
+                    <h1>
+                        Créer une
+                        <span>Extension</span>
+                    </h1>
+
+                    <p>
+                        Configurez une nouvelle extension et son booster
+                        pour l'intégrer au catalogue du TCG.
+                    </p>
+                </div>
+
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- VALIDATION ERRORS -->
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="admin-create-set-alert">
+
+            <div class="admin-create-set-alert-icon">
+                <i data-lucide="alert-triangle"></i>
+            </div>
+
+            <div class="admin-create-set-alert-content">
+
+                <strong>
+                    Impossible de créer l'extension
+                </strong>
+
+                <ul>
+                    @foreach (var entry in ViewData.ModelState)
+                    {
+                        foreach (var error in entry.Value.Errors)
+                        {
+                            if (!string.IsNullOrWhiteSpace(error.ErrorMessage))
+                            {
+                                <li>@error.ErrorMessage</li>
+                            }
+                        }
+                    }
+                </ul>
+
+            </div>
+
+        </div>
+    }
+
+
+    <!-- FORM -->
+    <form asp-controller="Admin"
+          asp-action="CreateCardSet"
+          method="post"
+          class="admin-create-set-layout">
+
+        @Html.AntiForgeryToken()
+
+
+        <!-- ==========================================
+             LEFT : FORM
+             ========================================== -->
+
+        <div class="admin-create-set-form">
+
+
+            <!-- SECTION 01 -->
+            <section class="admin-create-set-section">
+
+                <div class="admin-create-set-section-heading">
+
+                    <div class="admin-create-set-section-number">
+                        01
+                    </div>
+
+                    <div>
+                        <span>CONFIGURATION</span>
+
+                        <h2>
+                            Informations de l'extension
+                        </h2>
+
+                        <p>
+                            Définissez les informations principales
+                            de votre nouvelle extension.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="admin-create-set-fields">
+
+
+                    <!-- NAME -->
+                    <div class="admin-create-set-field field-full">
+
+                        <label asp-for="Name">
+                            Nom de l'extension
+                            <span>*</span>
+                        </label>
+
+                        <div class="admin-create-set-input-wrapper">
+
+                            <i data-lucide="text"></i>
+
+                            <input asp-for="Name"
+                                   id="Name"
+                                   placeholder="Ex : Première Génération"
+                                   autocomplete="off" />
+
+                        </div>
+
+                        <span asp-validation-for="Name"
+                              class="admin-create-set-validation">
+                        </span>
+
+                        <small>
+                            Maximum 100 caractères.
+                        </small>
+
+                    </div>
+
+
+                    <!-- CODE -->
+                    <div class="admin-create-set-field">
+
+                        <label asp-for="Code">
+                            Code de l'extension
+                            <span>*</span>
+                        </label>
+
+                        <div class="admin-create-set-input-wrapper">
+
+                            <i data-lucide="hash"></i>
+
+                            <input asp-for="Code"
+                                   id="Code"
+                                   placeholder="Ex : P01"
+                                   maxlength="20"
+                                   autocomplete="off" />
+
+                        </div>
+
+                        <span asp-validation-for="Code"
+                              class="admin-create-set-validation">
+                        </span>
+
+                        <small>
+                            Exemple : P01, P02, EX01...
+                        </small>
+
+                    </div>
+
+
+                    <!-- RELEASE DATE -->
+                    <div class="admin-create-set-field">
+
+                        <label asp-for="ReleaseDate">
+                            Date de sortie
+                            <span>*</span>
+                        </label>
+
+                        <div class="admin-create-set-input-wrapper">
+
+                            <i data-lucide="calendar-days"></i>
+
+                            <input asp-for="ReleaseDate"
+                                   id="ReleaseDate"
+                                   type="date" />
+
+                        </div>
+
+                        <span asp-validation-for="ReleaseDate"
+                              class="admin-create-set-validation">
+                        </span>
+
+                    </div>
+
+
+                    <!-- PRICE -->
+                    <div class="admin-create-set-field">
+
+                        <label asp-for="BoosterPrice">
+                            Prix du booster
+                            <span>*</span>
+                        </label>
+
+                        <div class="admin-create-set-input-wrapper">
+
+                            <i data-lucide="coins"></i>
+
+                            <input asp-for="BoosterPrice"
+                                   id="BoosterPrice"
+                                   type="number"
+                                   min="0"
+                                   max="999999999"
+                                   step="0.01"
+                                   placeholder="Ex : 100" />
+
+                        </div>
+
+                        <span asp-validation-for="BoosterPrice"
+                              class="admin-create-set-validation">
+                        </span>
+
+                        <small>
+                            Prix dans la monnaie virtuelle du jeu.
+                        </small>
+
+                    </div>
+
+
+                    <!-- STATUS -->
+                    <div class="admin-create-set-field">
+
+                        <label>
+                            Statut
+                        </label>
+
+                        <label class="admin-create-set-switch">
+
+                            <input asp-for="IsActive"
+                                   id="IsActive"
+                                   type="checkbox" />
+
+                            <span class="admin-create-set-switch-track">
+                                <span></span>
+                            </span>
+
+                            <span class="admin-create-set-switch-label">
+                                Extension active
+                            </span>
+
+                        </label>
+
+                        <small>
+                            Une extension inactive ne sera pas proposée
+                            dans la boutique.
+                        </small>
+
+                    </div>
+
+
+                </div>
+
+            </section>
+
+
+            <!-- SECTION 02 -->
+            <section class="admin-create-set-section">
+
+                <div class="admin-create-set-section-heading">
+
+                    <div class="admin-create-set-section-number">
+                        02
+                    </div>
+
+                    <div>
+                        <span>VISUEL</span>
+
+                        <h2>
+                            Identité du booster
+                        </h2>
+
+                        <p>
+                            Ajoutez l'image qui représentera le booster
+                            dans la boutique.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <div class="admin-create-set-fields">
+
+                    <div class="admin-create-set-field field-full">
+
+                        <label asp-for="BoosterImageUrl">
+                            URL de l'image du booster
+                            <span>*</span>
+                        </label>
+
+                        <div class="admin-create-set-input-wrapper">
+
+                            <i data-lucide="image"></i>
+
+                            <input asp-for="BoosterImageUrl"
+                                   id="BoosterImageUrl"
+                                   type="url"
+                                   placeholder="https://example.com/images/booster.webp"
+                                   maxlength="500"
+                                   autocomplete="off" />
+
+                        </div>
+
+                        <span asp-validation-for="BoosterImageUrl"
+                              class="admin-create-set-validation">
+                        </span>
+
+                        <small>
+                            URL complète ou chemin relatif vers l'image.
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ACTIONS -->
+            <div class="admin-create-set-actions">
+
+                <a asp-controller="Admin"
+                   asp-action="CardSets"
+                   class="admin-create-set-cancel">
+
+                    <i data-lucide="arrow-left"></i>
+                    <span>Annuler</span>
+
+                </a>
+
+                <button type="submit"
+                        class="admin-create-set-submit">
+
+                    <i data-lucide="plus"></i>
+
+                    <span>
+                        Créer l'extension
+                    </span>
+
+                    <i data-lucide="arrow-up-right"></i>
+
+                </button>
+
+            </div>
+
+        </div>
+
+
+        <!-- ==========================================
+             RIGHT : PREVIEW
+             ========================================== -->
+
+        <aside class="admin-create-set-preview">
+
+            <div class="admin-create-set-preview-panel">
+
+                <!-- PREVIEW HEADER -->
+                <div class="admin-create-set-preview-header">
+
+                    <div>
+
+                        <span>
+                            APERÇU EN DIRECT
+                        </span>
+
+                        <h2>
+                            Booster
+                        </h2>
+
+                    </div>
+
+                    <div class="admin-create-set-live">
+
+                        <span></span>
+                        LIVE
+
+                    </div>
+
+                </div>
+
+
+                <!-- BOOSTER -->
+                <div class="admin-create-set-booster-preview">
+
+                    <div class="admin-create-set-booster-frame">
+
+                        <div class="admin-create-set-booster-glow"></div>
+
+                        <img id="boosterPreview"
+                             src=""
+                             alt="Aperçu du booster"
+                             class="hidden" />
+
+                        <div id="boosterPlaceholder"
+                             class="admin-create-set-booster-placeholder">
+
+                            <i data-lucide="image"></i>
+
+                            <span>
+                                L'image du booster
+                                apparaîtra ici
+                            </span>
+
+                        </div>
+
+                        <div class="admin-create-set-booster-shine"></div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PREVIEW INFO -->
+                <div class="admin-create-set-preview-info">
+
+                    <div class="admin-create-set-preview-name">
+
+                        <span>
+                            EXTENSION
+                        </span>
+
+                        <strong id="previewName">
+                            Nouvelle Extension
+                        </strong>
+
+                    </div>
+
+
+                    <div class="admin-create-set-preview-grid">
+
+                        <div class="admin-create-set-preview-stat">
+
+                            <span>
+                                CODE
+                            </span>
+
+                            <strong id="previewCode">
+                                ---
+                            </strong>
+
+                        </div>
+
+                        <div class="admin-create-set-preview-stat">
+
+                            <span>
+                                PRIX
+                            </span>
+
+                            <strong id="previewPrice">
+                                0
+                            </strong>
+
+                            <small>
+                                crédits
+                            </small>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="admin-create-set-preview-stat admin-create-set-preview-date">
+
+                        <span>
+                            DATE DE SORTIE
+                        </span>
+
+                        <strong id="previewDate">
+                            —
+                        </strong>
+
+                    </div>
+
+
+                    <div class="admin-create-set-preview-status">
+
+                        <span>
+                            Disponibilité
+                        </span>
+
+                        <span id="previewStatusBadge"
+                              class="admin-create-set-status inactive">
+                            INACTIVE
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- PREVIEW FOOTER -->
+                <div class="admin-create-set-preview-footer">
+
+                    <i data-lucide="info"></i>
+
+                    <span>
+                        L'aperçu se met automatiquement à jour
+                        pendant la saisie.
+                    </span>
+
+                </div>
+
+            </div>
+
+        </aside>
+
+    </form>
+
+</div>
+
+
+</div>
+
+@section Scripts {
+
+
+<partial name="_ValidationScriptsPartial" />
+
+<script>
+
+    document.addEventListener('DOMContentLoaded', function () {
+
+        const nameInput =
+            document.getElementById('Name');
+
+        const codeInput =
+            document.getElementById('Code');
+
+        const priceInput =
+            document.getElementById('BoosterPrice');
+
+        const dateInput =
+            document.getElementById('ReleaseDate');
+
+        const imageInput =
+            document.getElementById('BoosterImageUrl');
+
+        const activeInput =
+            document.getElementById('IsActive');
+
+
+        const previewName =
+            document.getElementById('previewName');
+
+        const previewCode =
+            document.getElementById('previewCode');
+
+        const previewPrice =
+            document.getElementById('previewPrice');
+
+        const previewDate =
+            document.getElementById('previewDate');
+
+        const previewImage =
+            document.getElementById('boosterPreview');
+
+        const placeholder =
+            document.getElementById('boosterPlaceholder');
+
+        const statusBadge =
+            document.getElementById('previewStatusBadge');
+
+
+        function updatePreview() {
+
+            /*
+             * NOM
+             */
+            const name =
+                nameInput.value.trim();
+
+            previewName.textContent =
+                name || 'Nouvelle Extension';
+
+
+            /*
+             * CODE
+             */
+            const code =
+                codeInput.value.trim().toUpperCase();
+
+            previewCode.textContent =
+                code || '---';
+
+
+            /*
+             * PRIX
+             */
+            const price =
+                parseFloat(priceInput.value);
+
+            if (!Number.isNaN(price)) {
+
+                previewPrice.textContent =
+                    price.toLocaleString('fr-FR', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+
+            } else {
+
+                previewPrice.textContent = '0.00';
+
+            }
+
+
+            /*
+             * DATE
+             */
+            if (dateInput.value) {
+
+                const date =
+                    new Date(
+                        dateInput.value + 'T00:00:00'
+                    );
+
+                previewDate.textContent =
+                    date.toLocaleDateString(
+                        'fr-FR',
+                        {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                        }
+                    );
+
+            } else {
+
+                previewDate.textContent = '—';
+
+            }
+
+
+            /*
+             * IMAGE
+             */
+            const imageUrl =
+                imageInput.value.trim();
+
+            if (imageUrl) {
+
+                previewImage.src = imageUrl;
+
+                previewImage.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+
+            } else {
+
+                previewImage.removeAttribute('src');
+
+                previewImage.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+
+            }
+
+
+            /*
+             * STATUT
+             */
+            if (activeInput.checked) {
+
+                statusBadge.textContent =
+                    'ACTIVE';
+
+                statusBadge.className =
+                    'admin-create-set-status active';
+
+            } else {
+
+                statusBadge.textContent =
+                    'INACTIVE';
+
+                statusBadge.className =
+                    'admin-create-set-status inactive';
+
+            }
+
+        }
+
+
+        /*
+         * EVENTS
+         */
+
+        nameInput.addEventListener(
+            'input',
+            updatePreview
+        );
+
+        codeInput.addEventListener(
+            'input',
+            function () {
+
+                this.value =
+                    this.value.toUpperCase();
+
+                updatePreview();
+
+            }
+        );
+
+        priceInput.addEventListener(
+            'input',
+            updatePreview
+        );
+
+        dateInput.addEventListener(
+            'change',
+            updatePreview
+        );
+
+        imageInput.addEventListener(
+            'input',
+            updatePreview
+        );
+
+        activeInput.addEventListener(
+            'change',
+            updatePreview
+        );
+
+
+        /*
+         * IMAGE ERROR
+         */
+
+        previewImage.addEventListener(
+            'error',
+            function () {
+
+                previewImage.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+
+            }
+        );
+
+
+        /*
+         * INITIAL PREVIEW
+         */
+
+        updatePreview();
+
+
+        /*
+         * LUCIDE
+         */
+
+        if (window.lucide) {
+            lucide.createIcons();
+        }
+
+    });
+
+</script>
+
+
+}

@@ -1,0 +1,689 @@
+@using web_tcg.Data.Enums
+@model web_tcg.Models.Inventory.InventoryDetailViewModel
+
+@{
+    ViewData["Title"] = $"Détails - {Model.Card.Name}";
+
+    var typeLabel = Model.Card.Type switch
+    {
+        CardType.Leader => "PRÉSIDENT",
+        CardType.Character => "PERSONNAGE",
+        CardType.PoliticalDecision => "DÉCISION POLITIQUE",
+        CardType.Location => "LIEU",
+        _ => "INCONNU"
+    };
+
+    var typeIcon = Model.Card.Type switch
+    {
+        CardType.Leader => "crown",
+        CardType.Character => "user",
+        CardType.PoliticalDecision => "scale",
+        CardType.Location => "map-pin",
+        _ => "circle"
+    };
+
+    var rarityClass = Model.Card.Rarity switch
+    {
+        CardRarity.Common => "rarity-common",
+        CardRarity.Rare => "rarity-rare",
+        CardRarity.SuperRare => "rarity-super-rare",
+        CardRarity.UltraRare => "rarity-ultra-rare",
+        _ => "rarity-default"
+    };
+
+    var rarityLabel = Model.Card.Rarity switch
+    {
+        CardRarity.Common => "C · COMMUNE",
+        CardRarity.Rare => "R · RARE",
+        CardRarity.SuperRare => "SR · SUPER RARE",
+        CardRarity.UltraRare => "UR · ULTRA RARE",
+        _ => "N/A"
+    };
+}
+
+<link rel="stylesheet"
+      href="~/css/card-detail.css"
+      asp-append-version="true" />
+
+<div class="card-detail-page">
+
+    <div class="card-detail-background">
+        <div class="card-detail-grid"></div>
+        <div class="card-detail-glow card-detail-glow-left"></div>
+        <div class="card-detail-glow card-detail-glow-right"></div>
+    </div>
+
+    <header class="card-detail-top">
+        <a href="@Url.Action("Index", "Inventory")"
+           class="card-detail-back">
+
+            <i data-lucide="arrow-left"></i>
+
+            <span>
+                Retour à l'inventaire
+            </span>
+        </a>
+
+        <div class="card-detail-breadcrumb">
+            <span>INVENTAIRE</span>
+            <i data-lucide="chevron-right"></i>
+            <strong>DÉTAIL</strong>
+        </div>
+    </header>
+
+    @if (TempData["InventorySuccess"] is string successMessage)
+    {
+        <div class="card-detail-message card-detail-message-success">
+            <i data-lucide="circle-check"></i>
+            <span>@successMessage</span>
+        </div>
+    }
+
+    @if (TempData["InventoryError"] is string errorMessage)
+    {
+        <div class="card-detail-message card-detail-message-error">
+            <i data-lucide="circle-alert"></i>
+            <span>@errorMessage</span>
+        </div>
+    }
+
+    <main class="card-detail-container">
+
+        <section class="card-detail-preview">
+
+            <div class="card-detail-preview-header">
+                <span>CARTE COLLECTIONNÉE</span>
+
+                @if (Model.VariantNumber.HasValue)
+                {
+                    <span class="card-variant-label">
+                        VARIANTE @Model.VariantNumber
+                    </span>
+                }
+            </div>
+
+            <div class="card-detail-component-area">
+                <div class="card-detail-component-glow"></div>
+
+                <div class="card-detail-component">
+                    @await Component.InvokeAsync(
+                        "Card",
+                        new
+                        {
+                            model = Model.Card
+                        }
+                    )
+                </div>
+            </div>
+
+            <div class="collection-panel">
+
+                <div class="collection-panel-header">
+                    <div>
+                        <span class="panel-label">
+                            MA COLLECTION
+                        </span>
+
+                        <strong>
+                            DÉTENTION
+                        </strong>
+                    </div>
+
+                    <div class="collection-panel-icon">
+                        <i data-lucide="library"></i>
+                    </div>
+                </div>
+
+                <div class="collection-data">
+
+                    <div class="collection-data-item">
+                        <span>QUANTITÉ</span>
+
+                        <strong class="collection-quantity">
+                            ×@Model.Quantity
+                        </strong>
+                    </div>
+
+                    <div class="collection-data-item">
+                        <span>ÉTAT</span>
+                        <strong>@Model.Condition</strong>
+                    </div>
+
+                    <div class="collection-data-item">
+                        <span>AJOUTÉE LE</span>
+
+                        <strong>
+                            @Model.AcquiredDate.ToString("dd/MM/yyyy")
+                        </strong>
+                    </div>
+
+                </div>
+
+                @if (Model.IsForSale)
+                {
+                    <div class="collection-sale">
+
+                        <div class="collection-sale-icon">
+                            <i data-lucide="tag"></i>
+                        </div>
+
+                        <div>
+                            <span>CARTE À VENDRE</span>
+
+                            <strong>
+                                @Model.SalePrice?.ToString("N2") ◈
+                            </strong>
+                        </div>
+
+                    </div>
+                }
+
+            </div>
+
+        </section>
+
+        <section class="card-detail-information">
+
+            <div class="card-detail-heading">
+
+                <div class="card-detail-code">
+                    @Model.Card.CardSetCode-@Model.Card.CollectionNumber
+                    @(Model.VariantNumber.HasValue ? $"-{Model.VariantNumber}" : "")
+                </div>
+
+                <h1>
+                    @Model.Card.Name
+                </h1>
+
+                <div class="card-detail-tags">
+
+                    <span class="detail-type">
+                        <i data-lucide="@typeIcon"></i>
+                        @typeLabel
+                    </span>
+
+                    @if (Model.Card.Rarity.HasValue)
+                    {
+                        <span class="detail-rarity @rarityClass">
+                            <span class="rarity-dot"></span>
+                            @rarityLabel
+                        </span>
+                    }
+
+                </div>
+            </div>
+
+            <section class="detail-section">
+
+                <div class="detail-section-heading">
+                    <div class="detail-section-number">
+                        01
+                    </div>
+
+                    <div>
+                        <span>INFORMATIONS</span>
+                        <h2>Informations générales</h2>
+                    </div>
+                </div>
+
+                <div class="detail-info-grid">
+
+                    <div class="detail-info-item">
+                        <span>NUMÉRO DE COLLECTION</span>
+
+                        <strong>
+                            @Model.Card.CardSetCode-@Model.Card.CollectionNumber
+                            @(Model.VariantNumber.HasValue ? $"-{Model.VariantNumber}" : "")
+                        </strong>
+                    </div>
+
+                    <div class="detail-info-item">
+                        <span>COÛT D'USAGE</span>
+
+                        <strong class="detail-cost">
+                            @Model.Card.UsageCost ◈
+                        </strong>
+                    </div>
+
+                    <div class="detail-info-item">
+                        <span>EXTENSION</span>
+                        <strong>@Model.CardSetName</strong>
+                    </div>
+
+                    <div class="detail-info-item">
+                        <span>DATE DE SORTIE</span>
+
+                        <strong>
+                            @(Model.CardSetReleaseDate == DateTime.MinValue
+                                ? "N/A"
+                                : Model.CardSetReleaseDate.ToString("dd/MM/yyyy"))
+                        </strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+            <section class="detail-section">
+
+                <div class="detail-section-heading">
+                    <div class="detail-section-number">
+                        02
+                    </div>
+
+                    <div>
+                        <span>LOCALISATION</span>
+                        <h2>Région & territoire</h2>
+                    </div>
+                </div>
+
+                <div class="location-panel">
+
+                    <div class="location-region">
+
+                        <span class="location-color"
+                              style="--region-color: @Model.Card.RegionColor;">
+                        </span>
+
+                        <div>
+                            <span>RÉGION / FACTION</span>
+                            <strong>@Model.Card.RegionName</strong>
+                        </div>
+
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.Card.CountryName))
+                    {
+                        <div class="location-divider"></div>
+
+                        <div class="location-country">
+                            <span>PAYS</span>
+                            <strong>@Model.Card.CountryName</strong>
+                        </div>
+                    }
+
+                </div>
+
+            </section>
+
+            @if (Model.Card.Type == CardType.Leader ||
+                 Model.Card.Type == CardType.Character)
+            {
+                <section class="detail-section">
+
+                    <div class="detail-section-heading">
+                        <div class="detail-section-number">
+                            03
+                        </div>
+
+                        <div>
+                            <span>CARACTÉRISTIQUES</span>
+                            <h2>Statistiques</h2>
+                        </div>
+                    </div>
+
+                    <div class="characteristic-panel">
+
+                        <div class="characteristic-icon">
+
+                            @if (Model.Card.Type == CardType.Leader)
+                            {
+                                <i data-lucide="crown"></i>
+                            }
+                            else
+                            {
+                                <i data-lucide="heart"></i>
+                            }
+
+                        </div>
+
+                        <div class="characteristic-info">
+                            <span>POINTS DE VIE</span>
+
+                            <strong>
+                                @(Model.Card.HealthPoints?.ToString() ?? "N/A")
+                            </strong>
+                        </div>
+
+                    </div>
+
+                </section>
+            }
+
+            @if (Model.Card.Abilities.Any())
+            {
+                <section class="detail-section">
+
+                    <div class="detail-section-heading">
+                        <div class="detail-section-number">
+                            04
+                        </div>
+
+                        <div>
+                            <span>CAPACITÉS</span>
+                            <h2>Effets de la carte</h2>
+                        </div>
+                    </div>
+
+                    <div class="abilities-list">
+
+                        @foreach (var ability in Model.Card.Abilities.OrderBy(x => x.DisplayOrder))
+                        {
+                            var abilityIcon = ability.Type switch
+                            {
+                                AbilityType.Skill => "swords",
+                                AbilityType.Trait => "sparkles",
+                                AbilityType.Effect => "diamond",
+                                _ => "circle"
+                            };
+
+                            <article class="ability-card">
+
+                                <div class="ability-card-top">
+
+                                    <div class="ability-icon">
+                                        <i data-lucide="@abilityIcon"></i>
+                                    </div>
+
+                                    <div class="ability-title">
+                                        <span>
+                                            @ability.Type.ToString().ToUpper()
+                                        </span>
+
+                                        <strong>
+                                            @ability.Name
+                                        </strong>
+                                    </div>
+
+                                    @if (ability.UsageCost > 0)
+                                    {
+                                        <div class="ability-cost">
+                                            <span>COÛT</span>
+
+                                            <strong>
+                                                @ability.UsageCost ◈
+                                            </strong>
+                                        </div>
+                                    }
+
+                                </div>
+
+                                <div class="ability-description">
+                                    @ability.Description
+                                </div>
+
+                            </article>
+                        }
+
+                    </div>
+
+                </section>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(Model.Notes))
+            {
+                <section class="detail-section">
+
+                    <div class="detail-section-heading">
+                        <div class="detail-section-number">
+                            05
+                        </div>
+
+                        <div>
+                            <span>PERSONNEL</span>
+                            <h2>Mes notes</h2>
+                        </div>
+                    </div>
+
+                    <div class="notes-panel">
+                        <i data-lucide="notebook-pen"></i>
+                        <p>@Model.Notes</p>
+                    </div>
+
+                </section>
+            }
+
+            <div class="detail-actions">
+
+                <a href="@Url.Action("Index", "Inventory")"
+                   class="detail-back-button">
+
+                    <i data-lucide="arrow-left"></i>
+
+                    Retour à l'inventaire
+                </a>
+
+                <form method="post"
+                      asp-controller="Inventory"
+                      asp-action="DiscardCard"
+                      id="discardCardForm"
+                      class="detail-discard-form">
+
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden"
+                           name="id"
+                           value="@Model.Id" />
+
+                    <div class="detail-discard-copy">
+                        <span>DÉFAUSSE</span>
+
+                        <strong>
+                            1 carte = 1 ¤
+                        </strong>
+                    </div>
+
+                    <label class="detail-discard-quantity"
+                           for="discardQuantity">
+
+                        <span>
+                            QUANTITÉ
+                        </span>
+
+                        <div class="detail-discard-input">
+
+                            <button type="button"
+                                    id="discardMinus"
+                                    class="detail-discard-step"
+                                    aria-label="Retirer une carte">
+                                −
+                            </button>
+
+                            <input type="number"
+                                   id="discardQuantity"
+                                   name="quantity"
+                                   value="1"
+                                   min="1"
+                                   max="@Model.Quantity"
+                                   inputmode="numeric"
+                                   required />
+
+                            <button type="button"
+                                    id="discardPlus"
+                                    class="detail-discard-step"
+                                    aria-label="Ajouter une carte">
+                                +
+                            </button>
+
+                        </div>
+
+                        <small>
+                            Maximum : @Model.Quantity
+                        </small>
+                    </label>
+
+                    <div class="detail-discard-reward">
+                        <span>GAIN</span>
+
+                        <strong>
+                            +<span id="discardReward">1</span> ¤
+                        </strong>
+                    </div>
+
+                    <button type="submit"
+                            class="detail-discard-button">
+
+                        <i data-lucide="recycle"></i>
+
+                        <span>
+                            Défausser pour
+                            <strong id="discardButtonReward">1</strong>
+                            ¤
+                        </span>
+
+                    </button>
+
+                </form>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof lucide !== "undefined") {
+                lucide.createIcons();
+            }
+
+            const form =
+                document.getElementById("discardCardForm");
+
+            const quantityInput =
+                document.getElementById("discardQuantity");
+
+            const minusButton =
+                document.getElementById("discardMinus");
+
+            const plusButton =
+                document.getElementById("discardPlus");
+
+            const reward =
+                document.getElementById("discardReward");
+
+            const buttonReward =
+                document.getElementById("discardButtonReward");
+
+            if (!form || !quantityInput)
+                return;
+
+            const min =
+                Number(quantityInput.min) || 1;
+
+            const max =
+                Number(quantityInput.max) || 1;
+
+            function normalizeQuantity(value) {
+                const parsed =
+                    Number.parseInt(value, 10);
+
+                if (!Number.isFinite(parsed))
+                    return min;
+
+                return Math.min(
+                    Math.max(parsed, min),
+                    max
+                );
+            }
+
+            function refreshDiscardPreview() {
+                const quantity =
+                    normalizeQuantity(
+                        quantityInput.value
+                    );
+
+                quantityInput.value =
+                    quantity.toString();
+
+                if (reward) {
+                    reward.textContent =
+                        quantity.toString();
+                }
+
+                if (buttonReward) {
+                    buttonReward.textContent =
+                        quantity.toString();
+                }
+
+                if (minusButton) {
+                    minusButton.disabled =
+                        quantity <= min;
+                }
+
+                if (plusButton) {
+                    plusButton.disabled =
+                        quantity >= max;
+                }
+            }
+
+            minusButton?.addEventListener(
+                "click",
+                () => {
+                    quantityInput.value =
+                        (
+                            normalizeQuantity(
+                                quantityInput.value
+                            ) - 1
+                        ).toString();
+
+                    refreshDiscardPreview();
+                }
+            );
+
+            plusButton?.addEventListener(
+                "click",
+                () => {
+                    quantityInput.value =
+                        (
+                            normalizeQuantity(
+                                quantityInput.value
+                            ) + 1
+                        ).toString();
+
+                    refreshDiscardPreview();
+                }
+            );
+
+            quantityInput.addEventListener(
+                "input",
+                refreshDiscardPreview
+            );
+
+            quantityInput.addEventListener(
+                "blur",
+                refreshDiscardPreview
+            );
+
+            form.addEventListener(
+                "submit",
+                event => {
+                    const quantity =
+                        normalizeQuantity(
+                            quantityInput.value
+                        );
+
+                    quantityInput.value =
+                        quantity.toString();
+
+                    const allCards =
+                        quantity === max;
+
+                    const confirmation =
+                        allCards
+                            ? `Vous allez défausser vos ${quantity} exemplaire(s) de cette carte pour ${quantity} ¤. La carte disparaîtra de votre inventaire. Continuer ?`
+                            : `Défausser ${quantity} exemplaire(s) pour ${quantity} ¤ ?`;
+
+                    if (!window.confirm(confirmation)) {
+                        event.preventDefault();
+                    }
+                }
+            );
+
+            refreshDiscardPreview();
+        });
+    </script>
+}

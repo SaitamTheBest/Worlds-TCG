@@ -1,0 +1,207 @@
+﻿@using web_tcg.Models.Booster
+@model BoosterOpeningViewModel
+
+@{
+    ViewData["Title"] = "Ouverture du booster";
+
+    var boosterMenuUrl =
+        Url.Action("Index", "Booster")
+        ?? "/Booster";
+}
+
+<link rel="stylesheet"
+      href="~/css/booster-opening.css"
+      asp-append-version="true" />
+
+<div class="booster-opening"
+     data-card-count="@Model.Cards.Count"
+     data-opened-at="@Model.OpenedAt.ToUniversalTime().ToString("O")"
+     data-expires-after-seconds="60"
+     data-expired-url="@boosterMenuUrl">
+
+    <header class="booster-opening-header">
+        <div class="booster-opening-header-left">
+            <span class="booster-opening-kicker">
+                BOOSTER OPENING
+            </span>
+
+            <h1 class="booster-opening-title">
+                Révélation du paquet
+            </h1>
+        </div>
+
+        <div class="booster-opening-progress">
+            <span id="revealed-count">
+                1
+            </span>
+
+            <span class="booster-opening-progress-separator">
+                /
+            </span>
+
+            <span>
+                @Model.Cards.Count
+            </span>
+        </div>
+    </header>
+
+    <main class="booster-opening-stage">
+        <div class="booster-stage-grid"></div>
+        <div class="booster-stage-vignette"></div>
+        <div class="booster-opening-glow"></div>
+
+        <aside class="booster-summary"
+               id="booster-summary">
+
+            <div class="booster-summary-header">
+                <div>
+                    <span class="booster-summary-kicker">
+                        VOTRE TIRAGE
+                    </span>
+
+                    <h2>
+                        Cartes obtenues
+                    </h2>
+                </div>
+
+                <strong id="summary-count">
+                    0/@Model.Cards.Count
+                </strong>
+            </div>
+
+            <div class="booster-summary-track">
+                <div class="booster-summary-line"></div>
+            </div>
+
+            <div class="booster-summary-footer">
+                <span class="booster-summary-dot"></span>
+                <span>COLLECTION</span>
+            </div>
+        </aside>
+
+        <div class="booster-final-glow"></div>
+        <div class="booster-rarity-aura"></div>
+        <div class="booster-rarity-ring"></div>
+        <div class="booster-rarity-ring booster-rarity-ring-secondary"></div>
+        <div class="booster-rarity-rays"></div>
+        <div class="booster-rarity-flash"></div>
+        <div class="booster-particles"></div>
+
+        <div class="booster-rarity-display">
+            <span class="booster-rarity-pretitle">
+                DERNIÈRE CARTE
+            </span>
+
+            <strong class="booster-rarity-name"></strong>
+        </div>
+
+        <div class="booster-last-warning">
+            <span class="booster-last-warning-line"></span>
+            <span>DERNIÈRE CARTE</span>
+            <span class="booster-last-warning-line"></span>
+        </div>
+
+        <div class="booster-mystery-card"
+             id="booster-mystery-card"
+             aria-hidden="true">
+
+            <div class="booster-mystery-card-inner">
+                <span class="booster-mystery-kicker">
+                    DERNIÈRE CARTE
+                </span>
+
+                <div class="booster-mystery-symbol">
+                    ?
+                </div>
+
+                <div class="booster-mystery-divider"></div>
+
+                <span class="booster-mystery-label">
+                    CLIQUEZ POUR RÉVÉLER
+                </span>
+            </div>
+        </div>
+
+        <div class="booster-cards">
+            @foreach (var card in Model.Cards.OrderBy(x => x.Position))
+            {
+                <div class="booster-card-slot"
+                     data-position="@card.Position"
+                     data-card-id="@card.CardId"
+                     data-rarity="@card.Rarity"
+                     data-art-type="@card.Card.ArtType">
+
+                    <div class="booster-card-visual">
+                        @await Component.InvokeAsync(
+                            "Card",
+                            new
+                            {
+                                model = card.Card
+                            })
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="booster-opening-instruction">
+            <span id="booster-instruction-text">
+                CLIQUEZ SUR LA CARTE POUR CONTINUER
+            </span>
+        </div>
+    </main>
+
+    <footer class="booster-opening-footer">
+        <button type="button"
+                id="skip-opening"
+                class="tcg-button tcg-button-secondary booster-skip-button">
+
+            <i data-lucide="fast-forward"></i>
+
+            <span>
+                Passer l'animation
+            </span>
+        </button>
+
+        <div class="booster-opening-actions"
+             id="booster-actions">
+
+            <a href="@boosterMenuUrl"
+               class="tcg-button tcg-button-secondary booster-opening-action">
+
+                <i data-lucide="arrow-left"></i>
+
+                <span>
+                    Retour aux boosters
+                </span>
+            </a>
+
+            <form asp-controller="Booster"
+                  asp-action="Open"
+                  method="post"
+                  class="booster-opening-reopen-form">
+
+                @Html.AntiForgeryToken()
+
+                <input type="hidden"
+                       name="id"
+                       value="@Model.CardSetId" />
+
+                <button type="submit"
+                        class="tcg-button booster-opening-action booster-opening-action-primary">
+
+                    <i data-lucide="package-open"></i>
+
+                    <span>
+                        Réouvrir un paquet
+                    </span>
+                </button>
+            </form>
+        </div>
+    </footer>
+</div>
+
+@section Scripts {
+    <script src="~/js/booster-opening.js"
+            asp-append-version="true">
+    </script>
+}

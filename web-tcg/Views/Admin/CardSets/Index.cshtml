@@ -1,0 +1,500 @@
+﻿@using web_tcg.Data.Entities
+@model List<CardSet>
+
+@{
+    ViewData["Title"] = "Gestion des Extensions";
+    Layout = "_Layout";
+
+    var successMessage = TempData["SuccessMessage"] as string;
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-card-sets.css"
+      asp-append-version="true" />
+
+<div class="admin-cardsets-page">
+
+    <!-- BACKGROUND -->
+    <div class="admin-cardsets-background">
+        <div class="admin-cardsets-grid"></div>
+        <div class="admin-cardsets-glow admin-cardsets-glow-1"></div>
+        <div class="admin-cardsets-glow admin-cardsets-glow-2"></div>
+    </div>
+
+    <div class="admin-cardsets-container">
+
+        <!-- HEADER -->
+        <header class="admin-cardsets-header">
+
+            <div class="admin-cardsets-header-content">
+
+                <a asp-controller="Admin"
+                   asp-action="Index"
+                   class="admin-cardsets-back">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Administration</span>
+                </a>
+
+                <div class="admin-cardsets-eyebrow">
+                    <span class="admin-cardsets-eyebrow-line"></span>
+                    <span>GESTION DU CONTENU</span>
+                </div>
+
+                <div class="admin-cardsets-title-row">
+
+                    <div>
+                        <h1>
+                            Gestion des
+                            <span>Extensions</span>
+                        </h1>
+
+                        <p>
+                            Gérez les extensions, leurs boosters,
+                            leurs dates de sortie et leur disponibilité.
+                        </p>
+                    </div>
+
+                    <a asp-controller="Admin"
+                       asp-action="CreateCardSet"
+                       class="admin-cardsets-create-btn">
+
+                        <i data-lucide="plus"></i>
+
+                        <span>
+                            Nouvelle extension
+                        </span>
+
+                    </a>
+
+                </div>
+
+            </div>
+
+            <!-- COUNTER -->
+            <div class="admin-cardsets-counter">
+
+                <div class="admin-cardsets-counter-icon">
+                    <i data-lucide="layers-3"></i>
+                </div>
+
+                <div>
+                    <span class="admin-cardsets-counter-label">
+                        EXTENSIONS
+                    </span>
+
+                    <strong>
+                        @Model.Count
+                    </strong>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- SUCCESS MESSAGE -->
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="admin-cardsets-alert admin-cardsets-alert-success">
+
+                <div class="admin-cardsets-alert-icon">
+                    <i data-lucide="check"></i>
+                </div>
+
+                <div>
+                    <strong>Opération réussie</strong>
+                    <span>@successMessage</span>
+                </div>
+
+            </div>
+        }
+
+
+        <!-- CONTENT -->
+        <section class="admin-cardsets-panel">
+
+            <div class="admin-cardsets-panel-header">
+
+                <div>
+                    <span class="admin-cardsets-section-number">
+                        01 / EXTENSIONS
+                    </span>
+
+                    <h2>
+                        Catalogue des extensions
+                    </h2>
+
+                    <p>
+                        Liste des extensions actuellement enregistrées
+                        dans le système.
+                    </p>
+                </div>
+
+                <div class="admin-cardsets-total">
+                    <span>Total</span>
+                    <strong>@Model.Count</strong>
+                </div>
+
+            </div>
+
+
+            @if (Model.Count == 0)
+            {
+                <!-- EMPTY STATE -->
+                <div class="admin-cardsets-empty">
+
+                    <div class="admin-cardsets-empty-icon">
+                        <i data-lucide="layers-3"></i>
+                    </div>
+
+                    <span class="admin-cardsets-empty-kicker">
+                        CATALOGUE VIDE
+                    </span>
+
+                    <h2>
+                        Aucune extension
+                    </h2>
+
+                    <p>
+                        Aucune extension n'est actuellement enregistrée.
+                        Commencez par créer votre première extension.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="CreateCardSet"
+                       class="admin-cardsets-empty-btn">
+
+                        <i data-lucide="plus"></i>
+                        Créer une extension
+
+                    </a>
+
+                </div>
+            }
+            else
+            {
+                <!-- DESKTOP TABLE -->
+                <div class="admin-cardsets-table-wrapper">
+
+                    <table class="admin-cardsets-table">
+
+                        <thead>
+                            <tr>
+
+                                <th class="admin-cardsets-col-booster">
+                                    Booster
+                                </th>
+
+                                <th>
+                                    Extension
+                                </th>
+
+                                <th>
+                                    Code
+                                </th>
+
+                                <th>
+                                    Sortie
+                                </th>
+
+                                <th>
+                                    Prix
+                                </th>
+
+                                <th>
+                                    Statut
+                                </th>
+
+                                <th class="admin-cardsets-col-actions">
+                                    Actions
+                                </th>
+
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var cardSet in Model)
+                            {
+                                <tr>
+
+                                    <!-- BOOSTER -->
+                                    <td>
+
+                                        <div class="admin-cardsets-booster">
+
+                                            <div class="admin-cardsets-booster-image">
+
+                                                @if (!string.IsNullOrWhiteSpace(cardSet.BoosterImageUrl))
+                                                {
+                                                    <img src="@cardSet.BoosterImageUrl"
+                                                         alt="@cardSet.Name"
+                                                         loading="lazy" />
+                                                }
+                                                else
+                                                {
+                                                    <div class="admin-cardsets-image-placeholder">
+                                                        <i data-lucide="image-off"></i>
+                                                    </div>
+                                                }
+
+                                                <div class="admin-cardsets-image-overlay"></div>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- NAME -->
+                                    <td>
+
+                                        <div class="admin-cardsets-name">
+
+                                            <strong>
+                                                @cardSet.Name
+                                            </strong>
+
+                                            <span>
+                                                ID #@cardSet.Id
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- CODE -->
+                                    <td>
+
+                                        <span class="admin-cardsets-code">
+                                            <i data-lucide="hash"></i>
+                                            @cardSet.Code
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- RELEASE DATE -->
+                                    <td>
+
+                                        <div class="admin-cardsets-date">
+
+                                            <i data-lucide="calendar-days"></i>
+
+                                            <span>
+                                                @cardSet.ReleaseDate.ToString("dd/MM/yyyy")
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- PRICE -->
+                                    <td>
+
+                                        <div class="admin-cardsets-price">
+
+                                            <strong>
+                                                @cardSet.BoosterPrice.ToString("0.00")
+                                            </strong>
+
+                                            <span>
+                                                crédits
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- STATUS -->
+                                    <td>
+
+                                        @if (cardSet.IsActive)
+                                        {
+                                            <span class="admin-cardsets-status admin-cardsets-status-active">
+
+                                                <span class="admin-cardsets-status-dot"></span>
+
+                                                ACTIVE
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-cardsets-status admin-cardsets-status-inactive">
+
+                                                <span class="admin-cardsets-status-dot"></span>
+
+                                                INACTIVE
+
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- ACTIONS -->
+                                    <td>
+
+                                        <div class="admin-cardsets-actions">
+
+                                            <a href="#"
+                                               class="admin-cardsets-action admin-cardsets-action-edit"
+                                               title="Modifier">
+
+                                                <i data-lucide="pencil"></i>
+
+                                            </a>
+
+                                            <a href="#"
+                                               class="admin-cardsets-action admin-cardsets-action-delete"
+                                               title="Supprimer">
+
+                                                <i data-lucide="trash-2"></i>
+
+                                            </a>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- MOBILE CARDS -->
+                <div class="admin-cardsets-mobile-list">
+
+                    @foreach (var cardSet in Model)
+                    {
+                        <article class="admin-cardset-mobile-card">
+
+                            <div class="admin-cardset-mobile-top">
+
+                                <div class="admin-cardsets-booster-image admin-cardsets-mobile-image">
+
+                                    @if (!string.IsNullOrWhiteSpace(cardSet.BoosterImageUrl))
+                                    {
+                                        <img src="@cardSet.BoosterImageUrl"
+                                             alt="@cardSet.Name"
+                                             loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="admin-cardsets-image-placeholder">
+                                            <i data-lucide="image-off"></i>
+                                        </div>
+                                    }
+
+                                </div>
+
+                                <div class="admin-cardset-mobile-heading">
+
+                                    <span class="admin-cardsets-mobile-id">
+                                        ID #@cardSet.Id
+                                    </span>
+
+                                    <h3>
+                                        @cardSet.Name
+                                    </h3>
+
+                                    <span class="admin-cardsets-code">
+                                        <i data-lucide="hash"></i>
+                                        @cardSet.Code
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="admin-cardset-mobile-info">
+
+                                <div>
+                                    <span>Date de sortie</span>
+
+                                    <strong>
+                                        @cardSet.ReleaseDate.ToString("dd/MM/yyyy")
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Prix booster</span>
+
+                                    <strong>
+                                        @cardSet.BoosterPrice.ToString("0.00")
+                                    </strong>
+                                </div>
+
+                                <div>
+                                    <span>Statut</span>
+
+                                    @if (cardSet.IsActive)
+                                    {
+                                        <strong class="mobile-status-active">
+                                            Active
+                                        </strong>
+                                    }
+                                    else
+                                    {
+                                        <strong class="mobile-status-inactive">
+                                            Inactive
+                                        </strong>
+                                    }
+                                </div>
+
+                            </div>
+
+
+                            <div class="admin-cardset-mobile-actions">
+
+                                <a href="#"
+                                   class="admin-cardsets-action admin-cardsets-action-edit">
+
+                                    <i data-lucide="pencil"></i>
+                                    Modifier
+
+                                </a>
+
+                                <a href="#"
+                                   class="admin-cardsets-action admin-cardsets-action-delete">
+
+                                    <i data-lucide="trash-2"></i>
+                                    Supprimer
+
+                                </a>
+
+                            </div>
+
+                        </article>
+                    }
+
+                </div>
+
+            }
+
+        </section>
+
+    </div>
+
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+        });
+    </script>
+}

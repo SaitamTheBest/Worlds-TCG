@@ -1,0 +1,26 @@
+﻿@model web_tcg.Models.Balance.CardBalanceViewModel
+
+<div class="tcg-balance-widget tcg-card-balance-widget"
+     id="cardBalanceWidget"
+     data-card-balance="@Model.CardBalance.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+
+    <div class="tcg-balance-icon tcg-card-balance-icon">
+        <i data-lucide="coins"></i>
+    </div>
+
+    <div class="tcg-balance-content">
+        <span class="tcg-balance-label tcg-card-balance-label">
+            MARCHÉ
+        </span>
+
+        <div class="tcg-card-balance-value">
+            <strong id="userCardBalance">
+                @Model.CardBalance.ToString("N0")
+            </strong>
+
+            <span class="tcg-card-balance-unit">
+                ¤
+            </span>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,762 @@
+.worlds-home,
+.worlds-home * {
+    box-sizing: border-box;
+}
+
+.worlds-home {
+    --home-bg: #050505;
+    --home-surface: #0a0b0d;
+    --home-surface-hover: #0e0f12;
+    --home-white: #f5f5f5;
+    --home-white-soft: #d5d5d5;
+    --home-muted: #858585;
+    --home-dim: #5d5d5d;
+    --home-gold: #f4c430;
+    --home-gold-light: #ffe176;
+    --home-border: rgba(255,255,255,.07);
+    --home-border-hover: rgba(255,255,255,.12);
+    --home-border-gold: rgba(244,196,48,.22);
+    width: 100%;
+    min-height: 100%;
+    margin: 0;
+    /*
+     * Pas de hauteur forcée.
+     * Le contenu peut naturellement dépasser et scroller.
+     */
+    padding: clamp(24px, 3vw, 44px) clamp(18px, 3.5vw, 52px) 80px;
+    overflow-x: hidden;
+    color: var(--home-white);
+    background: radial-gradient( circle at 8% 0%, rgba(244,196,48,.045), transparent 24% ), #050505;
+}
+
+.worlds-home-shell {
+    width: min(100%, 1500px);
+    margin: 0 auto;
+}
+
+/* =========================================================
+   HERO
+   ========================================================= */
+
+.worlds-home .worlds-hero {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--home-border);
+    border-radius: 18px;
+    background: radial-gradient( circle at 6% 30%, rgba(244,196,48,.11), transparent 30% ), linear-gradient( 130deg, #10100d, #090a0b 48%, #060606 );
+    box-shadow: 0 22px 55px rgba(0,0,0,.4), inset 0 1px rgba(255,255,255,.025);
+}
+
+    .worlds-home .worlds-hero::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 4%;
+        width: 280px;
+        height: 2px;
+        background: linear-gradient( 90deg, transparent, var(--home-gold), transparent );
+    }
+
+.worlds-home .worlds-hero-glow {
+    position: absolute;
+    top: -230px;
+    left: -130px;
+    width: 520px;
+    height: 520px;
+    border-radius: 50%;
+    background: rgba(244,196,48,.1);
+    filter: blur(130px);
+    pointer-events: none;
+}
+
+.worlds-home .worlds-hero-content {
+    position: relative;
+    z-index: 2;
+    min-height: 190px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 40px;
+    padding: clamp(30px, 4vw, 48px);
+}
+
+/* =========================================================
+   BRAND
+   ========================================================= */
+
+.worlds-home .worlds-brand {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 22px;
+}
+
+.worlds-home .worlds-brand-logo-box {
+    position: relative;
+    width: 86px;
+    height: 86px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--home-border-gold);
+    border-radius: 18px;
+    background: radial-gradient( circle, rgba(244,196,48,.12), transparent 70% ), #080806;
+}
+
+    .worlds-home .worlds-brand-logo-box::after {
+        content: "";
+        position: absolute;
+        inset: 6px;
+        border: 1px solid rgba(244,196,48,.08);
+        border-radius: 13px;
+    }
+
+.worlds-home .worlds-brand-logo {
+    position: relative;
+    z-index: 2;
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    filter: drop-shadow( 0 0 12px rgba(244,196,48,.15) );
+}
+
+.worlds-home .worlds-brand-copy {
+    min-width: 0;
+}
+
+.worlds-home .worlds-kicker,
+.worlds-home .worlds-card-kicker,
+.worlds-home .worlds-stat-data > span {
+    color: var(--home-gold);
+    font-size: .61rem;
+    font-weight: 900;
+    letter-spacing: .17em;
+}
+
+.worlds-home .worlds-brand-copy h1 {
+    margin: 6px 0 9px;
+    color: #fff;
+    font-size: clamp(2.1rem, 3.5vw, 3.1rem);
+    line-height: 1;
+    letter-spacing: -.045em;
+}
+
+.worlds-home .worlds-brand-copy p {
+    max-width: 470px;
+    margin: 0;
+    color: var(--home-muted);
+    font-size: .76rem;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   HERO ACTIONS
+   ========================================================= */
+
+.worlds-home .worlds-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.worlds-home .worlds-button {
+    min-height: 45px;
+    padding: 0 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--home-border-hover);
+    border-radius: 10px;
+    background: #0d0e10;
+    color: var(--home-white);
+    font-size: .7rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease, color .18s ease, box-shadow .18s ease;
+}
+
+    .worlds-home .worlds-button svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .worlds-home .worlds-button:hover {
+        transform: translateY(-2px);
+        border-color: rgba(244,196,48,.28);
+        color: var(--home-gold);
+    }
+
+.worlds-home .worlds-button-primary {
+    border-color: var(--home-gold);
+    background: linear-gradient( 135deg, var(--home-gold-light), var(--home-gold) );
+    color: #080808;
+    box-shadow: 0 9px 28px rgba(244,196,48,.16);
+}
+
+    .worlds-home .worlds-button-primary:hover {
+        border-color: var(--home-gold-light);
+        background: linear-gradient( 135deg, #ffeb9a, var(--home-gold) );
+        color: #080808;
+        box-shadow: 0 12px 32px rgba(244,196,48,.22);
+    }
+
+.worlds-home .worlds-button-secondary {
+    border-color: var(--home-border-hover);
+    background: #141518;
+    color: var(--home-white);
+}
+
+    .worlds-home .worlds-button-secondary:hover {
+        border-color: var(--home-gold);
+        color: var(--home-gold);
+    }
+
+.worlds-home .worlds-play-empty {
+    color: var(--home-muted);
+    font-size: .8rem;
+    margin: 0;
+}
+
+.worlds-home .worlds-play-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.worlds-home .worlds-play-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+    .worlds-home .worlds-play-field label {
+        font-size: .72rem;
+        color: var(--home-muted);
+        font-weight: 700;
+    }
+
+    .worlds-home .worlds-play-field select {
+        min-height: 42px;
+        padding: 0 12px;
+        border: 1px solid var(--home-border-hover);
+        border-radius: 10px;
+        background: #0d0e10;
+        color: var(--home-white);
+        font-size: .82rem;
+    }
+
+.worlds-home .worlds-play-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.worlds-home .worlds-play-status {
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--home-gold);
+    min-height: 18px;
+}
+
+.worlds-home .worlds-play-status-error {
+    color: #e0514c;
+}
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.worlds-home .worlds-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 18px;
+}
+
+.worlds-home .worlds-stat {
+    position: relative;
+    min-width: 0;
+    min-height: 115px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    overflow: hidden;
+    border: 1px solid var(--home-border);
+    border-radius: 14px;
+    background: linear-gradient( 145deg, #0c0d0f, #08090a );
+    transition: border-color .18s ease, transform .18s ease, background .18s ease;
+}
+
+    .worlds-home .worlds-stat::before {
+        content: "";
+        position: absolute;
+        top: 26%;
+        bottom: 26%;
+        left: 0;
+        width: 2px;
+        background: var(--home-gold);
+        opacity: .55;
+    }
+
+    .worlds-home .worlds-stat:hover {
+        transform: translateY(-2px);
+        border-color: rgba(244,196,48,.2);
+        background: #0d0e10;
+    }
+
+.worlds-home .worlds-stat-icon {
+    width: 46px;
+    height: 46px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(244,196,48,.18);
+    border-radius: 11px;
+    background: rgba(244,196,48,.04);
+    color: var(--home-gold);
+}
+
+    .worlds-home .worlds-stat-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+.worlds-home .worlds-stat-data {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+    .worlds-home .worlds-stat-data strong {
+        margin-top: 5px;
+        color: #fff;
+        font-size: 1.55rem;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .worlds-home .worlds-stat-data small {
+        margin-top: 6px;
+        overflow: hidden;
+        color: var(--home-muted);
+        font-size: .61rem;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+.worlds-home .worlds-dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(330px, .75fr);
+    align-items: stretch;
+    gap: 16px;
+    margin-top: 18px;
+}
+
+.worlds-home .worlds-card {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 28px;
+    overflow: hidden;
+    border: 1px solid var(--home-border);
+    border-radius: 16px;
+    background: radial-gradient( circle at 100% 0%, rgba(244,196,48,.02), transparent 30% ), #090a0c;
+    box-shadow: 0 18px 42px rgba(0,0,0,.3), inset 0 1px rgba(255,255,255,.02);
+}
+
+    .worlds-home .worlds-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 26px;
+        right: 26px;
+        height: 1px;
+        background: linear-gradient( 90deg, transparent, rgba(255,255,255,.1), transparent );
+    }
+
+.worlds-home .worlds-card-header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+    .worlds-home .worlds-card-header h2 {
+        margin: 6px 0 0;
+        color: #fff;
+        font-size: 1.15rem;
+        letter-spacing: -.02em;
+    }
+
+.worlds-home .worlds-header-icon {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--home-border);
+    border-radius: 9px;
+    background: rgba(255,255,255,.02);
+    color: var(--home-gold);
+}
+
+    .worlds-home .worlds-header-icon svg {
+        width: 16px;
+        height: 16px;
+    }
+
+/* =========================================================
+   COLLECTION
+   ========================================================= */
+
+.worlds-home .worlds-collection {
+    min-height: 370px;
+    border-color: rgba(244,196,48,.15);
+}
+
+.worlds-home .worlds-card-accent {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 90px;
+    background: linear-gradient( var(--home-gold), transparent );
+}
+
+.worlds-home .worlds-progress-score {
+    display: flex;
+    align-items: flex-start;
+    color: var(--home-gold);
+}
+
+    .worlds-home .worlds-progress-score strong {
+        font-size: 2.15rem;
+        line-height: .9;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .worlds-home .worlds-progress-score span {
+        margin: 3px 0 0 2px;
+        font-size: .78rem;
+        font-weight: 900;
+    }
+
+.worlds-home .worlds-progress {
+    margin-top: 38px;
+}
+
+.worlds-home .worlds-progress-track {
+    position: relative;
+    height: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.045);
+    border-radius: 999px;
+    background: #030303;
+}
+
+.worlds-home .worlds-progress-value {
+    position: relative;
+    height: 100%;
+    max-width: 100%;
+    border-radius: inherit;
+    background: linear-gradient( 90deg, #997000, #c7970b, var(--home-gold), var(--home-gold-light) );
+    box-shadow: 0 0 14px rgba(244,196,48,.22);
+}
+
+.worlds-home .worlds-progress-labels {
+    margin-top: 9px;
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    color: var(--home-muted);
+    font-size: .61rem;
+}
+
+.worlds-home .worlds-collection-values {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 28px;
+}
+
+.worlds-home .worlds-collection-value {
+    padding: 17px;
+    border: 1px solid var(--home-border);
+    border-radius: 10px;
+    background: rgba(255,255,255,.016);
+}
+
+    .worlds-home .worlds-collection-value span {
+        display: block;
+        color: var(--home-muted);
+        font-size: .53rem;
+        font-weight: 850;
+        letter-spacing: .12em;
+    }
+
+    .worlds-home .worlds-collection-value strong {
+        display: block;
+        margin-top: 9px;
+        color: #fff;
+        font-size: 1.35rem;
+        font-variant-numeric: tabular-nums;
+    }
+
+.worlds-home .worlds-card-footer {
+    margin-top: auto;
+    padding-top: 28px;
+}
+
+.worlds-home .worlds-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: var(--home-gold);
+    font-size: .7rem;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+    .worlds-home .worlds-link svg {
+        width: 14px;
+        height: 14px;
+        transition: transform .18s ease;
+    }
+
+    .worlds-home .worlds-link:hover {
+        color: var(--home-gold-light);
+    }
+
+        .worlds-home .worlds-link:hover svg {
+            transform: translateX(4px);
+        }
+
+/* =========================================================
+   TYPES
+   ========================================================= */
+
+.worlds-home .worlds-types {
+    min-height: 370px;
+}
+
+.worlds-home .worlds-type-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 26px;
+}
+
+.worlds-home .worlds-type {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 10px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    transition: border-color .18s ease, background .18s ease;
+}
+
+    .worlds-home .worlds-type:hover {
+        border-color: var(--home-border);
+        background: rgba(255,255,255,.018);
+    }
+
+.worlds-home .worlds-type-main {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.worlds-home .worlds-type-icon {
+    width: 35px;
+    height: 35px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--home-border);
+    border-radius: 8px;
+    background: rgba(244,196,48,.03);
+    color: var(--home-gold);
+}
+
+    .worlds-home .worlds-type-icon svg {
+        width: 15px;
+        height: 15px;
+    }
+
+.worlds-home .worlds-type-main > div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.worlds-home .worlds-type-main strong {
+    color: var(--home-white-soft);
+    font-size: .73rem;
+}
+
+.worlds-home .worlds-type-main small {
+    color: var(--home-muted);
+    font-size: .57rem;
+}
+
+.worlds-home .worlds-type-value {
+    min-width: 31px;
+    height: 27px;
+    padding: 0 7px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid var(--home-border);
+    border-radius: 6px;
+    background: #070809;
+    color: #fff;
+    font-size: .68rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 1050px) {
+    .worlds-home .worlds-dashboard {
+        grid-template-columns: minmax(0, 1.1fr) minmax(300px, .9fr);
+    }
+}
+
+@media (max-width: 850px) {
+    .worlds-home {
+        padding: 22px 18px 60px;
+    }
+
+    .worlds-home .worlds-hero-content {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .worlds-home .worlds-actions {
+        width: 100%;
+    }
+
+    .worlds-home .worlds-button {
+        flex: 1;
+    }
+
+    .worlds-home .worlds-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .worlds-home .worlds-stat {
+        min-height: 95px;
+    }
+
+    .worlds-home .worlds-dashboard {
+        grid-template-columns: 1fr;
+    }
+
+    .worlds-home .worlds-collection,
+    .worlds-home .worlds-types {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .worlds-home {
+        padding: 14px 12px 48px;
+    }
+
+    .worlds-home .worlds-hero {
+        border-radius: 14px;
+    }
+
+    .worlds-home .worlds-hero-content {
+        min-height: 0;
+        padding: 22px;
+    }
+
+    .worlds-home .worlds-brand {
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .worlds-home .worlds-brand-logo-box {
+        width: 62px;
+        height: 62px;
+        border-radius: 14px;
+    }
+
+    .worlds-home .worlds-brand-logo {
+        width: 50px;
+        height: 50px;
+    }
+
+    .worlds-home .worlds-brand-copy h1 {
+        font-size: 1.85rem;
+    }
+
+    .worlds-home .worlds-brand-copy p {
+        font-size: .68rem;
+    }
+
+    .worlds-home .worlds-actions {
+        flex-direction: column;
+    }
+
+    .worlds-home .worlds-button {
+        width: 100%;
+    }
+
+    .worlds-home .worlds-card {
+        padding: 21px;
+    }
+
+    .worlds-home .worlds-progress-score strong {
+        font-size: 1.85rem;
+    }
+
+    .worlds-home .worlds-collection-values {
+        grid-template-columns: 1fr;
+    }
+
+    .worlds-home .worlds-progress-labels {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .worlds-home .worlds-button,
+    .worlds-home .worlds-stat,
+    .worlds-home .worlds-type,
+    .worlds-home .worlds-link svg {
+        transition: none;
+    }
+}
+
+
+.worlds-home .worlds-play { margin-top: 18px; }
+.worlds-home .worlds-play-card { gap: 22px; }
+.worlds-home .worlds-hero-content { flex-wrap: wrap; }
+.worlds-home .worlds-actions { flex-wrap: wrap; }
+.worlds-home .worlds-play-field select { width: 100%; min-width: 0; }
+.worlds-home .worlds-button:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+.worlds-home .worlds-decks { margin-top: 24px; }
+.worlds-home .worlds-decks-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.worlds-home .worlds-decks-header h2 { font-size: 1.3rem; }
+.worlds-home .worlds-play-status { overflow-wrap: anywhere; }

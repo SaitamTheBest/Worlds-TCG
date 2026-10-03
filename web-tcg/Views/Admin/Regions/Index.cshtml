@@ -1,0 +1,591 @@
+﻿@using web_tcg.Data.Entities
+
+@model List<Region>
+
+@{
+    ViewData["Title"] = "Gestion des Régions";
+    Layout = "_Layout";
+
+    var successMessage = TempData["SuccessMessage"] as string;
+    var errorMessage = TempData["ErrorMessage"] as string;
+
+    var totalCountries = Model.Sum(r => r.Countries.Count);
+    var totalCards = Model.Sum(r => r.Cards.Count);
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-regions.css"
+      asp-append-version="true" />
+
+
+<div class="admin-regions-page">
+
+    <!-- BACKGROUND -->
+    <div class="admin-regions-background">
+
+        <div class="admin-regions-grid"></div>
+
+        <div class="admin-regions-glow admin-regions-glow-1"></div>
+
+        <div class="admin-regions-glow admin-regions-glow-2"></div>
+
+    </div>
+
+
+    <div class="admin-regions-container">
+
+        <!-- HEADER -->
+        <header class="admin-regions-header">
+
+            <div>
+
+                <div class="admin-regions-eyebrow">
+                    <i data-lucide="settings-2"></i>
+                    ADMINISTRATION
+                </div>
+
+                <h1>
+                    Gestion des <span>Régions</span>
+                </h1>
+
+                <p>
+                    Gérez les régions et factions utilisées par vos cartes.
+                </p>
+
+            </div>
+
+
+            <a asp-controller="Admin"
+               asp-action="CreateRegion"
+               class="admin-regions-create-button">
+
+                <i data-lucide="plus"></i>
+
+                <span>
+                    Nouvelle région
+                </span>
+
+            </a>
+
+        </header>
+
+
+        <!-- ALERTS -->
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="admin-regions-alert admin-regions-alert-success">
+
+                <div class="admin-regions-alert-icon">
+                    <i data-lucide="circle-check"></i>
+                </div>
+
+                <div>
+                    <strong>
+                        Opération réussie
+                    </strong>
+
+                    <span>
+                        @successMessage
+                    </span>
+                </div>
+
+            </div>
+        }
+
+
+        @if (!string.IsNullOrWhiteSpace(errorMessage))
+        {
+            <div class="admin-regions-alert admin-regions-alert-error">
+
+                <div class="admin-regions-alert-icon">
+                    <i data-lucide="circle-alert"></i>
+                </div>
+
+                <div>
+                    <strong>
+                        Action impossible
+                    </strong>
+
+                    <span>
+                        @errorMessage
+                    </span>
+                </div>
+
+            </div>
+        }
+
+
+        <!-- STATISTICS -->
+        <section class="admin-regions-stats">
+
+            <div class="admin-regions-stat-card">
+
+                <div class="admin-regions-stat-icon">
+                    <i data-lucide="globe-2"></i>
+                </div>
+
+                <div>
+
+                    <span class="admin-regions-stat-label">
+                        Régions
+                    </span>
+
+                    <strong>
+                        @Model.Count
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-regions-stat-card">
+
+                <div class="admin-regions-stat-icon">
+                    <i data-lucide="flag"></i>
+                </div>
+
+                <div>
+
+                    <span class="admin-regions-stat-label">
+                        Pays associés
+                    </span>
+
+                    <strong>
+                        @totalCountries
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-regions-stat-card">
+
+                <div class="admin-regions-stat-icon">
+                    <i data-lucide="layers-3"></i>
+                </div>
+
+                <div>
+
+                    <span class="admin-regions-stat-label">
+                        Cartes associées
+                    </span>
+
+                    <strong>
+                        @totalCards
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- TOOLBAR -->
+        <section class="admin-regions-toolbar">
+
+            <div class="admin-regions-search">
+
+                <i data-lucide="search"></i>
+
+                <input type="search"
+                       id="regionSearch"
+                       placeholder="Rechercher une région..."
+                       autocomplete="off" />
+
+                <span class="admin-regions-search-shortcut">
+                    /
+                </span>
+
+            </div>
+
+            <div class="admin-regions-result-count">
+                <span id="regionResultCount">
+                    @Model.Count
+                </span>
+                région@(Model.Count > 1 ? "s" : "")
+            </div>
+
+        </section>
+
+
+        <!-- TABLE -->
+        <section class="admin-regions-panel">
+
+            @if (Model.Count == 0)
+            {
+                <div class="admin-regions-empty">
+
+                    <div class="admin-regions-empty-icon">
+                        <i data-lucide="globe-2"></i>
+                    </div>
+
+                    <h2>
+                        Aucune région
+                    </h2>
+
+                    <p>
+                        Commencez par créer votre première région.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="CreateRegion"
+                       class="admin-regions-empty-button">
+
+                        <i data-lucide="plus"></i>
+
+                        Créer une région
+
+                    </a>
+
+                </div>
+            }
+            else
+            {
+                <div class="admin-regions-table-wrapper">
+
+                    <table class="admin-regions-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Région
+                                </th>
+
+                                <th>
+                                    Code
+                                </th>
+
+                                <th>
+                                    Pays
+                                </th>
+
+                                <th>
+                                    Cartes
+                                </th>
+
+                                <th>
+                                    Couleur
+                                </th>
+
+                                <th class="admin-regions-actions-header">
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="regionsTableBody">
+
+                            @foreach (var region in Model)
+                            {
+                                <tr class="region-row"
+                                    data-search="@($"{region.Name} {region.Code}".ToLowerInvariant())">
+
+                                    <!-- REGION -->
+                                    <td>
+
+                                        <div class="admin-regions-identity">
+
+                                            <div class="admin-regions-color"
+                                                 style="--region-color: @region.Color;">
+
+                                                <span></span>
+
+                                            </div>
+
+                                            <div>
+
+                                                <strong>
+                                                    @region.Name
+                                                </strong>
+
+                                                <small>
+                                                    ID #@region.Id
+                                                </small>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- CODE -->
+                                    <td>
+
+                                        <span class="admin-regions-code">
+                                            @region.Code
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- COUNTRIES -->
+                                    <td>
+
+                                        <div class="admin-regions-metric">
+
+                                            <i data-lucide="flag"></i>
+
+                                            <span>
+                                                @region.Countries.Count
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- CARDS -->
+                                    <td>
+
+                                        <div class="admin-regions-metric">
+
+                                            <i data-lucide="layers-3"></i>
+
+                                            <span>
+                                                @region.Cards.Count
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- COLOR -->
+                                    <td>
+
+                                        <div class="admin-regions-color-value">
+
+                                            <span class="admin-regions-color-preview"
+                                                  style="background-color: @region.Color;">
+                                            </span>
+
+                                            <code>
+                                                @region.Color
+                                            </code>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- ACTIONS -->
+                                    <td>
+
+                                        <div class="admin-regions-actions">
+
+                                            <a asp-controller="Admin"
+                                               asp-action="EditRegion"
+                                               asp-route-id="@region.Id"
+                                               class="admin-regions-action admin-regions-action-edit"
+                                               title="Modifier">
+
+                                                <i data-lucide="pencil"></i>
+
+                                            </a>
+
+
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeleteRegion"
+                                                  asp-route-id="@region.Id"
+                                                  method="post"
+                                                  class="admin-regions-delete-form">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="admin-regions-action admin-regions-action-delete"
+                                                        title="Supprimer"
+                                                        data-region-name="@region.Name">
+
+                                                    <i data-lucide="trash-2"></i>
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- NO SEARCH RESULT -->
+                <div id="noRegionSearchResult"
+                     class="admin-regions-no-search-result"
+                     style="display: none;">
+
+                    <i data-lucide="search-x"></i>
+
+                    <strong>
+                        Aucun résultat
+                    </strong>
+
+                    <span>
+                        Aucune région ne correspond à votre recherche.
+                    </span>
+
+                </div>
+
+            }
+
+        </section>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const searchInput =
+                document.getElementById('regionSearch');
+
+            const rows =
+                document.querySelectorAll('.region-row');
+
+            const resultCount =
+                document.getElementById('regionResultCount');
+
+            const noResult =
+                document.getElementById('noRegionSearchResult');
+
+
+            function filterRegions() {
+
+                const search =
+                    searchInput.value
+                        .trim()
+                        .toLowerCase();
+
+                let visibleCount = 0;
+
+                rows.forEach(function(row) {
+
+                    const content =
+                        row.dataset.search || '';
+
+                    const visible =
+                        content.includes(search);
+
+                    row.style.display =
+                        visible ? '' : 'none';
+
+                    if (visible) {
+                        visibleCount++;
+                    }
+
+                });
+
+
+                if (resultCount) {
+                    resultCount.textContent =
+                        visibleCount;
+                }
+
+
+                if (noResult) {
+                    noResult.style.display =
+                        visibleCount === 0
+                            ? 'flex'
+                            : 'none';
+                }
+
+            }
+
+
+            if (searchInput) {
+
+                searchInput.addEventListener(
+                    'input',
+                    filterRegions
+                );
+
+
+                document.addEventListener(
+                    'keydown',
+                    function(event) {
+
+                        if (
+                            event.key === '/' &&
+                            document.activeElement !== searchInput
+                        ) {
+                            event.preventDefault();
+                            searchInput.focus();
+                        }
+
+                        if (
+                            event.key === 'Escape' &&
+                            document.activeElement === searchInput
+                        ) {
+                            searchInput.value = '';
+                            filterRegions();
+                            searchInput.blur();
+                        }
+
+                    }
+                );
+
+            }
+
+
+            document
+                .querySelectorAll('.admin-regions-delete-form')
+                .forEach(function(form) {
+
+                    form.addEventListener(
+                        'submit',
+                        function(event) {
+
+                            const button =
+                                form.querySelector(
+                                    '[data-region-name]'
+                                );
+
+                            const regionName =
+                                button?.dataset.regionName ||
+                                'cette région';
+
+                            const confirmed =
+                                confirm(
+                                    `Voulez-vous vraiment supprimer la région « ${regionName} » ?`
+                                );
+
+                            if (!confirmed) {
+                                event.preventDefault();
+                            }
+
+                        }
+                    );
+
+                });
+
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+        });
+
+    </script>
+}

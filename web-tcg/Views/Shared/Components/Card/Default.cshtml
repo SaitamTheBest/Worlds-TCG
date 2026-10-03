@@ -1,0 +1,216 @@
+﻿@using web_tcg.Data.Enums
+@model web_tcg.Models.Card.CardViewModel
+
+@{
+    bool isLeader = Model.Type == CardType.Leader;
+
+    string cardTypeClass = Model.Type switch
+    {
+        CardType.Leader => "tcg-card-leader",
+        CardType.Character => "tcg-card-character",
+        CardType.PoliticalDecision => "tcg-card-decision",
+        CardType.Location => "tcg-card-location",
+        _ => "tcg-card-character"
+    };
+
+    string artClass = Model.ArtType switch
+    {
+        CardArtType.FullArt => "tcg-card-fullart",
+        CardArtType.AlternateArt => "tcg-card-altart",
+        _ => "tcg-card-normal"
+    };
+
+    string rarityClass = Model.Rarity switch
+    {
+        CardRarity.SuperRare => "tcg-card-sr",
+        CardRarity.UltraRare => "tcg-card-ur",
+        _ => ""
+    };
+
+    string rarityName = isLeader
+        ? "L"
+        : Model.Rarity switch
+        {
+            CardRarity.Common => "C",
+            CardRarity.Rare => "R",
+            CardRarity.SuperRare => "SR",
+            CardRarity.UltraRare => "UR",
+            _ => ""
+        };
+
+    string rarityIcon = Model.ArtType switch
+    {
+        CardArtType.FullArt => "diamond",
+        CardArtType.AlternateArt => "star",
+        _ => isLeader ? "crown" : ""
+    };
+
+    bool hasRarityIcon = !string.IsNullOrEmpty(rarityIcon);
+
+    string typeName = Model.Type switch
+    {
+        CardType.Leader => "PRÉSIDENT",
+        CardType.Character => "PERSONNAGE",
+        CardType.PoliticalDecision => "DÉCISION POLITIQUE",
+        CardType.Location => "LIEU",
+        _ => "CARTE"
+    };
+
+    bool isRare = Model.Rarity == CardRarity.Rare;
+    bool isHit = Model.ArtType is CardArtType.FullArt or CardArtType.AlternateArt;
+
+    bool isHolo =
+        (Model.Rarity == CardRarity.Rare || Model.Rarity == CardRarity.SuperRare) &&
+        Model.ArtType == CardArtType.Normal;
+
+    bool isFoil =
+        Model.Rarity == CardRarity.SuperRare ||
+        Model.Rarity == CardRarity.UltraRare ||
+        Model.ArtType != CardArtType.Normal;
+
+    string cardCode = string.IsNullOrWhiteSpace(Model.CardSetCode)
+        ? Model.CollectionNumber
+        : $"{Model.CardSetCode}-{Model.CollectionNumber}";
+
+    string cardClasses = $"tcg-card {cardTypeClass} {artClass} {rarityClass}";
+
+    if (isRare)
+        cardClasses += " tcg-card-rare";
+
+    if (isHit)
+        cardClasses += " tcg-card-hit";
+
+    int nameLength = Model.Name?.Length ?? 0;
+
+    string nameClass =
+        nameLength > 28 ? "tcg-card-name tcg-card-name-xlong"
+        : nameLength > 22 ? "tcg-card-name tcg-card-name-long"
+        : "tcg-card-name";
+
+    int abilityCount = Model.Abilities?.Count() ?? 0;
+}
+
+<link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
+
+<div class="@cardClasses" style="--region-color:@Model.RegionColor;">
+    <div class="tcg-card-background"></div>
+    <div class="tcg-card-metal"></div>
+
+    @if (isHolo)
+    {
+        <div class="tcg-card-holo"></div>
+    }
+
+    @if (isFoil)
+    {
+        <div class="tcg-card-foil"></div>
+        <div class="tcg-card-sparkles"></div>
+        <div class="tcg-card-shine"></div>
+    }
+
+    <div class="tcg-card-frame"></div>
+
+    <div class="tcg-card-type-banner">
+        <span>@typeName</span>
+    </div>
+
+    <div class="tcg-card-top-stats">
+        @if (!isLeader)
+        {
+            <div class="tcg-card-stat tcg-card-stat-cost" title="Coût" aria-label="Coût : @Model.UsageCost">
+                <span class="tcg-card-stat-value">@Model.UsageCost</span>
+            </div>
+        }
+
+        @if (Model.HealthPoints.HasValue)
+        {
+            <div class="tcg-card-stat tcg-card-stat-hp" title="Points de vie" aria-label="Points de vie : @Model.HealthPoints">
+                <div class="tcg-card-hp-plate">
+                    <span class="tcg-card-stat-label">PV</span>
+                    <span class="tcg-card-stat-value">@Model.HealthPoints</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="tcg-card-art">
+        <img src="@Model.ImageUrl" alt="@Model.Name" loading="lazy" />
+        <div class="tcg-card-art-glow"></div>
+        <div class="tcg-card-art-vignette"></div>
+    </div>
+
+    <div class="tcg-card-info">
+        @if (abilityCount > 0)
+        {
+            <div class="tcg-card-abilities" data-count="@abilityCount">
+                @foreach (var ability in Model.Abilities.OrderBy(x => x.DisplayOrder))
+                {
+                    <div class="tcg-card-ability">
+                        <div class="tcg-card-ability-header">
+                            <div class="tcg-card-ability-title">
+                                <span class="tcg-card-ability-icon">
+                                    @switch (ability.Type)
+                                    {
+                                        case AbilityType.Skill:
+                                            @:S
+                                            break;
+                                        case AbilityType.Trait:
+                                            @:T
+                                            break;
+                                        case AbilityType.Effect:
+                                            @:E
+                                            break;
+                                    }
+                                </span>
+                                <span>@ability.Name</span>
+                            </div>
+
+                            @if (ability.UsageCost > 0)
+                            {
+                                <span class="tcg-card-ability-cost">@ability.UsageCost</span>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(ability.Description))
+                        {
+                            <div class="tcg-card-ability-description">@ability.Description</div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="tcg-card-identity">
+        <div class="@nameClass">@Model.Name</div>
+
+        <div class="tcg-card-region">
+            <span class="tcg-card-region-line"></span>
+            <span class="tcg-card-region-dot" style="background-color:@Model.RegionColor;"></span>
+            <span>@Model.RegionName</span>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CountryName))
+            {
+                <span class="tcg-card-country">· @Model.CountryName</span>
+            }
+
+            <span class="tcg-card-region-line"></span>
+        </div>
+    </div>
+
+    <div class="tcg-card-bottom-meta">
+        <span class="tcg-card-number">@cardCode</span>
+
+        @if (!string.IsNullOrEmpty(rarityName))
+        {
+            <span class="tcg-card-rarity tcg-card-rarity-@rarityName.ToLowerInvariant()@(hasRarityIcon ? " tcg-card-rarity-has-icon" : "")" title="@rarityName">
+                @if (hasRarityIcon)
+                {
+                    <span class="tcg-card-rarity-icon tcg-card-rarity-icon-@rarityIcon" aria-hidden="true"></span>
+                }
+
+                <span class="tcg-card-rarity-code">@rarityName</span>
+            </span>
+        }
+    </div>
+</div>

@@ -1,0 +1,129 @@
+﻿@using web_tcg.Infrastructure
+
+@{
+    var isAuthenticated =
+        User.Identity?.IsAuthenticated == true;
+
+    var appVersion =
+        AppVersion.Current;
+}
+
+<footer class="worlds-footer">
+    <div class="worlds-footer-shell">
+
+        <div class="worlds-footer-top">
+
+            <div class="worlds-footer-brand">
+
+                <a asp-controller="Home"
+                   asp-action="Index"
+                   class="worlds-footer-brand-link">
+
+                    <span class="worlds-footer-logo">
+                        <img src="~/worlds-tcg-logo.png"
+                             alt="Worlds TCG" />
+                    </span>
+
+                    <span class="worlds-footer-brand-name">
+                        <strong>WORLDS TCG</strong>
+                        <small>TRADING CARD GAME</small>
+                    </span>
+
+                </a>
+
+                <p>
+                    Collectionnez vos cartes, ouvrez des boosters
+                    et personnalisez votre collection.
+                </p>
+
+            </div>
+
+            <nav class="worlds-footer-navigation"
+                 aria-label="Navigation du pied de page">
+
+                <div class="worlds-footer-column">
+                    <span class="worlds-footer-title">
+                        JEU
+                    </span>
+
+                    <a asp-controller="Home"
+                       asp-action="Index">
+                        Accueil
+                    </a>
+
+                    @if (isAuthenticated)
+                    {
+                        <a asp-controller="Booster"
+                           asp-action="Index">
+                            Boosters
+                        </a>
+
+                        <a asp-controller="Inventory"
+                           asp-action="Index">
+                            Inventaire
+                        </a>
+
+                        <a asp-controller="Profile"
+                           asp-action="Index">
+                            Profil
+                        </a>
+                    }
+                </div>
+
+                <div class="worlds-footer-column">
+                    <span class="worlds-footer-title">
+                        INFORMATIONS
+                    </span>
+
+                    <a asp-controller="Home"
+                       asp-action="Privacy">
+                        Confidentialité
+                    </a>
+
+                    <a asp-controller="Home"
+                       asp-action="Terms">
+                        Conditions d'utilisation
+                    </a>
+                </div>
+
+            </nav>
+
+        </div>
+
+        <div class="worlds-footer-divider"></div>
+
+        <div class="worlds-footer-bottom">
+
+            <div class="worlds-footer-copyright">
+                <span class="worlds-footer-status"></span>
+
+                <span>
+                    © @DateTime.Now.Year Worlds TCG
+                </span>
+
+                <span class="worlds-footer-separator">
+                    •
+                </span>
+
+                <span>
+                    Tous droits réservés
+                </span>
+            </div>
+
+            <div class="worlds-footer-meta">
+
+                <span>
+                    WORLDS TCG
+                </span>
+
+                <span class="worlds-footer-version"
+                      title="Version actuelle du projet">
+                    @appVersion
+                </span>
+
+            </div>
+
+        </div>
+
+    </div>
+</footer>

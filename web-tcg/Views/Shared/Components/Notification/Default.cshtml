@@ -1,0 +1,98 @@
+﻿@model web_tcg.Models.Notifications.NotificationBellViewModel
+
+<div class="tcg-notification"
+     id="tcgNotification"
+     data-unread-count="@Model.UnreadCount">
+
+    @Html.AntiForgeryToken()
+
+    <button type="button"
+            class="tcg-notification-trigger"
+            id="tcgNotificationTrigger"
+            aria-label="Notifications"
+            aria-expanded="false"
+            aria-controls="tcgNotificationPopup">
+
+        <i data-lucide="bell"></i>
+
+        <span id="tcgNotificationBadge"
+              class="tcg-notification-badge @(Model.UnreadCount <= 0 ? "hidden" : "")">
+            @(Model.UnreadCount > 99 ? "99+" : Model.UnreadCount.ToString())
+        </span>
+    </button>
+
+    <div class="tcg-notification-popup"
+         id="tcgNotificationPopup"
+         aria-hidden="true">
+
+        <div class="tcg-notification-header">
+            <div>
+                <strong>Notifications</strong>
+                <span id="tcgNotificationHeaderCount">
+                    @Model.UnreadCount non lue@(Model.UnreadCount > 1 ? "s" : "")
+                </span>
+            </div>
+
+            <button type="button"
+                    id="tcgNotificationReadAll"
+                    class="tcg-notification-read-all"
+                @(Model.UnreadCount <= 0 ? "disabled" : null)>
+                Tout lire
+            </button>
+        </div>
+
+        <div class="tcg-notification-list"
+             id="tcgNotificationList">
+
+            @if (Model.Notifications.Count == 0)
+            {
+                <div class="tcg-notification-empty"
+                     id="tcgNotificationEmpty">
+                    <i data-lucide="bell-off"></i>
+                    <span>Aucune notification</span>
+                </div>
+            }
+            else
+            {
+                @foreach (var notification in Model.Notifications)
+                {
+                    var icon = notification.Type switch
+                    {
+                        "success" => "circle-check",
+                        "warning" => "triangle-alert",
+                        "error" => "circle-alert",
+                        _ => "info"
+                    };
+
+                    <button type="button"
+                            class="tcg-notification-item @(notification.IsRead ? "is-read" : "is-unread")"
+                            data-notification-id="@notification.Id"
+                            data-notification-url="@notification.ActionUrl">
+
+                        <span class="tcg-notification-item-icon"
+                              data-type="@notification.Type">
+                            <i data-lucide="@icon"></i>
+                        </span>
+
+                        <span class="tcg-notification-item-content">
+                            <strong>@notification.Title</strong>
+                            <span>@notification.Message</span>
+
+                            <time data-notification-date="@notification.CreatedAt.ToString("O")">
+                            </time>
+                        </span>
+
+                        @if (!notification.IsRead)
+                        {
+                            <span class="tcg-notification-unread-dot"></span>
+                        }
+                    </button>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+<div class="tcg-notification-toast-container"
+     id="tcgNotificationToastContainer">
+</div>

@@ -1,0 +1,166 @@
+﻿@model web_tcg.Models.BoosterShop.BoosterShopViewModel
+
+@{
+    ViewData["Title"] = "Boosters";
+}
+
+<div class="booster-page">
+
+    <!-- Hero -->
+    <section class="booster-hero">
+        <div class="booster-hero-content">
+
+            <div class="booster-badge">
+                <span class="booster-badge-dot"></span>
+                COLLECTION
+            </div>
+
+            <h1 class="booster-title">
+                Ouvrir des boosters
+            </h1>
+
+            <p class="booster-subtitle">
+                Découvrez les extensions disponibles et tentez
+                d'obtenir les cartes les plus rares.
+            </p>
+
+        </div>
+    </section>
+
+
+    <!-- Liste des extensions -->
+    <section class="booster-section">
+
+        <div class="booster-section-header">
+            <div>
+                <h2>Extensions</h2>
+                <p>
+                    Les dernières extensions sont affichées en premier.
+                </p>
+            </div>
+
+            <div class="booster-count">
+                @Model.CardSets.Count extension@(Model.CardSets.Count > 1 ? "s" : "")
+            </div>
+        </div>
+
+
+        @if (!Model.CardSets.Any())
+        {
+            <div class="booster-empty">
+                <div class="booster-empty-icon">
+                    ◈
+                </div>
+
+                <h3>Aucune extension disponible</h3>
+
+                <p>
+                    Les prochains boosters arriveront bientôt.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="booster-grid">
+
+                @foreach (var cardSet in Model.CardSets)
+                {
+                    var isLatest = cardSet == Model.CardSets.First();
+
+                    <article class="booster-card @(isLatest ? "booster-card-latest" : "")">
+
+                        @if (isLatest)
+                        {
+                            <div class="booster-latest-badge">
+                                NOUVEAUTÉ
+                            </div>
+                        }
+
+                        <!-- Image -->
+                        <div class="booster-image-container">
+
+                            <div class="booster-image-glow"></div>
+
+                            <img src="@cardSet.BoosterImageUrl"
+                                 alt="Booster @cardSet.Name"
+                                 class="booster-image"
+                                 loading="lazy" />
+
+                        </div>
+
+
+                        <!-- Informations -->
+                        <div class="booster-card-content">
+
+                            <div class="booster-card-header">
+
+                                <div>
+                                    <span class="booster-label">
+                                        EXTENSION
+                                    </span>
+
+                                    <h3>
+                                        @cardSet.Name
+                                    </h3>
+                                </div>
+
+                            </div>
+
+
+                            <div class="booster-meta">
+
+                                <div class="booster-meta-item">
+                                    <span class="booster-meta-label">
+                                        SORTIE
+                                    </span>
+
+                                    <span class="booster-meta-value">
+                                        @cardSet.ReleaseDate.ToString("dd/MM/yyyy")
+                                    </span>
+                                </div>
+
+                                <div class="booster-meta-separator"></div>
+
+                                <div class="booster-meta-item booster-price">
+
+                                    <span class="booster-meta-label">
+                                        PRIX
+                                    </span>
+
+                                    <span class="booster-price-value">
+                                        @cardSet.BoosterPrice.ToString("N0")
+                                        <span class="booster-currency">
+                                            ◈
+                                        </span>
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <button type="button"
+                                    class="booster-open-button"
+                                    data-set-id="@cardSet.Id">
+
+                                <span>
+                                    Ouvrir un booster
+                                </span>
+
+                                <span class="booster-arrow">
+                                    →
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </article>
+                }
+
+            </div>
+        }
+
+    </section>
+
+</div>

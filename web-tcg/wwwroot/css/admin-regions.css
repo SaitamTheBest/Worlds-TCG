@@ -1,0 +1,723 @@
+﻿/* =========================================================
+   ADMIN - REGIONS
+   ========================================================= */
+
+.admin-regions-page {
+    position: relative;
+    min-height: calc(100vh - 72px);
+    overflow: hidden;
+    background: #080a0d;
+    color: #fff;
+}
+
+
+/* =========================================================
+   BACKGROUND
+   ========================================================= */
+
+.admin-regions-background {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.admin-regions-grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient( rgba(255, 255, 255, .022) 1px, transparent 1px ), linear-gradient( 90deg, rgba(255, 255, 255, .022) 1px, transparent 1px );
+    background-size: 60px 60px;
+    mask-image: linear-gradient( to bottom, black, transparent 90% );
+}
+
+.admin-regions-glow {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(110px);
+}
+
+.admin-regions-glow-1 {
+    width: 600px;
+    height: 600px;
+    top: -350px;
+    right: -150px;
+    background: rgba(244, 196, 48, .065);
+}
+
+.admin-regions-glow-2 {
+    width: 450px;
+    height: 450px;
+    bottom: -300px;
+    left: -150px;
+    background: rgba(244, 196, 48, .03);
+}
+
+
+/* =========================================================
+   CONTAINER
+   ========================================================= */
+
+.admin-regions-container {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 48px 32px 100px;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.admin-regions-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 34px;
+}
+
+.admin-regions-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    color: var(--color-primary-yellow);
+    font-size: .67rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+}
+
+    .admin-regions-eyebrow svg {
+        width: 14px;
+        height: 14px;
+    }
+
+.admin-regions-header h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(2.3rem, 4vw, 3.8rem);
+    line-height: .95;
+    font-weight: 900;
+    letter-spacing: -.055em;
+}
+
+    .admin-regions-header h1 span {
+        color: var(--color-primary-yellow);
+    }
+
+.admin-regions-header p {
+    margin: 13px 0 0;
+    color: #737b86;
+    font-size: .9rem;
+}
+
+.admin-regions-create-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    flex-shrink: 0;
+    min-height: 48px;
+    padding: 0 19px;
+    border: 1px solid rgba(244, 196, 48, .4);
+    border-radius: 10px;
+    background: linear-gradient( 135deg, #f4c430, #d6a900 );
+    color: #111;
+    font-size: .8rem;
+    font-weight: 800;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(244, 196, 48, .1);
+    transition: transform .25s ease, box-shadow .25s ease;
+}
+
+    .admin-regions-create-button svg {
+        width: 17px;
+        height: 17px;
+    }
+
+    .admin-regions-create-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 35px rgba(244, 196, 48, .18);
+    }
+
+
+/* =========================================================
+   ALERTS
+   ========================================================= */
+
+.admin-regions-alert {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 15px 18px;
+    margin-bottom: 20px;
+    border-radius: 13px;
+}
+
+.admin-regions-alert-success {
+    border: 1px solid rgba(16, 185, 129, .2);
+    background: rgba(16, 185, 129, .045);
+}
+
+.admin-regions-alert-error {
+    border: 1px solid rgba(239, 68, 68, .2);
+    background: rgba(239, 68, 68, .045);
+}
+
+.admin-regions-alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: 9px;
+}
+
+.admin-regions-alert-success
+.admin-regions-alert-icon {
+    color: #10b981;
+    background: rgba(16, 185, 129, .1);
+}
+
+.admin-regions-alert-error
+.admin-regions-alert-icon {
+    color: #ef4444;
+    background: rgba(239, 68, 68, .1);
+}
+
+.admin-regions-alert-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.admin-regions-alert strong {
+    display: block;
+    margin-bottom: 2px;
+    color: #e7e9ec;
+    font-size: .78rem;
+}
+
+.admin-regions-alert span {
+    color: #737b85;
+    font-size: .75rem;
+}
+
+
+/* =========================================================
+   STATS
+   ========================================================= */
+
+.admin-regions-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-bottom: 24px;
+}
+
+.admin-regions-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 19px 21px;
+    border: 1px solid rgba(255, 255, 255, .055);
+    border-radius: 15px;
+    background: linear-gradient( 145deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .012) );
+    box-shadow: 0 15px 35px rgba(0, 0, 0, .16);
+}
+
+.admin-regions-stat-icon {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(244, 196, 48, .12);
+    border-radius: 10px;
+    background: rgba(244, 196, 48, .045);
+    color: var(--color-primary-yellow);
+}
+
+    .admin-regions-stat-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+.admin-regions-stat-label {
+    display: block;
+    margin-bottom: 3px;
+    color: #626a75;
+    font-size: .68rem;
+    font-weight: 600;
+}
+
+.admin-regions-stat-card strong {
+    color: #f2f3f4;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+.admin-regions-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 14px;
+}
+
+.admin-regions-search {
+    position: relative;
+    width: 100%;
+    max-width: 430px;
+}
+
+    .admin-regions-search > svg {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        width: 17px;
+        height: 17px;
+        color: #5d6570;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+
+    .admin-regions-search input {
+        width: 100%;
+        height: 45px;
+        padding: 0 55px 0 43px;
+        border: 1px solid rgba(255, 255, 255, .07);
+        border-radius: 10px;
+        outline: none;
+        background: rgba(255, 255, 255, .025);
+        color: #fff;
+        font-family: inherit;
+        font-size: .8rem;
+        transition: border-color .25s ease, background .25s ease;
+    }
+
+        .admin-regions-search input::placeholder {
+            color: #505862;
+        }
+
+        .admin-regions-search input:focus {
+            border-color: rgba(244, 196, 48, .35);
+            background: rgba(244, 196, 48, .018);
+            box-shadow: 0 0 0 3px rgba(244, 196, 48, .045);
+        }
+
+.admin-regions-search-shortcut {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 23px;
+    height: 23px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 5px;
+    background: rgba(255, 255, 255, .025);
+    color: #555d67;
+    font-size: .7rem;
+    transform: translateY(-50%);
+}
+
+.admin-regions-result-count {
+    color: #555e69;
+    font-size: .72rem;
+}
+
+    .admin-regions-result-count span {
+        color: #a5abb3;
+        font-weight: 700;
+    }
+
+
+/* =========================================================
+   PANEL
+   ========================================================= */
+
+.admin-regions-panel {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .06);
+    border-radius: 17px;
+    background: linear-gradient( 145deg, rgba(255, 255, 255, .032), rgba(255, 255, 255, .01) );
+    box-shadow: 0 25px 60px rgba(0, 0, 0, .24);
+}
+
+.admin-regions-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.admin-regions-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 850px;
+}
+
+    .admin-regions-table thead {
+        background: rgba(255, 255, 255, .018);
+    }
+
+    .admin-regions-table th {
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, .055);
+        color: #5d6570;
+        font-size: .63rem;
+        font-weight: 800;
+        text-align: left;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+    }
+
+    .admin-regions-table td {
+        padding: 17px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, .035);
+        vertical-align: middle;
+    }
+
+    .admin-regions-table tbody tr {
+        transition: background .2s ease;
+    }
+
+        .admin-regions-table tbody tr:hover {
+            background: rgba(244, 196, 48, .018);
+        }
+
+        .admin-regions-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+
+/* =========================================================
+   IDENTITY
+   ========================================================= */
+
+.admin-regions-identity {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+}
+
+.admin-regions-color {
+    position: relative;
+    width: 39px;
+    height: 39px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .025);
+}
+
+    .admin-regions-color span {
+        width: 19px;
+        height: 19px;
+        border-radius: 6px;
+        background: var(--region-color);
+        box-shadow: 0 0 15px color-mix( in srgb, var(--region-color) 35%, transparent );
+    }
+
+.admin-regions-identity strong {
+    display: block;
+    color: #e4e6e9;
+    font-size: .8rem;
+    font-weight: 750;
+}
+
+.admin-regions-identity small {
+    display: block;
+    margin-top: 3px;
+    color: #555d67;
+    font-family: monospace;
+    font-size: .63rem;
+}
+
+
+/* =========================================================
+   CODE
+   ========================================================= */
+
+.admin-regions-code {
+    display: inline-flex;
+    align-items: center;
+    min-width: 45px;
+    height: 28px;
+    justify-content: center;
+    padding: 0 9px;
+    border: 1px solid rgba(244, 196, 48, .15);
+    border-radius: 6px;
+    background: rgba(244, 196, 48, .045);
+    color: var(--color-primary-yellow);
+    font-family: monospace;
+    font-size: .68rem;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   METRICS
+   ========================================================= */
+
+.admin-regions-metric {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #9aa1aa;
+    font-size: .76rem;
+}
+
+    .admin-regions-metric svg {
+        width: 15px;
+        height: 15px;
+        color: #59616c;
+    }
+
+
+/* =========================================================
+   COLOR VALUE
+   ========================================================= */
+
+.admin-regions-color-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-regions-color-preview {
+    width: 17px;
+    height: 17px;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: 5px;
+}
+
+.admin-regions-color-value code {
+    color: #777f89;
+    font-family: monospace;
+    font-size: .68rem;
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.admin-regions-actions-header {
+    text-align: right !important;
+}
+
+.admin-regions-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 7px;
+}
+
+.admin-regions-action {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255, 255, 255, .065);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .025);
+    color: #69717b;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease;
+}
+
+    .admin-regions-action svg {
+        width: 15px;
+        height: 15px;
+    }
+
+    .admin-regions-action:hover {
+        transform: translateY(-1px);
+    }
+
+.admin-regions-action-edit:hover {
+    border-color: rgba(244, 196, 48, .25);
+    background: rgba(244, 196, 48, .06);
+    color: var(--color-primary-yellow);
+}
+
+.admin-regions-action-delete:hover {
+    border-color: rgba(239, 68, 68, .25);
+    background: rgba(239, 68, 68, .06);
+    color: #ef4444;
+}
+
+.admin-regions-delete-form {
+    margin: 0;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.admin-regions-empty {
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px;
+    text-align: center;
+}
+
+.admin-regions-empty-icon {
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 18px;
+    border: 1px solid rgba(244, 196, 48, .14);
+    border-radius: 17px;
+    background: rgba(244, 196, 48, .045);
+    color: var(--color-primary-yellow);
+}
+
+    .admin-regions-empty-icon svg {
+        width: 28px;
+        height: 28px;
+    }
+
+.admin-regions-empty h2 {
+    margin: 0;
+    color: #e5e7ea;
+    font-size: 1.1rem;
+}
+
+.admin-regions-empty p {
+    margin: 8px 0 20px;
+    color: #626a75;
+    font-size: .78rem;
+}
+
+.admin-regions-empty-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border: 1px solid rgba(244, 196, 48, .3);
+    border-radius: 8px;
+    background: rgba(244, 196, 48, .07);
+    color: var(--color-primary-yellow);
+    font-size: .75rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+    .admin-regions-empty-button svg {
+        width: 15px;
+        height: 15px;
+    }
+
+
+/* =========================================================
+   NO SEARCH RESULT
+   ========================================================= */
+
+.admin-regions-no-search-result {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    color: #5d6570;
+    text-align: center;
+}
+
+    .admin-regions-no-search-result svg {
+        width: 27px;
+        height: 27px;
+        margin-bottom: 6px;
+    }
+
+    .admin-regions-no-search-result strong {
+        color: #b1b6bd;
+        font-size: .8rem;
+    }
+
+    .admin-regions-no-search-result span {
+        font-size: .72rem;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 800px) {
+
+    .admin-regions-container {
+        padding: 35px 20px 80px;
+    }
+
+    .admin-regions-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-regions-create-button {
+        width: 100%;
+    }
+
+    .admin-regions-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .admin-regions-toolbar {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .admin-regions-search {
+        max-width: none;
+    }
+}
+
+
+@media (max-width: 500px) {
+
+    .admin-regions-container {
+        padding: 28px 15px 60px;
+    }
+
+    .admin-regions-header h1 {
+        font-size: 2.2rem;
+    }
+
+    .admin-regions-header p {
+        line-height: 1.5;
+    }
+
+    .admin-regions-stat-card {
+        padding: 16px;
+    }
+
+    .admin-regions-panel {
+        border-radius: 13px;
+    }
+}

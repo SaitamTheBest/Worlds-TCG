@@ -1,0 +1,119 @@
+services:
+  uploads-init:
+    image: ${DOCKER_REGISTRY-}webtcg:latest
+
+    build:
+      context: .
+      dockerfile: web-tcg/Dockerfile
+
+    user: "0:0"
+
+    entrypoint:
+      - /bin/sh
+      - -c
+
+    command:
+      - |
+        set -e
+
+        echo "Initialisation du stockage uploads..."
+
+        mkdir -p /app/wwwroot/uploads/cards
+        mkdir -p /app/wwwroot/uploads/avatars
+
+        APP_USER_ID=$$(id -u app 2>/dev/null || echo 1654)
+        APP_GROUP_ID=$$(id -g app 2>/dev/null || echo 1654)
+
+        echo "Utilisateur ASP.NET : $${APP_USER_ID}:$${APP_GROUP_ID}"
+
+        chown -R "$${APP_USER_ID}:$${APP_GROUP_ID}" /app/wwwroot/uploads
+
+        chmod -R u+rwX,g+rX /app/wwwroot/uploads
+
+        echo "Stockage uploads initialisé."
+
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
+
+    restart: "no"
+
+    networks:
+      - tcg-network
+
+  web-tcg:
+    image: ${DOCKER_REGISTRY-}webtcg:latest
+
+    build:
+      context: .
+      dockerfile: web-tcg/Dockerfile
+
+    container_name: web-tcg
+
+    restart: unless-stopped
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+
+      ConnectionStrings__DefaultConnection: >-
+        Host=postgres;
+        Port=5432;
+        Database=${POSTGRES_DB};
+        Username=${POSTGRES_USER};
+        Password=${POSTGRES_PASSWORD}
+
+    ports:
+      - "${WEB_PORT:-8080}:8080"
+
+    volumes:
+      - uploads_data:/app/wwwroot/uploads
+
+    depends_on:
+      uploads-init:
+        condition: service_completed_successfully
+
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - tcg-network
+
+  postgres:
+    image: postgres:17
+
+    container_name: web-tcg-postgres
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+    networks:
+      - tcg-network
+
+volumes:
+  postgres_data:
+  uploads_data:
+
+networks:
+  tcg-network:
+    driver: bridge

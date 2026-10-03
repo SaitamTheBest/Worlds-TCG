@@ -1,0 +1,913 @@
+﻿@{
+    ViewData["Title"] = "Authentification";
+    Layout = null;
+
+    var mode = ViewBag.Mode as string ?? "login";
+    var returnUrl = ViewBag.ReturnUrl as string ?? "";
+}
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - Worlds TCG</title>
+
+    <link rel="stylesheet"
+          href="~/css/variables.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/output.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/components.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/auth.css"
+          asp-append-version="true" />
+
+    <script defer
+            src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js">
+    </script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body class="auth-page">
+
+    <div class="auth-background">
+        <div class="auth-grid"></div>
+        <div class="auth-glow auth-glow-left"></div>
+        <div class="auth-glow auth-glow-right"></div>
+    </div>
+
+
+    <main class="auth-wrapper">
+
+        <!-- =========================================================
+             BRAND
+        ========================================================== -->
+
+        <div class="auth-brand">
+            <a asp-controller="Home"
+               asp-action="Index"
+               class="auth-brand-link">
+
+                <span class="auth-brand-mark">
+                    <img src="~/worlds-tcg-logo.png"
+                         alt="Worlds TCG"
+                         class="auth-brand-logo" />
+                </span>
+
+                <span class="auth-brand-name">
+                    WORLDS TCG
+                </span>
+            </a>
+
+            <span class="auth-brand-subtitle">
+                COLLECTION HUB
+            </span>
+        </div>
+
+
+        <!-- =========================================================
+             AUTH CARD
+        ========================================================== -->
+
+        <section id="authContainer"
+                 class="auth-card">
+
+            <!-- =====================================================
+                 HEADER
+            ====================================================== -->
+
+            <div class="auth-card-header">
+
+                <div class="auth-card-kicker">
+                    <span class="auth-card-kicker-line"></span>
+                    ESPACE MEMBRE
+                    <span class="auth-card-kicker-line"></span>
+                </div>
+
+                <h1 id="authTitle">
+                    @(mode == "register"
+                        ? "Créer votre compte"
+                        : "Bienvenue")
+                </h1>
+
+                <p id="authSubtitle">
+                    @(mode == "register"
+                        ? "Rejoignez la collection et commencez votre aventure."
+                        : "Connectez-vous pour retrouver votre collection.")
+                </p>
+
+            </div>
+
+
+            <!-- =====================================================
+                 TABS
+            ====================================================== -->
+
+            <div class="auth-tabs">
+
+                <button type="button"
+                        id="loginBtn"
+                        onclick="toggleAuth('login')"
+                        class="auth-tab @(mode == "login" ? "active" : "")">
+
+                    <i data-lucide="log-in"></i>
+
+                    <span>Connexion</span>
+
+                </button>
+
+
+                <button type="button"
+                        id="registerBtn"
+                        onclick="toggleAuth('register')"
+                        class="auth-tab @(mode == "register" ? "active" : "")">
+
+                    <i data-lucide="user-plus"></i>
+
+                    <span>Inscription</span>
+
+                </button>
+
+            </div>
+
+
+            <!-- =====================================================
+                 FORMS
+            ====================================================== -->
+
+            <div class="auth-forms">
+
+
+                <!-- =================================================
+                     LOGIN
+                ================================================== -->
+
+                <div id="loginForm"
+                     class="auth-form @(mode == "login" ? "" : "hidden")">
+
+                    <div id="loginError"
+                         class="auth-message auth-message-error hidden"
+                         role="alert">
+                    </div>
+
+
+                    <form id="loginFormElement">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               id="loginReturnUrl"
+                               value="@returnUrl" />
+
+
+                        <!-- Username -->
+
+                        <div class="auth-field">
+
+                            <label for="loginUsername">
+                                Identifiant
+                            </label>
+
+                            <div class="auth-input-wrapper">
+
+                                <i data-lucide="user"></i>
+
+                                <input type="text"
+                                       id="loginUsername"
+                                       name="username"
+                                       required
+                                       autocomplete="username"
+                                       placeholder="Nom d'utilisateur ou email" />
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Password -->
+
+                        <div class="auth-field">
+
+                            <div class="auth-label-row">
+
+                                <label for="loginPassword">
+                                    Mot de passe
+                                </label>
+
+                                <a href="#"
+                                   class="auth-forgot">
+                                    Mot de passe oublié ?
+                                </a>
+
+                            </div>
+
+                            <div class="auth-input-wrapper">
+
+                                <i data-lucide="lock-keyhole"></i>
+
+                                <input type="password"
+                                       id="loginPassword"
+                                       name="password"
+                                       required
+                                       autocomplete="current-password"
+                                       placeholder="Votre mot de passe" />
+
+                                <button type="button"
+                                        class="auth-password-toggle"
+                                        onclick="togglePassword('loginPassword', this)"
+                                        aria-label="Afficher le mot de passe">
+
+                                    <i data-lucide="eye"></i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Remember -->
+
+                        <div class="auth-options">
+
+                            <label class="auth-checkbox">
+
+                                <input type="checkbox"
+                                       id="rememberMe"
+                                       name="rememberMe" />
+
+                                <span class="auth-checkbox-box">
+                                    <i data-lucide="check"></i>
+                                </span>
+
+                                <span>
+                                    Se souvenir de moi
+                                </span>
+
+                            </label>
+
+                        </div>
+
+
+                        <!-- Submit -->
+
+                        <button type="submit"
+                                id="loginSubmit"
+                                class="auth-submit">
+
+                            <span class="auth-submit-content">
+
+                                <i data-lucide="arrow-right"></i>
+
+                                <span>Se connecter</span>
+
+                            </span>
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+
+                <!-- =================================================
+                     REGISTER
+                ================================================== -->
+
+                <div id="registerForm"
+                     class="auth-form @(mode == "register" ? "" : "hidden")">
+
+                    <div id="registerErrors"
+                         class="auth-message auth-message-error auth-error-list hidden"
+                         role="alert">
+                    </div>
+
+
+                    <form id="registerFormElement">
+
+                        @Html.AntiForgeryToken()
+
+                        <input type="hidden"
+                               id="registerReturnUrl"
+                               value="@returnUrl" />
+
+
+                        <!-- Username -->
+
+                        <div class="auth-field">
+
+                            <label for="registerUsername">
+                                Nom d'utilisateur
+                            </label>
+
+                            <div class="auth-input-wrapper">
+
+                                <i data-lucide="user-round"></i>
+
+                                <input type="text"
+                                       id="registerUsername"
+                                       name="username"
+                                       required
+                                       minlength="3"
+                                       maxlength="30"
+                                       autocomplete="username"
+                                       placeholder="Votre pseudo" />
+
+                            </div>
+
+                            <span class="auth-field-hint">
+                                3 à 30 caractères
+                            </span>
+
+                        </div>
+
+
+                        <!-- Email -->
+
+                        <div class="auth-field">
+
+                            <label for="registerEmail">
+                                Adresse email
+                            </label>
+
+                            <div class="auth-input-wrapper">
+
+                                <i data-lucide="mail"></i>
+
+                                <input type="email"
+                                       id="registerEmail"
+                                       name="email"
+                                       required
+                                       autocomplete="email"
+                                       placeholder="votre@email.com" />
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Password -->
+
+                        <div class="auth-field">
+
+                            <label for="registerPassword">
+                                Mot de passe
+                            </label>
+
+                            <div class="auth-input-wrapper">
+
+                                <i data-lucide="lock-keyhole"></i>
+
+                                <input type="password"
+                                       id="registerPassword"
+                                       name="password"
+                                       required
+                                       minlength="6"
+                                       autocomplete="new-password"
+                                       placeholder="Minimum 6 caractères" />
+
+                                <button type="button"
+                                        class="auth-password-toggle"
+                                        onclick="togglePassword('registerPassword', this)"
+                                        aria-label="Afficher le mot de passe">
+
+                                    <i data-lucide="eye"></i>
+
+                                </button>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Confirm -->
+
+                        <div class="auth-field">
+
+                            <label for="registerConfirm">
+                                Confirmation
+                            </label>
+
+                            <div class="auth-input-wrapper">
+
+                                <i data-lucide="shield-check"></i>
+
+                                <input type="password"
+                                       id="registerConfirm"
+                                       name="confirmPassword"
+                                       required
+                                       minlength="6"
+                                       autocomplete="new-password"
+                                       placeholder="Confirmez votre mot de passe" />
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Submit -->
+
+                        <button type="submit"
+                                id="registerSubmit"
+                                class="auth-submit auth-submit-register">
+
+                            <span class="auth-submit-content">
+
+                                <i data-lucide="user-plus"></i>
+
+                                <span>Créer mon compte</span>
+
+                            </span>
+
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+
+            <!-- =====================================================
+                 FOOTER CARD
+            ====================================================== -->
+
+            <div class="auth-card-footer">
+
+                <i data-lucide="shield-check"></i>
+
+                <span>
+                    Vos données sont protégées
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================================================
+             PAGE FOOTER
+        ========================================================== -->
+
+        <footer class="auth-footer">
+
+            <span>TCG WEB</span>
+
+            <span class="auth-footer-separator">•</span>
+
+            <span>2026</span>
+
+            <a asp-controller="Home"
+               asp-action="Privacy">
+                Confidentialité
+            </a>
+
+        </footer>
+
+    </main>
+
+
+    <!-- =============================================================
+         JAVASCRIPT
+    ============================================================= -->
+
+    <script>
+
+            // ============================================================
+            // CSRF TOKEN
+            // ============================================================
+
+            function getAntiForgeryToken() {
+
+                const token = document.querySelector(
+                    'input[name="__RequestVerificationToken"]'
+                );
+
+                return token ? token.value : '';
+
+            }
+
+
+            // ============================================================
+            // TOGGLE LOGIN / REGISTER
+            // ============================================================
+
+            function toggleAuth(mode) {
+
+                const loginForm =
+                    document.getElementById('loginForm');
+
+                const registerForm =
+                    document.getElementById('registerForm');
+
+                const loginBtn =
+                    document.getElementById('loginBtn');
+
+                const registerBtn =
+                    document.getElementById('registerBtn');
+
+                const title =
+                    document.getElementById('authTitle');
+
+                const subtitle =
+                    document.getElementById('authSubtitle');
+
+
+                if (mode === 'login') {
+
+                    registerForm.classList.add('hidden');
+                    loginForm.classList.remove('hidden');
+
+                    loginBtn.classList.add('active');
+                    registerBtn.classList.remove('active');
+
+                    title.textContent = 'Bienvenue';
+
+                    subtitle.textContent =
+                        'Connectez-vous pour retrouver votre collection.';
+
+                }
+                else {
+
+                    loginForm.classList.add('hidden');
+                    registerForm.classList.remove('hidden');
+
+                    registerBtn.classList.add('active');
+                    loginBtn.classList.remove('active');
+
+                    title.textContent =
+                        'Créer votre compte';
+
+                    subtitle.textContent =
+                        'Rejoignez la collection et commencez votre aventure.';
+
+                }
+
+                lucide.createIcons();
+
+            }
+
+
+            // ============================================================
+            // PASSWORD VISIBILITY
+            // ============================================================
+
+            function togglePassword(inputId, button) {
+
+                const input =
+                    document.getElementById(inputId);
+
+                const isPassword =
+                    input.type === 'password';
+
+                input.type =
+                    isPassword ? 'text' : 'password';
+
+                button.innerHTML =
+                    isPassword
+                        ? '<i data-lucide="eye-off"></i>'
+                        : '<i data-lucide="eye"></i>';
+
+                lucide.createIcons();
+
+            }
+
+
+            // ============================================================
+            // LOGIN ERROR
+            // ============================================================
+
+            function showLoginError(message) {
+
+                const error =
+                    document.getElementById('loginError');
+
+                error.textContent = message;
+
+                error.classList.remove('hidden');
+
+            }
+
+
+            function hideLoginError() {
+
+                document
+                    .getElementById('loginError')
+                    .classList.add('hidden');
+
+            }
+
+
+            // ============================================================
+            // REGISTER ERRORS
+            // ============================================================
+
+            function showRegisterErrors(message, errors = []) {
+
+                const container =
+                    document.getElementById('registerErrors');
+
+                container.innerHTML = '';
+
+                if (message) {
+
+                    const p =
+                        document.createElement('p');
+
+                    p.textContent = message;
+
+                    container.appendChild(p);
+
+                }
+
+                errors.forEach(errorMessage => {
+
+                    const p =
+                        document.createElement('p');
+
+                    p.textContent = errorMessage;
+
+                    container.appendChild(p);
+
+                });
+
+                container.classList.remove('hidden');
+
+            }
+
+
+            function hideRegisterErrors() {
+
+                document
+                    .getElementById('registerErrors')
+                    .classList.add('hidden');
+
+            }
+
+
+            // ============================================================
+            // LOGIN AJAX
+            // ============================================================
+
+            document
+                .getElementById('loginFormElement')
+                .addEventListener('submit', async function(event) {
+
+                    event.preventDefault();
+
+                    hideLoginError();
+
+                    const button =
+                        document.getElementById('loginSubmit');
+
+                    const username =
+                        document.getElementById('loginUsername').value;
+
+                    const password =
+                        document.getElementById('loginPassword').value;
+
+                    const rememberMe =
+                        document.getElementById('rememberMe').checked;
+
+                    const returnUrl =
+                        document.getElementById('loginReturnUrl').value;
+
+
+                    button.disabled = true;
+
+                    button.innerHTML = `
+                                <span class="auth-submit-content">
+                                    <span class="auth-spinner"></span>
+                                    <span>Connexion...</span>
+                                </span>
+                            `;
+
+
+                    try {
+
+                        const response =
+                            await fetch('/Auth/Login', {
+
+                                method: 'POST',
+
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'RequestVerificationToken':
+                                        getAntiForgeryToken()
+                                },
+
+                                body: JSON.stringify({
+                                    username: username,
+                                    password: password,
+                                    rememberMe: rememberMe,
+                                    returnUrl: returnUrl
+                                })
+
+                            });
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (response.ok && data.success) {
+
+                            window.location.href =
+                                data.redirectUrl || '/';
+
+                            return;
+
+                        }
+
+
+                        showLoginError(
+                            data.message ||
+                            'Identifiants incorrects.'
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(error);
+
+                        showLoginError(
+                            'Impossible de contacter le serveur.'
+                        );
+
+                    }
+                    finally {
+
+                        button.disabled = false;
+
+                        button.innerHTML = `
+                                    <span class="auth-submit-content">
+                                        <i data-lucide="arrow-right"></i>
+                                        <span>Se connecter</span>
+                                    </span>
+                                `;
+
+                        lucide.createIcons();
+
+                    }
+
+                });
+
+
+            // ============================================================
+            // REGISTER AJAX
+            // ============================================================
+
+            document
+                .getElementById('registerFormElement')
+                .addEventListener('submit', async function(event) {
+
+                    event.preventDefault();
+
+                    hideRegisterErrors();
+
+                    const button =
+                        document.getElementById('registerSubmit');
+
+
+                    const username =
+                        document.getElementById('registerUsername').value;
+
+                    const email =
+                        document.getElementById('registerEmail').value;
+
+                    const password =
+                        document.getElementById('registerPassword').value;
+
+                    const confirmPassword =
+                        document.getElementById('registerConfirm').value;
+
+                    const returnUrl =
+                        document.getElementById('registerReturnUrl').value;
+
+
+                    button.disabled = true;
+
+                    button.innerHTML = `
+                                <span class="auth-submit-content">
+                                    <span class="auth-spinner"></span>
+                                    <span>Création...</span>
+                                </span>
+                            `;
+
+
+                    try {
+
+                        const response =
+                            await fetch('/Auth/Register', {
+
+                                method: 'POST',
+
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'RequestVerificationToken':
+                                        getAntiForgeryToken()
+                                },
+
+                                body: JSON.stringify({
+
+                                    username: username,
+
+                                    email: email,
+
+                                    password: password,
+
+                                    confirmPassword: confirmPassword,
+
+                                    returnUrl: returnUrl
+
+                                })
+
+                            });
+
+
+                        const data =
+                            await response.json();
+
+
+                        if (response.ok && data.success) {
+
+                            window.location.href =
+                                data.redirectUrl || '/';
+
+                            return;
+
+                        }
+
+
+                        showRegisterErrors(
+                            data.message,
+                            data.errors || []
+                        );
+
+                    }
+                    catch (error) {
+
+                        console.error(error);
+
+                        showRegisterErrors(
+                            'Impossible de contacter le serveur.'
+                        );
+
+                    }
+                    finally {
+
+                        button.disabled = false;
+
+                        button.innerHTML = `
+                                    <span class="auth-submit-content">
+                                        <i data-lucide="user-plus"></i>
+                                        <span>Créer mon compte</span>
+                                    </span>
+                                `;
+
+                        lucide.createIcons();
+
+                    }
+
+                });
+
+
+            // ============================================================
+            // PAGE LOAD
+            // ============================================================
+
+            window.addEventListener('load', function() {
+
+                const params =
+                    new URLSearchParams(window.location.search);
+
+                if (params.get('mode') === 'register') {
+
+                    toggleAuth('register');
+
+                }
+                else {
+
+                    toggleAuth('login');
+
+                }
+
+                lucide.createIcons();
+
+            });
+
+    </script>
+
+</body>
+
+</html>

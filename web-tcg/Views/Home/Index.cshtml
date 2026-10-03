@@ -1,0 +1,620 @@
+@using System.Globalization
+@model web_tcg.Models.Home.HomeViewModel
+
+@{
+    ViewData["Title"] = "Accueil";
+
+    var progress = Math.Clamp(
+        Model.CollectionProgress,
+        0,
+        100);
+
+    var progressCss = progress.ToString(
+        "0.##",
+        CultureInfo.InvariantCulture);
+
+    var missingCards = Math.Max(
+        Model.AvailableCards - Model.UserUniqueCards,
+        0);
+}
+
+<link rel="stylesheet"
+      href="~/css/home.css"
+      asp-append-version="true" />
+
+@Html.AntiForgeryToken()
+<link rel="stylesheet" href="~/css/deck-management.css" asp-append-version="true" />
+
+<main class="worlds-home">
+    <div class="worlds-home-shell">
+
+        <!-- =========================================================
+             HERO
+             ========================================================= -->
+
+        <section class="worlds-hero">
+
+            <div class="worlds-hero-glow"></div>
+
+            <div class="worlds-hero-content">
+
+                <div class="worlds-brand">
+
+                    <div class="worlds-brand-logo-box">
+                        <img src="~/worlds-tcg-logo.png"
+                             alt="Worlds TCG"
+                             class="worlds-brand-logo" />
+                    </div>
+
+                    <div class="worlds-brand-copy">
+                        <span class="worlds-kicker">
+                            WORLDS TCG
+                        </span>
+
+                        <h1>
+                            Tableau de bord
+                        </h1>
+
+                        <p>
+                            Suivez votre collection et continuez
+                            à compléter votre catalogue.
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="worlds-actions">
+
+                    <a asp-controller="Booster"
+                       asp-action="Index"
+                       class="worlds-button worlds-button-primary">
+
+                        <i data-lucide="package-open"></i>
+
+                        <span>
+                            Ouvrir un booster
+                        </span>
+                    </a>
+
+                    <a asp-controller="Inventory"
+                       asp-action="Index"
+                       class="worlds-button worlds-button-secondary">
+
+                        <i data-lucide="library"></i>
+
+                        <span>
+                            Ma collection
+                        </span>
+                    </a>
+
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- =========================================================
+             INDICATEURS
+             ========================================================= -->
+
+        <section class="worlds-stats">
+
+            <article class="worlds-stat">
+
+                <div class="worlds-stat-icon">
+                    <i data-lucide="layers-3"></i>
+                </div>
+
+                <div class="worlds-stat-data">
+                    <span>CATALOGUE</span>
+
+                    <strong>
+                        @Model.AvailableCards.ToString("N0")
+                    </strong>
+
+                    <small>
+                        @Model.BaseCards principales ·
+                        @Model.Variants variantes
+                    </small>
+                </div>
+
+            </article>
+
+            <article class="worlds-stat">
+
+                <div class="worlds-stat-icon">
+                    <i data-lucide="users"></i>
+                </div>
+
+                <div class="worlds-stat-data">
+                    <span>JOUEURS</span>
+
+                    <strong>
+                        @Model.RegisteredPlayers.ToString("N0")
+                    </strong>
+
+                    <small>
+                        Comptes enregistrés
+                    </small>
+                </div>
+
+            </article>
+
+            <article class="worlds-stat">
+
+                <div class="worlds-stat-icon">
+                    <i data-lucide="package-check"></i>
+                </div>
+
+                <div class="worlds-stat-data">
+                    <span>BOOSTERS OUVERTS</span>
+
+                    <strong>
+                        @Model.BoosterOpenings.ToString("N0")
+                    </strong>
+
+                    <small>
+                        Ouvertures enregistrées
+                    </small>
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- =========================================================
+             JOUER - PVP / IA
+             ========================================================= -->
+
+        <section class="worlds-play" id="worldsPlaySection">
+
+            <article class="worlds-card worlds-play-card">
+
+                <div class="worlds-card-accent"></div>
+
+                <header class="worlds-card-header">
+
+                    <div>
+                        <span class="worlds-card-kicker">
+                            PARTIE
+                        </span>
+
+                        <h2>
+                            Jouer une partie
+                        </h2>
+                    </div>
+
+                    <div class="worlds-header-icon">
+                        <i data-lucide="swords"></i>
+                    </div>
+
+                </header>
+
+                @if (Model.UserDecks.Count == 0)
+                {
+                    <p class="worlds-play-empty">
+                        Vous n'avez pas encore de deck prêt à jouer.
+                        Créez un deck pour pouvoir lancer une partie.
+                    </p>
+                }
+                    <div class="worlds-play-body">
+
+                        <div class="worlds-play-field">
+
+                            <label for="worldsDeckSelect">
+                                Deck à utiliser
+                            </label>
+
+                            <select id="worldsDeckSelect">
+                                @foreach (var deck in Model.UserDecks)
+                                {
+                                    <option value="@deck.Id">
+                                        @deck.Name
+                                    </option>
+                                }
+                            </select>
+
+                        </div>
+
+                        <div class="worlds-play-actions">
+
+                            <button type="button"
+                                    id="worldsPlayPvpButton"
+                                    class="worlds-button worlds-button-primary">
+
+                                <i data-lucide="users"></i>
+
+                                <span>
+                                    Rechercher une partie (PVP)
+                                </span>
+
+                            </button>
+
+                            <button type="button"
+                                    id="worldsPlayAiButton"
+                                    class="worlds-button worlds-button-secondary">
+
+                                <i data-lucide="bot"></i>
+
+                                <span>
+                                    Jouer contre l'IA
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                        <div class="worlds-play-status"
+                             id="worldsPlayStatus">
+                        </div>
+                        <div class="worlds-matchmaking-activity" role="status" aria-live="polite">
+                            <span><strong id="matchmakingPlayersInGame">—</strong> joueurs en partie</span>
+                            <span><strong id="matchmakingPlayersInQueue">—</strong> joueurs en file d’attente</span>
+                        </div>
+
+                    </div>
+
+            </article>
+
+        </section>
+
+        <!-- =========================================================
+             CONTENU
+             ========================================================= -->
+
+        <section class="worlds-dashboard">
+
+            <!-- =====================================================
+                 COLLECTION
+                 ===================================================== -->
+
+            <article class="worlds-card worlds-collection">
+
+                <div class="worlds-card-accent"></div>
+
+                <header class="worlds-card-header">
+
+                    <div>
+                        <span class="worlds-card-kicker">
+                            MA COLLECTION
+                        </span>
+
+                        <h2>
+                            Progression
+                        </h2>
+                    </div>
+
+                    <div class="worlds-progress-score">
+                        <strong>
+                            @Model.CollectionProgress.ToString("0.#")
+                        </strong>
+
+                        <span>%</span>
+                    </div>
+
+                </header>
+
+                <div class="worlds-progress">
+
+                    <div class="worlds-progress-track">
+
+                        <div class="worlds-progress-value"
+                             style="width:@progressCss%">
+                        </div>
+
+                    </div>
+
+                    <div class="worlds-progress-labels">
+
+                        <span>
+                            @Model.UserUniqueCards carte@(Model.UserUniqueCards > 1 ? "s" : "") obtenue@(Model.UserUniqueCards > 1 ? "s" : "")
+                        </span>
+
+                        <span>
+                            @missingCards restante@(missingCards > 1 ? "s" : "")
+                        </span>
+
+                    </div>
+
+                </div>
+
+                <div class="worlds-collection-values">
+
+                    <div class="worlds-collection-value">
+                        <span>
+                            CARTES UNIQUES
+                        </span>
+
+                        <strong>
+                            @Model.UserUniqueCards.ToString("N0")
+                        </strong>
+                    </div>
+
+                    <div class="worlds-collection-value">
+                        <span>
+                            TOTAL POSSÉDÉ
+                        </span>
+
+                        <strong>
+                            @Model.UserTotalCards.ToString("N0")
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div class="worlds-card-footer">
+
+                    <a asp-controller="Inventory"
+                       asp-action="Index"
+                       class="worlds-link">
+
+                        <span>
+                            Voir mon inventaire
+                        </span>
+
+                        <i data-lucide="arrow-right"></i>
+
+                    </a>
+
+                </div>
+
+            </article>
+
+            <!-- =====================================================
+                 TYPES DE CARTES
+                 ===================================================== -->
+
+            <article class="worlds-card worlds-types">
+
+                <header class="worlds-card-header">
+
+                    <div>
+                        <span class="worlds-card-kicker">
+                            CATALOGUE
+                        </span>
+
+                        <h2>
+                            Types de cartes
+                        </h2>
+                    </div>
+
+                    <div class="worlds-header-icon">
+                        <i data-lucide="gallery-vertical-end"></i>
+                    </div>
+
+                </header>
+
+                <div class="worlds-type-list">
+
+                    <div class="worlds-type">
+
+                        <div class="worlds-type-main">
+
+                            <span class="worlds-type-icon">
+                                <i data-lucide="crown"></i>
+                            </span>
+
+                            <div>
+                                <strong>
+                                    Leaders
+                                </strong>
+
+                                <small>
+                                    Présidents
+                                </small>
+                            </div>
+
+                        </div>
+
+                        <span class="worlds-type-value">
+                            @Model.LeaderCards
+                        </span>
+
+                    </div>
+
+                    <div class="worlds-type">
+
+                        <div class="worlds-type-main">
+
+                            <span class="worlds-type-icon">
+                                <i data-lucide="user-round"></i>
+                            </span>
+
+                            <div>
+                                <strong>
+                                    Personnages
+                                </strong>
+
+                                <small>
+                                    Cartes jouables
+                                </small>
+                            </div>
+
+                        </div>
+
+                        <span class="worlds-type-value">
+                            @Model.CharacterCards
+                        </span>
+
+                    </div>
+
+                    <div class="worlds-type">
+
+                        <div class="worlds-type-main">
+
+                            <span class="worlds-type-icon">
+                                <i data-lucide="landmark"></i>
+                            </span>
+
+                            <div>
+                                <strong>
+                                    Décisions
+                                </strong>
+
+                                <small>
+                                    Actions politiques
+                                </small>
+                            </div>
+
+                        </div>
+
+                        <span class="worlds-type-value">
+                            @Model.PoliticalDecisionCards
+                        </span>
+
+                    </div>
+
+                    <div class="worlds-type">
+
+                        <div class="worlds-type-main">
+
+                            <span class="worlds-type-icon">
+                                <i data-lucide="map-pinned"></i>
+                            </span>
+
+                            <div>
+                                <strong>
+                                    Lieux
+                                </strong>
+
+                                <small>
+                                    Cartes persistantes
+                                </small>
+                            </div>
+
+                        </div>
+
+                        <span class="worlds-type-value">
+                            @Model.LocationCards
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </article>
+
+        </section>
+
+        <!-- =========================================================
+             GESTION DES DECKS
+             ========================================================= -->
+
+        <section class="worlds-decks">
+
+            <div class="worlds-decks-header">
+
+                <div>
+                    <span class="worlds-kicker">
+                        STRATÉGIE
+                    </span>
+
+                    <h2>
+                        Mes Decks
+                    </h2>
+                </div>
+
+                <button type="button"
+                        id="worldsCreateDeckButton"
+                        class="worlds-btn worlds-btn-gold">
+                    <i data-lucide="plus"></i>
+                    Nouveau deck
+                </button>
+
+            </div>
+
+            <div id="worldsDeckList"
+                 class="worlds-deck-list">
+                <p class="worlds-deck-empty">
+                    Chargement de vos decks...
+                </p>
+            </div>
+
+        </section>
+
+    </div>
+
+    <!-- =========================================================
+         MODALE CRÉATION / MODIFICATION DE DECK
+         ========================================================= -->
+
+    <div id="worldsDeckModal"
+         class="worlds-deck-modal"
+         hidden>
+
+        <div class="worlds-deck-modal-backdrop"
+             id="worldsDeckModalBackdrop"></div>
+
+        <div class="worlds-deck-modal-panel" role="dialog" aria-modal="true" aria-labelledby="worldsDeckModalTitle">
+
+            <div class="worlds-deck-modal-header">
+                <h3 id="worldsDeckModalTitle">
+                    Nouveau deck
+                </h3>
+
+                <button type="button"
+                        id="worldsDeckModalClose"
+                        aria-label="Fermer le constructeur de deck"
+                        class="worlds-deck-modal-close">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="worlds-deck-modal-body">
+
+                <input type="hidden" id="worldsDeckId" value="" />
+
+                <div class="worlds-deck-field">
+                    <label for="worldsDeckName">Nom du deck</label>
+                    <input type="text"
+                           id="worldsDeckName"
+                           maxlength="100"
+                           placeholder="Ex. Deck Offensif" />
+                </div>
+
+                <div class="worlds-deck-field">
+                    <label for="worldsDeckLeaderSelect">Leader</label>
+                    <select id="worldsDeckLeaderSelect">
+                        <option value="">Sélectionnez un Leader</option>
+                    </select>
+                </div>
+
+                <div class="worlds-deck-builder-status">
+                    <span id="worldsDeckCountLabel">0 / 40 cartes</span>
+                    <span id="worldsDeckError" class="worlds-deck-error" role="alert"></span>
+                </div>
+
+                <div id="worldsDeckCardGrid"
+                     class="worlds-deck-card-grid">
+                </div>
+
+            </div>
+
+            <div class="worlds-deck-modal-footer">
+                <button type="button"
+                        id="worldsDeckDeleteButton"
+                        class="worlds-btn worlds-btn-ghost"
+                        hidden>
+                    Supprimer
+                </button>
+
+                <button type="button"
+                        id="worldsDeckSaveButton"
+                        class="worlds-btn worlds-btn-gold">
+                    Enregistrer
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<script src="~/js/pvp-lobby.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/card-components.js" asp-append-version="true"></script>
+<script src="~/js/deck-management-page.js"
+        asp-append-version="true"></script>
+

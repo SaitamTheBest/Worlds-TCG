@@ -1,0 +1,503 @@
+/* =========================================================
+   WEB TCG - COMPONENTS
+   Premium Black / Yellow UI
+   ========================================================= */
+
+
+/* =========================================================
+   BUTTON BASE
+   ========================================================= */
+
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-success {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 42px;
+    padding: 0.65rem 1.1rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    font-family: var(--font-family);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    cursor: pointer;
+    transition: transform var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast), color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+
+/* =========================================================
+   PRIMARY
+   ========================================================= */
+
+.btn-primary {
+    color: #080808;
+    background: linear-gradient( 135deg, #f7d13d, #dcae19 );
+    border-color: rgba(244, 196, 48, 0.7);
+    box-shadow: 0 4px 14px rgba(244, 196, 48, 0.10);
+}
+
+    .btn-primary:hover {
+        color: #080808;
+        background: linear-gradient( 135deg, #ffe06a, #f4c430 );
+        transform: translateY(-2px);
+        box-shadow: 0 7px 22px rgba(244, 196, 48, 0.18);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+    }
+
+
+/* =========================================================
+   SECONDARY
+   ========================================================= */
+
+.btn-secondary {
+    color: var(--color-text);
+    background: var(--color-surface-light);
+    border-color: var(--color-border);
+}
+
+    .btn-secondary:hover {
+        color: var(--color-primary-yellow);
+        background: var(--color-surface-hover);
+        border-color: var(--color-border-yellow);
+        transform: translateY(-1px);
+    }
+
+
+/* =========================================================
+   DANGER
+   ========================================================= */
+
+.btn-danger {
+    color: #ffffff;
+    background: rgba(239, 68, 68, 0.10);
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+    .btn-danger:hover {
+        background: rgba(239, 68, 68, 0.18);
+        border-color: rgba(239, 68, 68, 0.40);
+        transform: translateY(-1px);
+    }
+
+
+/* =========================================================
+   SUCCESS
+   ========================================================= */
+
+.btn-success {
+    color: #ffffff;
+    background: rgba(34, 197, 94, 0.10);
+    border-color: rgba(34, 197, 94, 0.22);
+}
+
+    .btn-success:hover {
+        background: rgba(34, 197, 94, 0.18);
+        border-color: rgba(34, 197, 94, 0.40);
+        transform: translateY(-1px);
+    }
+
+
+    /* =========================================================
+   DISABLED
+   ========================================================= */
+
+    .btn-primary:disabled,
+    .btn-secondary:disabled,
+    .btn-danger:disabled,
+    .btn-success:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.card {
+    position: relative;
+    padding: var(--spacing-lg);
+    background: linear-gradient( 145deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.008) ), var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    transition: border-color var(--transition-base), transform var(--transition-base), box-shadow var(--transition-base), background-color var(--transition-base);
+    overflow: hidden;
+}
+
+
+    /* Ligne décorative */
+
+    .card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient( 90deg, transparent, rgba(244, 196, 48, 0.22), transparent );
+    }
+
+    .card:hover {
+        border-color: var(--color-border-hover);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+
+/* =========================================================
+   CARD VARIANTS
+   ========================================================= */
+
+.card-accent {
+    border-color: var(--color-border-yellow);
+    box-shadow: var(--shadow-md), inset 0 0 25px rgba(244, 196, 48, 0.015);
+}
+
+    .card-accent:hover {
+        border-color: rgba(244, 196, 48, 0.38);
+        box-shadow: var(--shadow-lg), var(--shadow-yellow);
+    }
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.input-field {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.7rem 0.9rem;
+    color: var(--color-text);
+    background: linear-gradient( 180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0.01) ), var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    font-family: var(--font-family);
+    font-size: var(--font-size-base);
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+}
+
+    .input-field:hover {
+        border-color: var(--color-border-hover);
+    }
+
+    .input-field:focus {
+        outline: none;
+        background: var(--color-surface-light);
+        border-color: var(--color-primary-yellow);
+        box-shadow: 0 0 0 2px rgba(244, 196, 48, 0.10), 0 0 18px rgba(244, 196, 48, 0.05);
+    }
+
+
+/* =========================================================
+   SELECT
+   ========================================================= */
+
+select.input-field {
+    cursor: pointer;
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #888 50%), linear-gradient(135deg, #888 50%, transparent 50%);
+    background-position: calc(100% - 18px) 50%, calc(100% - 13px) 50%;
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 2.5rem;
+}
+
+
+/* =========================================================
+   TEXTAREA
+   ========================================================= */
+
+textarea.input-field {
+    min-height: 120px;
+    resize: vertical;
+}
+
+
+/* =========================================================
+   BADGES
+   ========================================================= */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 999px;
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+
+/* Primary */
+
+.badge-primary {
+    color: #080808;
+    background: var(--color-primary-yellow);
+    box-shadow: 0 2px 8px rgba(244, 196, 48, 0.12);
+}
+
+
+/* Secondary */
+
+.badge-secondary {
+    color: var(--color-text-secondary);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--color-border);
+}
+
+
+/* Success */
+
+.badge-success {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.10);
+    border: 1px solid rgba(34, 197, 94, 0.18);
+}
+
+
+/* Danger */
+
+.badge-danger {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.10);
+    border: 1px solid rgba(239, 68, 68, 0.18);
+}
+
+
+/* =========================================================
+   ALERT BASE
+   ========================================================= */
+
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid;
+    font-size: var(--font-size-sm);
+}
+
+
+/* Success */
+
+.alert-success {
+    color: #86efac;
+    background: rgba(34, 197, 94, 0.07);
+    border-color: rgba(34, 197, 94, 0.20);
+}
+
+
+/* Danger */
+
+.alert-danger {
+    color: #fca5a5;
+    background: rgba(239, 68, 68, 0.07);
+    border-color: rgba(239, 68, 68, 0.20);
+}
+
+
+/* Warning */
+
+.alert-warning {
+    color: #fcd34d;
+    background: rgba(245, 158, 11, 0.07);
+    border-color: rgba(245, 158, 11, 0.20);
+}
+
+
+/* Info */
+
+.alert-info {
+    color: #93c5fd;
+    background: rgba(59, 130, 246, 0.07);
+    border-color: rgba(59, 130, 246, 0.20);
+}
+
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.form-label {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--color-text-secondary);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+}
+
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+
+/* =========================================================
+   SECTION HEADER
+   ========================================================= */
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: var(--spacing-lg);
+}
+
+.section-header-title {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: var(--color-text);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+}
+
+    .section-header-title::before {
+        content: '';
+        width: 4px;
+        height: 22px;
+        border-radius: 4px;
+        background: var(--color-primary-yellow);
+        box-shadow: 0 0 10px rgba(244, 196, 48, 0.25);
+    }
+
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.divider {
+    width: 100%;
+    height: 1px;
+    background: linear-gradient( 90deg, transparent, var(--color-border), transparent );
+    margin: var(--spacing-lg) 0;
+}
+
+
+/* =========================================================
+   LOADING
+   ========================================================= */
+
+.loading-spinner {
+    width: 22px;
+    height: 22px;
+    border: 2px solid rgba(244, 196, 48, 0.15);
+    border-top-color: var(--color-primary-yellow);
+    border-radius: 50%;
+    animation: tcg-spin 0.8s linear infinite;
+}
+
+@keyframes tcg-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   GLOW TEXT
+   ========================================================= */
+
+.text-glow {
+    color: var(--color-primary-yellow);
+    text-shadow: 0 0 12px rgba(244, 196, 48, 0.18);
+}
+
+
+/* =========================================================
+   ICON CONTAINER
+   ========================================================= */
+
+.icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: var(--color-primary-yellow);
+    background: rgba(244, 196, 48, 0.07);
+    border: 1px solid rgba(244, 196, 48, 0.12);
+}
+
+    .icon-box svg {
+        width: 19px;
+        height: 19px;
+    }
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .card {
+        padding: var(--spacing-md);
+    }
+
+    .section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-success {
+        min-height: 40px;
+        padding: 0.6rem 0.9rem;
+    }
+}
+
+/* Responsive */
+
+@media (max-width: 900px) {
+    .tcg-balance-widget {
+        min-width: auto;
+        width: 48px;
+        padding: .4rem;
+        justify-content: center;
+    }
+
+    .tcg-balance-content,
+    .tcg-balance-timer {
+        display: none;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+}
+
+.sidebar-logo-img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+}

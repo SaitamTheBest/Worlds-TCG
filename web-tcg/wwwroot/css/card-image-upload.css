@@ -1,0 +1,389 @@
+﻿/* =========================================================
+   WORLDS TCG - CARD IMAGE UPLOAD
+   ========================================================= */
+
+.card-image-uploader {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 170px minmax(0, 1fr);
+    gap: 14px;
+    align-items: stretch;
+}
+
+/* =========================================================
+   PREVIEW
+   ========================================================= */
+
+.card-image-preview {
+    position: relative;
+    min-width: 0;
+    min-height: 180px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 11px;
+    background: radial-gradient( circle at 50% 40%, rgba(244,196,48,.055), transparent 65% ), #070809;
+}
+
+.card-image-preview-img {
+    width: 100%;
+    height: 100%;
+    min-height: 180px;
+    display: block;
+    object-fit: contain;
+    background: #050505;
+}
+
+/*
+ * Empêche l'icône cassée et le texte ALT
+ * lorsqu'aucune image n'est encore sélectionnée.
+ */
+.card-image-preview.is-empty .card-image-preview-img {
+    display: none !important;
+}
+
+.card-image-preview:not(.is-empty) .card-image-preview-img {
+    display: block;
+}
+
+.card-image-preview-empty {
+    position: absolute;
+    inset: 0;
+    display: none;
+    place-items: center;
+    align-content: center;
+    gap: 8px;
+    padding: 15px;
+    color: rgba(255,255,255,.23);
+    text-align: center;
+    font-size: .58rem;
+    font-weight: 750;
+}
+
+    .card-image-preview-empty svg {
+        width: 25px;
+        height: 25px;
+        color: rgba(244,196,48,.38);
+    }
+
+.card-image-preview.is-empty .card-image-preview-empty {
+    display: grid;
+}
+
+/* =========================================================
+   DROPZONE
+   ========================================================= */
+
+.card-image-dropzone {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-width: 0;
+    min-height: 180px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 9px;
+    border: 1px dashed rgba(244,196,48,.24);
+    border-radius: 11px;
+    outline: none;
+    background: linear-gradient( 145deg, rgba(244,196,48,.028), rgba(255,255,255,.01) ), #08090b;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: border-color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+    .card-image-dropzone:hover,
+    .card-image-dropzone:focus-visible {
+        border-color: rgba(244,196,48,.55);
+        background: linear-gradient( 145deg, rgba(244,196,48,.065), rgba(244,196,48,.015) ), #090a0c;
+        box-shadow: 0 0 0 3px rgba(244,196,48,.04);
+    }
+
+    /* =========================================================
+   DRAG & DROP
+   ========================================================= */
+
+    .card-image-dropzone.is-dragging {
+        transform: translateY(-2px);
+        border-color: #f4c430;
+        background: linear-gradient( 145deg, rgba(244,196,48,.12), rgba(244,196,48,.03) ), #090a0c;
+        box-shadow: 0 0 0 3px rgba(244,196,48,.07), 0 0 25px rgba(244,196,48,.06);
+    }
+
+        .card-image-dropzone.is-dragging .card-image-dropzone-icon {
+            transform: translateY(-2px);
+            border-color: rgba(244,196,48,.5);
+            background: rgba(244,196,48,.12);
+        }
+
+    /* =========================================================
+   DISABLED / UPLOADING
+   ========================================================= */
+
+    .card-image-dropzone:disabled {
+        cursor: wait;
+        opacity: .7;
+    }
+
+.card-image-uploader.is-uploading .card-image-dropzone {
+    cursor: wait;
+    border-color: rgba(244,196,48,.35);
+}
+
+.card-image-uploader.is-uploading .card-image-dropzone-icon {
+    color: #fff;
+    background: rgba(244,196,48,.12);
+}
+
+/* =========================================================
+   FILE INPUT
+   ========================================================= */
+
+.card-image-file {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* =========================================================
+   DROPZONE ICON
+   ========================================================= */
+
+.card-image-dropzone-icon {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(244,196,48,.16);
+    border-radius: 10px;
+    background: rgba(244,196,48,.045);
+    color: #f4c430;
+    transition: transform .18s ease, border-color .18s ease, background .18s ease;
+}
+
+    .card-image-dropzone-icon svg {
+        width: 19px;
+        height: 19px;
+    }
+
+/* =========================================================
+   DROPZONE TEXT
+   ========================================================= */
+
+.card-image-dropzone-copy {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+}
+
+    .card-image-dropzone-copy strong {
+        color: rgba(255,255,255,.82);
+        font-size: .7rem;
+        font-weight: 850;
+    }
+
+    .card-image-dropzone-copy small {
+        margin: 0;
+        color: rgba(255,255,255,.34);
+        font-size: .56rem;
+        font-weight: 600;
+        line-height: 1.45;
+    }
+
+.card-image-dropzone-format {
+    margin-top: 3px;
+    color: rgba(244,196,48,.58);
+    font-size: .48rem;
+    font-weight: 850;
+    letter-spacing: .08em;
+}
+
+/* =========================================================
+   STATUS
+   ========================================================= */
+
+.card-image-upload-status {
+    grid-column: 1 / -1;
+    min-height: 20px;
+    margin-top: -3px;
+}
+
+    .card-image-upload-status:empty {
+        min-height: 0;
+    }
+
+    .card-image-upload-status > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .56rem;
+        font-weight: 750;
+        line-height: 1.4;
+    }
+
+    .card-image-upload-status svg {
+        width: 13px;
+        height: 13px;
+        flex-shrink: 0;
+    }
+
+    .card-image-upload-status .is-success {
+        color: #86efac;
+    }
+
+    .card-image-upload-status .is-error {
+        color: #fca5a5;
+    }
+
+    .card-image-upload-status .is-warning {
+        color: #fde68a;
+    }
+
+    .card-image-upload-status .is-loading {
+        color: rgba(255,255,255,.5);
+    }
+
+        .card-image-upload-status .is-loading svg {
+            animation: cardImageUploaderSpin .7s linear infinite;
+        }
+
+/* =========================================================
+   ANIMATION
+   ========================================================= */
+
+@keyframes cardImageUploaderSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* =========================================================
+   VARIANTS
+   ========================================================= */
+
+.variant-item .card-image-uploader {
+    margin-top: 2px;
+}
+
+.variant-item .card-image-preview {
+    min-height: 155px;
+}
+
+.variant-item .card-image-preview-img {
+    min-height: 155px;
+}
+
+.variant-item .card-image-dropzone {
+    min-height: 155px;
+}
+
+/* =========================================================
+   TABLET
+   ========================================================= */
+
+@media (max-width: 900px) {
+    .card-image-uploader {
+        grid-template-columns: 150px minmax(0, 1fr);
+    }
+
+    .card-image-preview,
+    .card-image-preview-img {
+        min-height: 160px;
+    }
+
+    .card-image-dropzone {
+        min-height: 160px;
+    }
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 650px) {
+    .card-image-uploader {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+
+    .card-image-preview {
+        width: 100%;
+        min-height: 220px;
+        max-height: 340px;
+    }
+
+    .card-image-preview-img {
+        width: 100%;
+        min-height: 220px;
+        max-height: 340px;
+        object-fit: contain;
+    }
+
+    .card-image-dropzone {
+        min-height: 145px;
+        padding: 18px 14px;
+    }
+
+    .card-image-upload-status {
+        grid-column: auto;
+        margin-top: 0;
+    }
+
+    .variant-item .card-image-preview,
+    .variant-item .card-image-preview-img {
+        min-height: 200px;
+        max-height: 310px;
+    }
+
+    .variant-item .card-image-dropzone {
+        min-height: 140px;
+    }
+}
+
+/* =========================================================
+   VERY SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+    .card-image-preview,
+    .card-image-preview-img {
+        min-height: 190px;
+    }
+
+    .card-image-dropzone {
+        min-height: 135px;
+    }
+
+    .card-image-dropzone-copy strong {
+        font-size: .66rem;
+    }
+
+    .card-image-dropzone-copy small {
+        font-size: .52rem;
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .card-image-dropzone,
+    .card-image-dropzone-icon,
+    .card-image-upload-status .is-loading svg {
+        transition: none;
+        animation: none;
+    }
+}

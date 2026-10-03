@@ -1,0 +1,287 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
+using System.Security.Claims;
+using web_tcg.Data;
+using web_tcg.Data.Entities;
+using web_tcg.Data.Enums;
+using web_tcg.Game.Engine;
+using web_tcg.Models;
+using web_tcg.Models.Home;
+using web_tcg.Services;
+
+namespace web_tcg.Controllers
+{
+    [Authorize]
+    public class HomeController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        private readonly GameService _gameService;
+
+        public HomeController(
+            ApplicationDbContext context,
+            GameService gameService)
+        {
+            _context = context;
+            _gameService = gameService;
+        }
+
+        public async Task<IActionResult> Index()
+        {
+            var userId =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+            var availableCards =
+                await _context.Cards
+                    .AsNoTracking()
+                    .CountAsync(x => x.IsActive);
+
+            var baseCards =
+                await _context.Cards
+                    .AsNoTracking()
+                    .CountAsync(x =>
+                        x.IsActive &&
+                        x.BaseCardId == null);
+
+            var variants =
+                await _context.Cards
+                    .AsNoTracking()
+                    .CountAsync(x =>
+                        x.IsActive &&
+                        x.BaseCardId != null);
+
+            var registeredPlayers =
+                await _context.Users
+                    .AsNoTracking()
+                    .CountAsync();
+
+            var cardSets =
+                await _context.CardSets
+                    .AsNoTracking()
+                    .CountAsync();
+
+            var boosterOpenings =
+                await _context.BoosterOpenings
+                    .AsNoTracking()
+                    .CountAsync();
+
+            var typeCounts =
+                await _context.Cards
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.IsActive &&
+                        x.BaseCardId == null)
+                    .GroupBy(x => x.Type)
+                    .Select(x => new
+                    {
+                        Type = x.Key,
+                        Count = x.Count()
+                    })
+                    .ToDictionaryAsync(
+                        x => x.Type,
+                        x => x.Count);
+
+            var userUniqueCards = 0;
+            var userTotalCards = 0;
+            var userDecks =
+                new List<HomeDeckOption>();
+
+            if (!string.IsNullOrWhiteSpace(userId))
+            {
+                userUniqueCards =
+                    await _context.UserCardCollections
+                        .AsNoTracking()
+                        .CountAsync(x =>
+                            x.UserId == userId &&
+                            x.Quantity > 0);
+
+                userTotalCards =
+                    await _context.UserCardCollections
+                        .AsNoTracking()
+                        .Where(x =>
+                            x.UserId == userId &&
+                            x.Quantity > 0)
+                        .SumAsync(
+                            x => (int?)x.Quantity)
+                    ?? 0;
+
+                userDecks =
+                    await _context.Set<Deck>()
+                        .AsNoTracking()
+                        .Where(x => x.UserId == userId)
+                        .OrderBy(x => x.Name)
+                        .Select(x => new HomeDeckOption
+                        {
+                            Id = x.Id,
+                            Name = x.Name
+                        })
+                        .ToListAsync();
+            }
+
+            var collectionProgress =
+                availableCards > 0
+                    ? Math.Round(
+                        (double)userUniqueCards /
+                        availableCards *
+                        100,
+                        1)
+                    : 0;
+
+            var model =
+                new HomeViewModel
+                {
+                    AvailableCards =
+                        availableCards,
+
+                    BaseCards =
+                        baseCards,
+
+                    Variants =
+                        variants,
+
+                    RegisteredPlayers =
+                        registeredPlayers,
+
+                    CardSets =
+                        cardSets,
+
+                    BoosterOpenings =
+                        boosterOpenings,
+
+                    LeaderCards =
+                        typeCounts.GetValueOrDefault(
+                            CardType.Leader),
+
+                    CharacterCards =
+                        typeCounts.GetValueOrDefault(
+                            CardType.Character),
+
+                    PoliticalDecisionCards =
+                        typeCounts.GetValueOrDefault(
+                            CardType.PoliticalDecision),
+
+                    LocationCards =
+                        typeCounts.GetValueOrDefault(
+                            CardType.Location),
+
+                    UserUniqueCards =
+                        userUniqueCards,
+
+                    UserTotalCards =
+                        userTotalCards,
+
+                    CollectionProgress =
+                        collectionProgress,
+
+                    UserDecks =
+                        userDecks
+                };
+
+            return View(model);
+        }
+
+        /// <summary>
+        /// Lance immédiatement une partie contre le bot IA
+        /// avec le deck sélectionné par le joueur.
+        /// </summary>
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> PlayAi(
+            Guid deckId)
+        {
+            var userId =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(userId))
+                return Unauthorized();
+
+            var botUser =
+                await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(x => x.IsBot);
+
+            if (botUser == null)
+            {
+                return BadRequest(
+                    "Aucun bot IA n'est disponible pour le moment.");
+            }
+
+            var botDeckId =
+                await _context.Set<Deck>()
+                    .AsNoTracking()
+                    .Where(x => x.UserId == botUser.Id)
+                    .Select(x => (Guid?)x.Id)
+                    .FirstOrDefaultAsync();
+
+            if (botDeckId == null)
+            {
+                return BadRequest(
+                    "Le bot IA ne possède pas de deck configuré.");
+            }
+
+            try
+            {
+                var matchId =
+                    await _gameService.CreateMatchAsync(
+                        userId,
+                        deckId,
+                        botUser.Id,
+                        botDeckId.Value);
+
+                return RedirectToAction(
+                    "Play",
+                    "Game",
+                    new
+                    {
+                        id = matchId
+                    });
+            }
+            catch (GameRuleException ex)
+            {
+                return BadRequest(
+                    ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// Politique de confidentialité.
+        /// Accessible même sans authentification.
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult Privacy()
+        {
+            return View();
+        }
+
+        /// <summary>
+        /// Conditions générales d'utilisation.
+        /// Accessible même sans authentification.
+        /// </summary>
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult Terms()
+        {
+            return View();
+        }
+
+        [AllowAnonymous]
+        [ResponseCache(
+            Duration = 0,
+            Location = ResponseCacheLocation.None,
+            NoStore = true)]
+        public IActionResult Error()
+        {
+            return View(
+                new ErrorViewModel
+                {
+                    RequestId =
+                        Activity.Current?.Id ??
+                        HttpContext.TraceIdentifier
+                });
+        }
+    }
+}

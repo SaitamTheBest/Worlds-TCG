@@ -1,0 +1,418 @@
+/* =========================================================
+   PAGE PVP - MODE MATCHMAKING
+   ========================================================= */
+
+.worlds-pvp {
+    --pvp-border: rgba(244,196,48,.08);
+    --pvp-border-hover: rgba(244,196,48,.16);
+    --pvp-gold: #f4c430;
+    --pvp-gold-light: #ffeb9a;
+    --pvp-dark: #0a0b0d;
+    --pvp-dark-alt: #141518;
+    --pvp-white: #ffffff;
+    --pvp-muted: #6b7280;
+    --pvp-accent: #f4c430;
+}
+
+.worlds-pvp * {
+    font-family: 'Roboto', sans-serif;
+}
+
+.worlds-pvp {
+    min-height: 100vh;
+    padding: clamp(20px, 3vw, 40px) 0;
+    background: linear-gradient(
+        180deg,
+        #0a0b0d 0%,
+        #0f1013 50%,
+        #0a0b0d 100%
+    );
+}
+
+.worlds-pvp .worlds-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 clamp(16px, 2vw, 24px);
+}
+
+.worlds-pvp .worlds-pvp-header {
+    margin-bottom: 36px;
+    border-bottom: 1px solid rgba(244,196,48,.08);
+    padding-bottom: 24px;
+}
+
+    .worlds-pvp .worlds-pvp-header span {
+        display: inline-block;
+        font-size: .6rem;
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: var(--pvp-accent);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
+
+    .worlds-pvp .worlds-pvp-header h1 {
+        margin: 0 0 8px 0;
+        font-size: clamp(2rem, 5vw, 3rem);
+        font-weight: 900;
+        color: var(--pvp-white);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+.worlds-pvp .worlds-pvp-subtitle {
+    color: var(--pvp-muted);
+    font-size: .9rem;
+    margin: 0;
+    font-weight: 500;
+}
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.worlds-pvp .worlds-pvp-card {
+    border: 1px solid var(--pvp-border);
+    border-radius: 12px;
+    background: var(--pvp-dark-alt);
+    padding: clamp(20px, 2.5vw, 32px);
+    transition: border-color .2s ease, background .2s ease;
+}
+
+    .worlds-pvp .worlds-pvp-card:hover {
+        border-color: var(--pvp-border-hover);
+    }
+
+.worlds-pvp .worlds-pvp-card-header {
+    margin-bottom: 24px;
+}
+
+    .worlds-pvp .worlds-pvp-card-header span {
+        display: inline-block;
+        font-size: .55rem;
+        font-weight: 900;
+        letter-spacing: 1.8px;
+        color: var(--pvp-accent);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+    }
+
+    .worlds-pvp .worlds-pvp-card-header h2 {
+        margin: 0;
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: var(--pvp-white);
+        text-transform: uppercase;
+    }
+
+.worlds-pvp .worlds-pvp-empty {
+    color: var(--pvp-muted);
+    font-size: .85rem;
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* =========================================================
+   LAYOUT DEUX COLONNES (PVP vs IA)
+   ========================================================= */
+
+.worlds-pvp .worlds-pvp-modes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+@media (max-width: 1024px) {
+    .worlds-pvp .worlds-pvp-modes {
+        grid-template-columns: 1fr;
+    }
+}
+
+.worlds-pvp .worlds-pvp-mode-section {
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================================
+   FORMULAIRE DE JEU
+   ========================================================= */
+
+.worlds-pvp .worlds-pvp-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.worlds-pvp .worlds-pvp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+    .worlds-pvp .worlds-pvp-field label {
+        font-size: .7rem;
+        font-weight: 700;
+        color: var(--pvp-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .worlds-pvp .worlds-pvp-field select {
+        min-height: 40px;
+        padding: 0 12px;
+        border: 1px solid var(--pvp-border-hover);
+        border-radius: 8px;
+        background: var(--pvp-dark);
+        color: var(--pvp-white);
+        font-size: .85rem;
+        font-family: 'Roboto', sans-serif;
+        font-weight: 500;
+        transition: border-color .2s ease, background .2s ease;
+    }
+
+        .worlds-pvp .worlds-pvp-field select:focus {
+            outline: none;
+            border-color: var(--pvp-accent);
+            background: rgba(244,196,48,.05);
+        }
+
+.worlds-pvp .worlds-pvp-status {
+    font-size: .75rem;
+    font-weight: 700;
+    color: var(--pvp-accent);
+    min-height: 18px;
+}
+
+.worlds-pvp .worlds-pvp-status-error {
+    color: #ff6b6b;
+}
+
+/* =========================================================
+   BOUTONS
+   ========================================================= */
+
+.worlds-pvp .worlds-btn {
+    min-height: 40px;
+    padding: 0 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--pvp-border-hover);
+    border-radius: 8px;
+    background: var(--pvp-dark);
+    color: var(--pvp-white);
+    font-size: .75rem;
+    font-weight: 700;
+    font-family: 'Roboto', sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all .18s ease;
+    user-select: none;
+}
+
+    .worlds-pvp .worlds-btn svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .worlds-pvp .worlds-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        border-color: var(--pvp-accent);
+        color: var(--pvp-accent);
+    }
+
+    .worlds-pvp .worlds-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+.worlds-pvp .worlds-btn-gold {
+    border-color: var(--pvp-accent);
+    background: linear-gradient(
+        135deg,
+        rgba(244,196,48,.95),
+        var(--pvp-accent)
+    );
+    color: #000000;
+    box-shadow: 0 4px 12px rgba(244,196,48,.15);
+}
+
+    .worlds-pvp .worlds-btn-gold:hover:not(:disabled) {
+        background: linear-gradient(
+            135deg,
+            #ffeb9a,
+            #ffd700
+        );
+        box-shadow: 0 6px 16px rgba(244,196,48,.25);
+        color: #000000;
+        border-color: #ffeb9a;
+        transform: translateY(-3px);
+    }
+
+.worlds-pvp .worlds-btn-ghost {
+    background: transparent;
+    border-color: var(--pvp-border-hover);
+    color: var(--pvp-muted);
+}
+
+    .worlds-pvp .worlds-btn-ghost:hover:not(:disabled) {
+        border-color: var(--pvp-accent);
+        color: var(--pvp-accent);
+        background: rgba(244,196,48,.05);
+    }
+
+.worlds-pvp .worlds-btn-secondary {
+    border-color: var(--pvp-border-hover);
+    background: rgba(244,196,48,.08);
+    color: var(--pvp-white);
+}
+
+    .worlds-pvp .worlds-btn-secondary:hover:not(:disabled) {
+        background: rgba(244,196,48,.16);
+        border-color: var(--pvp-accent);
+        color: var(--pvp-accent);
+    }
+
+/* =========================================================
+   FILE D'ATTENTE
+   ========================================================= */
+
+.worlds-pvp .worlds-pvp-queue {
+    margin-top: 32px;
+}
+
+    .worlds-pvp .worlds-pvp-queue[hidden] {
+        display: none !important;
+    }
+
+.worlds-pvp .worlds-pvp-queue-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    padding: 40px 32px;
+}
+
+.worlds-pvp .worlds-pvp-queue-animation {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.worlds-pvp .worlds-pvp-queue-spinner {
+    width: 60px;
+    height: 60px;
+    border: 3px solid rgba(244,196,48,.1);
+    border-top-color: var(--pvp-accent);
+    border-radius: 50%;
+    animation: worlds-pvp-spin 1.2s linear infinite;
+}
+
+@keyframes worlds-pvp-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.worlds-pvp #worldsVsPvpQueueMessage,
+.worlds-pvp #worldsVsPvpQueueMessageIa {
+    color: var(--pvp-muted);
+    font-size: .85rem;
+    margin: 0;
+    text-align: center;
+}
+
+/* =========================================================
+   DIVIDER
+   ========================================================= */
+
+.worlds-pvp .worlds-pvp-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 24px 0;
+    color: var(--pvp-muted);
+    font-size: .75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+    .worlds-pvp .worlds-pvp-divider::before,
+    .worlds-pvp .worlds-pvp-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: var(--pvp-border-hover);
+    }
+
+/* =========================================================
+   RÉACTIVITÉ MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .worlds-pvp .worlds-pvp-header h1 {
+        font-size: 1.6rem;
+    }
+
+    .worlds-pvp .worlds-pvp-body {
+        gap: 12px;
+    }
+
+    .worlds-pvp .worlds-pvp-queue-content {
+        padding: 32px 24px;
+    }
+
+    .worlds-pvp .worlds-pvp-modes {
+        gap: 16px;
+    }
+
+    .worlds-pvp .worlds-pvp-card {
+        padding: clamp(16px, 2vw, 24px);
+    }
+}
+
+@media (max-width: 480px) {
+    .worlds-pvp {
+        padding: 16px 0;
+    }
+
+    .worlds-pvp .worlds-pvp-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .worlds-pvp .worlds-pvp-header {
+        margin-bottom: 24px;
+        padding-bottom: 16px;
+    }
+
+    .worlds-pvp .worlds-btn {
+        min-height: 36px;
+        padding: 0 16px;
+        font-size: .7rem;
+    }
+
+    .worlds-pvp .worlds-pvp-divider {
+        margin: 16px 0;
+    }
+}
+
+
+.worlds-pvp, .worlds-pvp * { box-sizing: border-box; }
+.worlds-pvp .worlds-pvp-modes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.worlds-pvp .worlds-pvp-field select { width: 100%; min-width: 0; }
+.worlds-pvp .worlds-pvp-status { overflow-wrap: anywhere; }
+.worlds-pvp .worlds-pvp-card-header h2 { display: flex; align-items: center; gap: 8px; }
+.worlds-pvp .worlds-pvp-card-header h2 svg { width: 22px; height: 22px; }
+.worlds-pvp #worldsVsIaQueueMessage { color: var(--pvp-muted); text-align: center; }
+@media (max-width: 900px) { .worlds-pvp .worlds-pvp-modes { grid-template-columns: minmax(0, 1fr); } }
+
+
+.worlds-pvp .worlds-matchmaking-activity { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 14px 20px; border: 1px solid rgba(244,196,48,.16); border-radius: 12px; background: #101318; color: #a7afb9; font-size: .85rem; }
+.worlds-pvp .worlds-matchmaking-activity strong { color: #f4c430; font-size: 1.15rem; margin-right: 5px; }

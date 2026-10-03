@@ -1,0 +1,495 @@
+﻿/* =========================================================
+   BOOSTER PAGE
+   ========================================================= */
+
+.booster-page {
+    min-height: calc(100vh - 72px);
+    background: radial-gradient( circle at 75% 10%, rgba(244, 196, 48, .055), transparent 28% ), #080a0d;
+    color: #fff;
+}
+
+/* =========================================================
+   SECTION
+   ========================================================= */
+
+.booster-section {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding-left: 32px;
+    padding-right: 32px;
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.booster-section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 38px;
+}
+
+.booster-section-kicker {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--color-primary-yellow);
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+}
+
+.booster-section-header h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -.035em;
+}
+
+.booster-section-header p {
+    margin: 8px 0 0;
+    color: rgba(255, 255, 255, .42);
+    font-size: .9rem;
+}
+
+.booster-count {
+    display: flex;
+    align-items: baseline;
+    gap: 9px;
+    flex-shrink: 0;
+    padding: 11px 15px;
+    border: 1px solid rgba(244, 196, 48, .18);
+    border-radius: 9px;
+    background: rgba(244, 196, 48, .035);
+}
+
+    .booster-count strong {
+        color: var(--color-primary-yellow);
+        font-size: 1.15rem;
+        font-weight: 900;
+    }
+
+    .booster-count span {
+        color: rgba(255, 255, 255, .38);
+        font-size: .6rem;
+        font-weight: 800;
+        letter-spacing: .13em;
+    }
+
+
+/* =========================================================
+   GRID
+   ========================================================= */
+
+.booster-grid {
+    display: grid;
+    grid-template-columns: repeat( auto-fill, minmax(300px, 1fr) );
+    gap: 24px;
+}
+
+
+/* =========================================================
+   BOOSTER CARD
+   ========================================================= */
+
+.booster-card {
+    position: relative;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .07);
+    border-radius: 18px;
+    background: linear-gradient( 145deg, rgba(255, 255, 255, .035), rgba(255, 255, 255, .012) );
+    box-shadow: 0 20px 50px rgba(0, 0, 0, .28);
+    transition: transform .35s ease, border-color .35s ease, box-shadow .35s ease;
+}
+
+    .booster-card:hover {
+        transform: translateY(-8px);
+        border-color: rgba(244, 196, 48, .28);
+        box-shadow: 0 30px 70px rgba(0, 0, 0, .45), 0 0 40px rgba(244, 196, 48, .055);
+    }
+
+.booster-card-latest {
+    border-color: rgba(244, 196, 48, .2);
+}
+
+
+/* =========================================================
+   LATEST BADGE
+   ========================================================= */
+
+.booster-latest-badge {
+    position: absolute;
+    z-index: 10;
+    top: 15px;
+    left: 15px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 10px;
+    border: 1px solid rgba(244, 196, 48, .22);
+    border-radius: 7px;
+    background: rgba(8, 10, 13, .8);
+    backdrop-filter: blur(10px);
+    color: var(--color-primary-yellow);
+    font-size: .57rem;
+    font-weight: 900;
+    letter-spacing: .1em;
+}
+
+
+/* =========================================================
+   IMAGE
+   ========================================================= */
+
+.booster-image-container {
+    position: relative;
+    height: 390px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: radial-gradient( circle at center, rgba(244, 196, 48, .11), transparent 48% ), #0b0e12;
+}
+
+.booster-image-background {
+    position: absolute;
+    inset: 0;
+    opacity: .35;
+    background-image: linear-gradient( 135deg, rgba(244, 196, 48, .025) 25%, transparent 25% );
+    background-size: 8px 8px;
+}
+
+.booster-image-glow {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    background: rgba(244, 196, 48, .13);
+    filter: blur(80px);
+    opacity: .55;
+    transition: transform .6s ease, opacity .6s ease;
+}
+
+.booster-card:hover .booster-image-glow {
+    transform: scale(1.25);
+    opacity: .8;
+}
+
+.booster-image-frame {
+    position: absolute;
+    inset: 14px;
+    border: 1px solid rgba(244, 196, 48, .07);
+    border-radius: 12px;
+    pointer-events: none;
+}
+
+.booster-image {
+    position: relative;
+    z-index: 2;
+    width: 78%;
+    height: 88%;
+    object-fit: contain;
+    filter: drop-shadow(0 25px 25px rgba(0, 0, 0, .55)) drop-shadow(0 0 22px rgba(244, 196, 48, .08));
+    transform: perspective(900px) rotateY(0deg) scale(1);
+    transition: transform .6s cubic-bezier(.2, .8, .2, 1), filter .6s ease;
+}
+
+.booster-card:hover .booster-image {
+    transform: perspective(900px) rotateY(-5deg) rotateX(2deg) scale(1.07);
+    filter: drop-shadow(0 35px 35px rgba(0, 0, 0, .65)) drop-shadow(0 0 35px rgba(244, 196, 48, .13));
+}
+
+.booster-image-shine {
+    position: absolute;
+    z-index: 4;
+    top: -50%;
+    left: -80%;
+    width: 55%;
+    height: 200%;
+    transform: rotate(25deg);
+    background: linear-gradient( 90deg, transparent, rgba(255, 255, 255, .08), transparent );
+    pointer-events: none;
+    transition: left .8s ease;
+}
+
+.booster-card:hover .booster-image-shine {
+    left: 130%;
+}
+
+.booster-image-placeholder {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    color: rgba(255, 255, 255, .3);
+}
+
+    .booster-image-placeholder svg {
+        width: 46px;
+        height: 46px;
+        stroke-width: 1.2;
+    }
+
+    .booster-image-placeholder span {
+        font-size: .6rem;
+        font-weight: 800;
+        letter-spacing: .12em;
+    }
+
+
+/* =========================================================
+   CARD CONTENT
+   ========================================================= */
+
+.booster-card-content {
+    padding: 22px;
+}
+
+.booster-card-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.booster-label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--color-primary-yellow);
+    font-size: .57rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+}
+
+.booster-card-top h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.35rem;
+    font-weight: 800;
+    letter-spacing: -.025em;
+}
+
+.booster-code {
+    padding: 6px 8px;
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, .42);
+    font-family: monospace;
+    font-size: .62rem;
+    font-weight: 700;
+}
+
+
+/* =========================================================
+   META
+   ========================================================= */
+
+.booster-meta {
+    display: flex;
+    margin-top: 20px;
+    padding: 15px 0;
+    border-top: 1px solid rgba(255, 255, 255, .06);
+    border-bottom: 1px solid rgba(255, 255, 255, .06);
+}
+
+.booster-meta-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.booster-meta-label {
+    color: rgba(255, 255, 255, .3);
+    font-size: .55rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.booster-meta-item strong {
+    color: rgba(255, 255, 255, .75);
+    font-size: .78rem;
+    font-weight: 700;
+}
+
+.booster-price {
+    text-align: right;
+}
+
+    .booster-price strong {
+        color: var(--color-primary-yellow);
+    }
+
+    .booster-price small {
+        font-size: .65rem;
+    }
+
+
+/* =========================================================
+   BUTTON
+   ========================================================= */
+
+.booster-open-button {
+    position: relative;
+    width: 100%;
+    margin-top: 17px;
+    padding: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    border: 1px solid rgba(244, 196, 48, .25);
+    border-radius: 9px;
+    background: rgba(244, 196, 48, .07);
+    color: var(--color-primary-yellow);
+    font-size: .7rem;
+    font-weight: 800;
+    letter-spacing: .03em;
+    text-decoration: none;
+    overflow: hidden;
+    transition: background .25s ease, border-color .25s ease, color .25s ease;
+}
+
+    .booster-open-button::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient( 90deg, transparent, rgba(255, 255, 255, .08), transparent );
+        transform: translateX(-100%);
+        transition: transform .5s ease;
+    }
+
+    .booster-open-button:hover {
+        background: var(--color-primary-yellow);
+        border-color: var(--color-primary-yellow);
+        color: #111;
+    }
+
+        .booster-open-button:hover::before {
+            transform: translateX(100%);
+        }
+
+.booster-open-icon {
+    display: flex;
+}
+
+    .booster-open-icon svg {
+        width: 15px;
+        height: 15px;
+    }
+
+.booster-arrow {
+    position: absolute;
+    right: 12px;
+    display: flex;
+    transition: transform .25s ease;
+}
+
+    .booster-arrow svg {
+        width: 15px;
+        height: 15px;
+    }
+
+.booster-open-button:hover .booster-arrow {
+    transform: translate(2px, -2px);
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
+.booster-empty {
+    min-height: 360px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 50px;
+    border: 1px dashed rgba(255, 255, 255, .1);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, .015);
+    text-align: center;
+}
+
+.booster-empty-icon {
+    width: 65px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    border: 1px solid rgba(244, 196, 48, .2);
+    border-radius: 14px;
+    background: rgba(244, 196, 48, .05);
+    color: var(--color-primary-yellow);
+}
+
+    .booster-empty-icon svg {
+        width: 30px;
+        height: 30px;
+    }
+
+.booster-empty-kicker {
+    margin-bottom: 8px;
+    color: var(--color-primary-yellow);
+    font-size: .6rem;
+    font-weight: 800;
+    letter-spacing: .15em;
+}
+
+.booster-empty h3 {
+    margin: 0;
+    color: #fff;
+    font-size: 1.25rem;
+    font-weight: 800;
+}
+
+.booster-empty p {
+    margin: 9px 0 0;
+    color: rgba(255, 255, 255, .4);
+    font-size: .85rem;
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+    .booster-section {
+        padding: 55px 24px 80px;
+    }
+
+    .booster-section-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .booster-count {
+        align-self: flex-start;
+    }
+}
+
+@media (max-width: 600px) {
+
+    .booster-title {
+        font-size: 2.8rem;
+    }
+
+    .booster-subtitle {
+        font-size: .9rem;
+    }
+
+    .booster-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .booster-image-container {
+        height: 350px;
+    }
+}

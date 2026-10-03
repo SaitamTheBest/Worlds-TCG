@@ -1,0 +1,353 @@
+﻿/* =========================================================
+   NOTIFICATIONS
+   ========================================================= */
+
+.tcg-notification {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tcg-notification-trigger {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+    transition: .18s ease;
+}
+
+    .tcg-notification-trigger:hover,
+    .tcg-notification.is-open .tcg-notification-trigger {
+        color: #f4c430;
+        border-color: rgba(244,196,48,.16);
+        background: rgba(244,196,48,.045);
+    }
+
+    .tcg-notification-trigger svg {
+        width: 18px;
+        height: 18px;
+    }
+
+.tcg-notification-badge {
+    position: absolute;
+    top: 2px;
+    right: 1px;
+    min-width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    border: 2px solid #0d0e10;
+    border-radius: 999px;
+    background: #f4c430;
+    color: #050505;
+    font-size: .46rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+    .tcg-notification-badge.hidden {
+        display: none;
+    }
+
+/* =========================================================
+   POPUP
+   ========================================================= */
+
+.tcg-notification-popup {
+    position: absolute;
+    top: calc(100% + 11px);
+    right: -8px;
+    z-index: 400;
+    width: 335px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,.085);
+    border-radius: 12px;
+    background: #0b0c0e;
+    box-shadow: 0 20px 50px rgba(0,0,0,.62);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px) scale(.985);
+    transform-origin: top right;
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+}
+
+.tcg-notification.is-open .tcg-notification-popup {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+.tcg-notification-header {
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+    .tcg-notification-header > div {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .tcg-notification-header strong {
+        color: #f5f5f5;
+        font-size: .75rem;
+    }
+
+    .tcg-notification-header span {
+        color: #707070;
+        font-size: .54rem;
+    }
+
+.tcg-notification-read-all {
+    padding: 5px 7px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #f4c430;
+    font-size: .56rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+    .tcg-notification-read-all:hover:not(:disabled) {
+        background: rgba(244,196,48,.055);
+    }
+
+    .tcg-notification-read-all:disabled {
+        color: #444;
+        cursor: default;
+    }
+
+/* =========================================================
+   LIST
+   ========================================================= */
+
+.tcg-notification-list {
+    max-height: 350px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+    .tcg-notification-list::-webkit-scrollbar {
+        width: 5px;
+    }
+
+    .tcg-notification-list::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(255,255,255,.11);
+    }
+
+.tcg-notification-item {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px 12px;
+    border: 0;
+    border-bottom: 1px solid rgba(255,255,255,.045);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background .16s ease;
+}
+
+    .tcg-notification-item:last-child {
+        border-bottom: 0;
+    }
+
+    .tcg-notification-item:hover {
+        background: rgba(255,255,255,.025);
+    }
+
+    .tcg-notification-item.is-unread {
+        background: rgba(244,196,48,.025);
+    }
+
+        .tcg-notification-item.is-unread:hover {
+            background: rgba(244,196,48,.045);
+        }
+
+.tcg-notification-item-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(244,196,48,.14);
+    border-radius: 8px;
+    background: rgba(244,196,48,.04);
+    color: #f4c430;
+}
+
+    .tcg-notification-item-icon svg {
+        width: 14px;
+        height: 14px;
+    }
+
+.tcg-notification-item-content {
+    min-width: 0;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+}
+
+    .tcg-notification-item-content strong {
+        overflow: hidden;
+        color: #ececec;
+        font-size: .65rem;
+        font-weight: 800;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .tcg-notification-item-content > span {
+        display: -webkit-box;
+        overflow: hidden;
+        color: #818181;
+        font-size: .58rem;
+        line-height: 1.45;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+
+    .tcg-notification-item-content time {
+        margin-top: 2px;
+        color: #505050;
+        font-size: .51rem;
+    }
+
+.tcg-notification-unread-dot {
+    width: 6px;
+    height: 6px;
+    margin-top: 4px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #f4c430;
+    box-shadow: 0 0 7px rgba(244,196,48,.55);
+}
+
+.tcg-notification-empty {
+    min-height: 130px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #555;
+    font-size: .62rem;
+}
+
+    .tcg-notification-empty svg {
+        width: 21px;
+        height: 21px;
+    }
+
+/* =========================================================
+   REALTIME TOAST
+   ========================================================= */
+
+.tcg-notification-toast-container {
+    position: fixed;
+    top: 76px;
+    right: 18px;
+    z-index: 9999;
+    width: 310px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.tcg-notification-toast {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 11px;
+    border: 1px solid rgba(244,196,48,.17);
+    border-radius: 10px;
+    background: #0b0c0e;
+    box-shadow: 0 14px 35px rgba(0,0,0,.55);
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity .2s ease, transform .2s ease;
+    pointer-events: auto;
+}
+
+    .tcg-notification-toast.is-visible {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+.tcg-notification-toast-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 8px;
+    background: rgba(244,196,48,.055);
+    color: #f4c430;
+}
+
+    .tcg-notification-toast-icon svg {
+        width: 15px;
+        height: 15px;
+    }
+
+.tcg-notification-toast-content {
+    min-width: 0;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+}
+
+    .tcg-notification-toast-content strong {
+        color: #f5f5f5;
+        font-size: .65rem;
+    }
+
+    .tcg-notification-toast-content span {
+        color: #858585;
+        font-size: .57rem;
+        line-height: 1.4;
+    }
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 520px) {
+    .tcg-notification-popup {
+        position: fixed;
+        top: 62px;
+        right: 8px;
+        width: min(335px,calc(100vw - 16px));
+    }
+
+    .tcg-notification-toast-container {
+        top: 66px;
+        right: 8px;
+        left: 8px;
+        width: auto;
+    }
+}

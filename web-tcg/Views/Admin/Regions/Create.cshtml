@@ -1,0 +1,547 @@
+﻿@model web_tcg.Models.Admin.CreateRegionViewModel
+
+@{
+    ViewData["Title"] = "Créer une région";
+    Layout = "_Layout";
+}
+
+<link rel="stylesheet" href="~/css/admin-region-create.css" asp-append-version="true" />
+
+<div class="admin-region-create-page">
+
+    <!-- BACKGROUND -->
+    <div class="admin-region-background">
+        <div class="admin-region-grid"></div>
+        <div class="admin-region-glow admin-region-glow-1"></div>
+        <div class="admin-region-glow admin-region-glow-2"></div>
+    </div>
+
+    <div class="admin-region-container">
+
+        <!-- HEADER -->
+        <header class="admin-region-header">
+
+            <div class="admin-region-breadcrumb">
+
+                <a asp-controller="Admin"
+                   asp-action="Regions"
+                   class="admin-region-back">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Régions</span>
+                </a>
+
+                <span class="admin-region-breadcrumb-separator">/</span>
+
+                <span class="admin-region-breadcrumb-current">
+                    Nouvelle région
+                </span>
+
+            </div>
+
+            <div class="admin-region-heading">
+
+                <div class="admin-region-heading-icon">
+                    <i data-lucide="globe-2"></i>
+                </div>
+
+                <div>
+                    <div class="admin-region-eyebrow">
+                        ADMINISTRATION
+                    </div>
+
+                    <h1>
+                        Créer une <span>Région</span>
+                    </h1>
+
+                    <p>
+                        Ajoutez une nouvelle région ou faction à votre univers TCG.
+                    </p>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ERREURS -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="admin-region-alert admin-region-alert-error">
+
+                <div class="admin-region-alert-icon">
+                    <i data-lucide="triangle-alert"></i>
+                </div>
+
+                <div class="admin-region-alert-content">
+
+                    <h2>
+                        Vérifiez les informations
+                    </h2>
+
+                    <ul>
+                        @foreach (var entry in ViewData.ModelState)
+                        {
+                            foreach (var error in entry.Value.Errors)
+                            {
+                                if (!string.IsNullOrWhiteSpace(error.ErrorMessage))
+                                {
+                                    <li>
+                                        @error.ErrorMessage
+                                    </li>
+                                }
+                            }
+                        }
+                    </ul>
+
+                </div>
+
+            </div>
+        }
+
+
+        <!-- CONTENT -->
+        <div class="admin-region-layout">
+
+            <!-- FORM -->
+            <main class="admin-region-form-card">
+
+                <div class="admin-region-section-header">
+
+                    <div class="admin-region-section-number">
+                        01
+                    </div>
+
+                    <div>
+                        <h2>Informations</h2>
+
+                        <p>
+                            Définissez l'identité et les propriétés de la région.
+                        </p>
+                    </div>
+
+                </div>
+
+
+                <form asp-controller="Admin"
+                      asp-action="CreateRegion"
+                      method="post"
+                      class="admin-region-form">
+
+                    @Html.AntiForgeryToken()
+
+
+                    <!-- NOM -->
+                    <div class="admin-region-field admin-region-field-full">
+
+                        <label asp-for="Name">
+                            <span class="admin-region-label-icon">
+                                <i data-lucide="tag"></i>
+                            </span>
+
+                            <span>
+                                Nom de la région
+                                <b>*</b>
+                            </span>
+                        </label>
+
+                        <div class="admin-region-input-wrapper">
+
+                            <i data-lucide="map"></i>
+
+                            <input asp-for="Name"
+                                   id="Name"
+                                   placeholder="Ex : République Française"
+                                   autocomplete="off" />
+
+                        </div>
+
+                        <span asp-validation-for="Name"
+                              class="admin-region-validation">
+                        </span>
+
+                    </div>
+
+
+                    <div class="admin-region-fields-grid">
+
+                        <!-- CODE -->
+                        <div class="admin-region-field">
+
+                            <label asp-for="Code">
+
+                                <span class="admin-region-label-icon">
+                                    <i data-lucide="hash"></i>
+                                </span>
+
+                                <span>
+                                    Code de la région
+                                    <b>*</b>
+                                </span>
+
+                            </label>
+
+                            <div class="admin-region-input-wrapper">
+
+                                <i data-lucide="scan-barcode"></i>
+
+                                <input asp-for="Code"
+                                       id="Code"
+                                       maxlength="10"
+                                       placeholder="Ex : FR"
+                                       autocomplete="off" />
+
+                            </div>
+
+                            <span asp-validation-for="Code"
+                                  class="admin-region-validation">
+                            </span>
+
+                            <span class="admin-region-help">
+                                Maximum 10 caractères.
+                            </span>
+
+                        </div>
+
+
+                        <!-- COULEUR -->
+                        <div class="admin-region-field">
+
+                            <label asp-for="Color">
+
+                                <span class="admin-region-label-icon">
+                                    <i data-lucide="palette"></i>
+                                </span>
+
+                                <span>
+                                    Couleur
+                                    <b>*</b>
+                                </span>
+
+                            </label>
+
+                            <div class="admin-region-color-input">
+
+                                <div class="admin-region-input-wrapper">
+
+                                    <i data-lucide="pipette"></i>
+
+                                    <input asp-for="Color"
+                                           id="Color"
+                                           type="text"
+                                           maxlength="7"
+                                           placeholder="#F4C430"
+                                           autocomplete="off" />
+
+                                </div>
+
+                                <input id="ColorPicker"
+                                       type="color"
+                                       value="@Model.Color"
+                                       aria-label="Sélectionner une couleur" />
+
+                            </div>
+
+                            <span asp-validation-for="Color"
+                                  class="admin-region-validation">
+                            </span>
+
+                            <span class="admin-region-help">
+                                Couleur utilisée pour identifier la région.
+                            </span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- PREVIEW -->
+                    <div class="admin-region-preview-section">
+
+                        <div class="admin-region-section-header compact">
+
+                            <div class="admin-region-section-number">
+                                02
+                            </div>
+
+                            <div>
+                                <h2>Aperçu</h2>
+
+                                <p>
+                                    Visualisez l'identité de votre région.
+                                </p>
+                            </div>
+
+                        </div>
+
+
+                        <div class="admin-region-preview">
+
+                            <div class="admin-region-preview-glow"
+                                 id="regionPreviewGlow">
+                            </div>
+
+                            <div class="admin-region-preview-color"
+                                 id="regionColorPreview"
+                                 style="background-color: @Model.Color;">
+                            </div>
+
+                            <div class="admin-region-preview-content">
+
+                                <div class="admin-region-preview-top">
+
+                                    <span>
+                                        RÉGION
+                                    </span>
+
+                                    <div class="admin-region-preview-code"
+                                         id="regionCodePreview">
+                                        @(string.IsNullOrWhiteSpace(Model.Code)
+                                            ? "---"
+                                            : Model.Code.ToUpperInvariant())
+                                    </div>
+
+                                </div>
+
+                                <div class="admin-region-preview-name"
+                                     id="regionNamePreview">
+                                    @(string.IsNullOrWhiteSpace(Model.Name)
+                                        ? "Nom de la région"
+                                        : Model.Name)
+                                </div>
+
+                                <div class="admin-region-preview-line"></div>
+
+                                <div class="admin-region-preview-footer">
+
+                                    <span>
+                                        <i data-lucide="circle"></i>
+                                        Identité régionale
+                                    </span>
+
+                                    <span id="regionColorValue">
+                                        @(string.IsNullOrWhiteSpace(Model.Color)
+                                            ? "#F4C430"
+                                            : Model.Color.ToUpperInvariant())
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ACTIONS -->
+                    <div class="admin-region-actions">
+
+                        <a asp-controller="Admin"
+                           asp-action="Regions"
+                           class="admin-region-button admin-region-button-secondary">
+
+                            <i data-lucide="arrow-left"></i>
+
+                            <span>Annuler</span>
+
+                        </a>
+
+                        <button type="submit"
+                                class="admin-region-button admin-region-button-primary">
+
+                            <i data-lucide="globe-2"></i>
+
+                            <span>Créer la région</span>
+
+                            <i data-lucide="arrow-right"></i>
+
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </main>
+
+
+            <!-- SIDEBAR -->
+            <aside class="admin-region-sidebar">
+
+                <div class="admin-region-side-card">
+
+                    <div class="admin-region-side-icon">
+                        <i data-lucide="info"></i>
+                    </div>
+
+                    <div class="admin-region-side-content">
+
+                        <span class="admin-region-side-eyebrow">
+                            CONFIGURATION
+                        </span>
+
+                        <h3>
+                            Identité régionale
+                        </h3>
+
+                        <p>
+                            Chaque région possède un nom, un code unique
+                            et une couleur permettant de l'identifier
+                            visuellement dans l'application.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-region-side-card">
+
+                    <div class="admin-region-side-icon">
+                        <i data-lucide="palette"></i>
+                    </div>
+
+                    <div class="admin-region-side-content">
+
+                        <span class="admin-region-side-eyebrow">
+                            COULEUR
+                        </span>
+
+                        <h3>
+                            Système visuel
+                        </h3>
+
+                        <p>
+                            Utilisez une couleur facilement identifiable.
+                            Elle pourra être associée aux cartes appartenant
+                            à cette région.
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="admin-region-side-status">
+
+                    <div class="admin-region-status-dot"></div>
+
+                    <div>
+                        <strong>
+                            Nouvelle région
+                        </strong>
+
+                        <span>
+                            Prête à être configurée
+                        </span>
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const name = document.getElementById('Name');
+            const code = document.getElementById('Code');
+            const color = document.getElementById('Color');
+            const colorPicker = document.getElementById('ColorPicker');
+
+            const namePreview =
+                document.getElementById('regionNamePreview');
+
+            const codePreview =
+                document.getElementById('regionCodePreview');
+
+            const colorPreview =
+                document.getElementById('regionColorPreview');
+
+            const colorGlow =
+                document.getElementById('regionPreviewGlow');
+
+            const colorValue =
+                document.getElementById('regionColorValue');
+
+
+            function updatePreview() {
+
+                if (!name || !code || !color) {
+                    return;
+                }
+
+                namePreview.textContent =
+                    name.value.trim() || 'Nom de la région';
+
+                codePreview.textContent =
+                    code.value.trim().toUpperCase() || '---';
+
+                const value = color.value.trim();
+
+                if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+
+                    const normalizedColor =
+                        value.toUpperCase();
+
+                    colorPreview.style.backgroundColor =
+                        normalizedColor;
+
+                    colorGlow.style.background =
+                        `radial-gradient(
+                                    circle,
+                                    ${normalizedColor}55 0%,
+                                    transparent 70%
+                                )`;
+
+                    colorValue.textContent =
+                        normalizedColor;
+
+                    if (document.activeElement !== colorPicker) {
+                        colorPicker.value = value;
+                    }
+                }
+            }
+
+
+            colorPicker.addEventListener('input', function() {
+
+                color.value =
+                    colorPicker.value.toUpperCase();
+
+                updatePreview();
+
+            });
+
+
+            name.addEventListener('input', updatePreview);
+
+            code.addEventListener('input', function() {
+
+                code.value =
+                    code.value.toUpperCase();
+
+                updatePreview();
+
+            });
+
+            color.addEventListener('input', updatePreview);
+
+            updatePreview();
+
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+        });
+    </script>
+}

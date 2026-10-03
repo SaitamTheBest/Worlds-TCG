@@ -1,0 +1,1059 @@
+﻿/* ============================================================
+   WORLDS TCG - BOOSTER OPENING
+   ============================================================ */
+
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --booster-gold: #d4af37;
+    --booster-gold-light: #e7ca67;
+    --booster-bg: #000;
+    --booster-center-x: 50%;
+    --booster-topbar-height: 60px;
+}
+
+/* ============================================================
+   FOND GLOBAL
+   ============================================================ */
+
+html,
+body {
+    min-height: 100%;
+    background: #000 !important;
+}
+
+body {
+    min-height: 100dvh;
+}
+
+    /*
+ * Le CSS n'est chargé que sur cette vue.
+ * Cela empêche le layout principal d'afficher un fond blanc
+ * entre l'ouverture du booster et le footer global.
+ */
+    body:has(.booster-opening) {
+        background: #000 !important;
+    }
+
+        body:has(.booster-opening) main {
+            background-color: #000;
+        }
+
+/* ============================================================
+   ROOT
+   ============================================================ */
+
+.booster-opening {
+    position: relative;
+    width: 100%;
+    /*
+     * IMPORTANT :
+     * la topbar fait 60px, et non plus 80px.
+     */
+    height: calc(100dvh - var(--booster-topbar-height));
+    min-height: 560px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #000;
+    color: #fff;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+
+.booster-opening-header {
+    position: relative;
+    z-index: 100;
+    min-height: 64px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 0 clamp(16px, 3vw, 32px);
+    border-bottom: 1px solid rgba(255,255,255,.055);
+    background: #050505;
+}
+
+.booster-opening-header-left {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.booster-opening-kicker {
+    color: var(--booster-gold);
+    font-size: .52rem;
+    font-weight: 900;
+    letter-spacing: .25em;
+    white-space: nowrap;
+}
+
+.booster-opening-title {
+    margin: 0;
+    overflow: hidden;
+    color: rgba(255,255,255,.94);
+    font-size: .95rem;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.booster-opening-progress {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
+    flex-shrink: 0;
+    color: var(--booster-gold);
+    font-size: 1rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+.booster-opening-progress-separator {
+    color: rgba(255,255,255,.25);
+}
+
+/* ============================================================
+   STAGE
+   ============================================================ */
+
+.booster-opening-stage {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+    isolation: isolate;
+    background: radial-gradient( circle at 50% 46%, rgba(212,175,55,.07), transparent 38% ), #000;
+}
+
+.booster-stage-grid {
+    position: absolute;
+    inset: 0;
+    z-index: -5;
+    pointer-events: none;
+    background-image: linear-gradient(rgba(255,255,255,.017) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.017) 1px, transparent 1px);
+    background-size: 45px 45px;
+    mask-image: radial-gradient( circle at center, #000 0%, rgba(0,0,0,.7) 60%, transparent 100% );
+}
+
+.booster-stage-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    box-shadow: inset 0 0 150px rgba(0,0,0,.95), inset 0 0 35px rgba(0,0,0,.75);
+}
+
+.booster-opening-glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(620px, 65vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient( circle, rgba(212,175,55,.14), rgba(212,175,55,.05) 35%, transparent 70% );
+    filter: blur(40px);
+}
+
+/* ============================================================
+   RÉCAPITULATIF
+   ============================================================ */
+
+.booster-summary {
+    position: absolute;
+    z-index: 10;
+    top: 20px;
+    bottom: 20px;
+    left: 20px;
+    width: 160px;
+    overflow: hidden;
+    pointer-events: none;
+    border: 1px solid rgba(212,175,55,.18);
+    border-radius: 14px;
+    background: linear-gradient( 180deg, #10100f, #090909 48%, #050505 );
+    box-shadow: 0 16px 40px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.035);
+}
+
+    .booster-summary::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient( 180deg, rgba(212,175,55,.045), transparent 28% );
+    }
+
+    .booster-summary::after {
+        content: "";
+        position: absolute;
+        top: 58px;
+        left: 14px;
+        right: 14px;
+        height: 1px;
+        background: linear-gradient( 90deg, transparent, rgba(212,175,55,.18), transparent );
+    }
+
+.booster-summary-header {
+    position: absolute;
+    z-index: 4;
+    top: 13px;
+    left: 13px;
+    right: 13px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+    .booster-summary-header > div {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+.booster-summary-kicker {
+    color: rgba(255,255,255,.35);
+    font-size: .39rem;
+    font-weight: 900;
+    letter-spacing: .18em;
+}
+
+.booster-summary-header h2 {
+    margin: 0;
+    color: rgba(255,255,255,.85);
+    font-size: .66rem;
+    line-height: 1.1;
+    font-weight: 850;
+}
+
+#summary-count {
+    flex-shrink: 0;
+    color: var(--booster-gold);
+    font-size: .62rem;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+}
+
+.booster-summary-track {
+    position: absolute;
+    top: 72px;
+    bottom: 38px;
+    left: 50%;
+    width: 1px;
+    transform: translateX(-50%);
+}
+
+.booster-summary-line {
+    width: 1px;
+    height: 100%;
+    background: linear-gradient( 180deg, rgba(212,175,55,.18), rgba(212,175,55,.04), transparent );
+}
+
+.booster-summary-footer {
+    position: absolute;
+    left: 14px;
+    bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: rgba(255,255,255,.28);
+    font-size: .39rem;
+    font-weight: 900;
+    letter-spacing: .18em;
+}
+
+.booster-summary-dot {
+    width: 5px;
+    height: 5px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: var(--booster-gold);
+    box-shadow: 0 0 8px rgba(212,175,55,.65);
+}
+
+/* ============================================================
+   CARTES
+   ============================================================ */
+
+.booster-cards {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+}
+
+.booster-card-slot {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    perspective: 1600px;
+}
+
+    .booster-card-slot.is-current,
+    .booster-card-slot.is-archived {
+        display: flex;
+    }
+
+    .booster-card-slot.is-current {
+        z-index: 35;
+        pointer-events: auto;
+    }
+
+        .booster-card-slot.is-current .booster-card-visual {
+            cursor: pointer;
+        }
+
+    .booster-card-slot.is-archived {
+        z-index: 25;
+        pointer-events: none;
+    }
+
+.booster-card-visual {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-origin: center center;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+    will-change: transform, opacity, filter;
+}
+
+    /*
+ * Taille du vrai composant Card.
+ */
+    .booster-card-visual .tcg-card {
+        --card-width: clamp(210px, min(18vw, 34dvh), 278px);
+        width: var(--card-width) !important;
+        max-width: var(--card-width) !important;
+        margin: 0 auto;
+    }
+
+.booster-card-slot.is-archived .booster-card-visual {
+    pointer-events: none;
+}
+
+/* ============================================================
+   DERNIÈRE CARTE
+   ============================================================ */
+
+.booster-last-warning {
+    position: absolute;
+    z-index: 42;
+    top: 20px;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    opacity: 0;
+    transform: translateX(-50%) translateY(-8px);
+    pointer-events: none;
+    color: rgba(255,255,255,.7);
+    font-size: .55rem;
+    font-weight: 900;
+    letter-spacing: .26em;
+    white-space: nowrap;
+}
+
+.booster-last-warning-line {
+    width: 38px;
+    height: 1px;
+    background: linear-gradient( 90deg, transparent, var(--booster-gold) );
+}
+
+    .booster-last-warning-line:last-child {
+        transform: scaleX(-1);
+    }
+
+/* ============================================================
+   EFFETS DE RARETÉ
+   ============================================================ */
+
+.booster-final-glow,
+.booster-rarity-aura,
+.booster-rarity-ring,
+.booster-rarity-rays {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    pointer-events: none;
+}
+
+.booster-final-glow {
+    z-index: 11;
+    width: min(550px, 60vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%) scale(.6);
+    border-radius: 50%;
+    opacity: 0;
+    filter: blur(45px);
+    background: radial-gradient( circle, rgba(212,175,55,.48), rgba(212,175,55,.1) 35%, transparent 70% );
+}
+
+.booster-rarity-aura {
+    z-index: 12;
+    width: min(520px, 58vw);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    opacity: 0;
+    filter: blur(40px) saturate(1.25);
+    mix-blend-mode: screen;
+}
+
+.booster-rarity-ring {
+    z-index: 13;
+    width: min(430px, 52vw);
+    aspect-ratio: 1;
+    border: 1px solid rgba(255,255,255,.3);
+    border-radius: 50%;
+    opacity: 0;
+}
+
+.booster-rarity-ring-secondary {
+    width: min(500px, 58vw);
+    border-style: dashed;
+}
+
+.booster-rarity-rays {
+    z-index: 9;
+    width: min(650px, 70vw);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%) scale(.6);
+    opacity: 0;
+    background: repeating-conic-gradient( from 0deg, rgba(255,255,255,.12) 0deg, transparent 3deg, transparent 13deg );
+    mask-image: radial-gradient( circle, transparent 0%, #000 25%, transparent 72% );
+}
+
+.booster-rarity-flash {
+    position: absolute;
+    inset: 0;
+    z-index: 55;
+    opacity: 0;
+    pointer-events: none;
+    background: radial-gradient( circle at 50% 50%, #fff, rgba(255,255,255,.7) 10%, rgba(255,255,255,.12) 34%, transparent 65% );
+}
+
+/* ============================================================
+   TEXTE RARETÉ
+   ============================================================ */
+
+.booster-rarity-display {
+    position: absolute;
+    z-index: 45;
+    left: calc(50% + 280px);
+    top: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.booster-rarity-pretitle {
+    color: rgba(255,255,255,.35);
+    opacity: 0;
+    font-size: .48rem;
+    font-weight: 900;
+    letter-spacing: .26em;
+}
+
+.booster-rarity-name {
+    margin-top: 5px;
+    opacity: 0;
+    font-size: clamp(.85rem, 1.5vw, 1.2rem);
+    font-weight: 1000;
+    letter-spacing: .25em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    text-shadow: 0 0 10px currentColor, 0 0 28px currentColor;
+}
+
+/* ============================================================
+   PARTICULES
+   ============================================================ */
+
+.booster-particles {
+    position: absolute;
+    inset: 0;
+    z-index: 30;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.booster-particle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 7px;
+    height: 7px;
+    opacity: 0;
+    border-radius: 50%;
+    box-shadow: 0 0 6px currentColor, 0 0 14px currentColor;
+    will-change: transform, opacity;
+}
+
+    .booster-particle.is-diamond {
+        border-radius: 1px;
+    }
+
+    .booster-particle.is-line {
+        width: 2px;
+        height: 18px;
+        border-radius: 10px;
+    }
+
+/* ============================================================
+   INSTRUCTION
+   ============================================================ */
+
+.booster-opening-instruction {
+    position: absolute;
+    z-index: 48;
+    left: 50%;
+    bottom: 10px;
+    width: max-content;
+    max-width: calc(100% - 32px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateX(-50%);
+    pointer-events: none;
+    color: rgba(255,255,255,.46);
+    font-size: .55rem;
+    font-weight: 900;
+    letter-spacing: .18em;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* ============================================================
+   FOOTER BOOSTER
+   ============================================================ */
+
+.booster-opening-footer {
+    position: relative;
+    z-index: 100;
+    min-height: 68px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 20px;
+    border-top: 1px solid rgba(255,255,255,.05);
+    background: #000;
+}
+
+.booster-skip-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .booster-skip-button svg {
+        width: 15px;
+        height: 15px;
+    }
+
+.booster-opening-actions {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+    .booster-opening-actions.is-visible {
+        display: flex;
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+.booster-opening-reopen-form {
+    margin: 0;
+}
+
+.booster-opening-action {
+    min-width: 190px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+    .booster-opening-action svg {
+        width: 16px;
+        height: 16px;
+    }
+
+.booster-opening-action-primary {
+    color: #080808 !important;
+    background: var(--booster-gold) !important;
+    border-color: var(--booster-gold) !important;
+    box-shadow: 0 6px 24px rgba(212,175,55,.14);
+}
+
+    .booster-opening-action-primary:hover {
+        background: var(--booster-gold-light) !important;
+        border-color: var(--booster-gold-light) !important;
+    }
+
+/* ============================================================
+   CARTE MYSTÈRE
+   ============================================================ */
+
+.booster-mystery-card {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    z-index: 45;
+    width: clamp(210px, min(18vw, 34dvh), 278px);
+    aspect-ratio: 5 / 7;
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    opacity: 0;
+    visibility: hidden;
+    transform: translate(-50%, -50%) scale(.9);
+    pointer-events: none;
+    will-change: transform, opacity;
+}
+
+    .booster-mystery-card.is-visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+.booster-mystery-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid rgba(212,175,55,.72);
+    border-radius: 14px;
+    background: radial-gradient( circle at 50% 38%, rgba(212,175,55,.1), transparent 35% ), linear-gradient( 145deg, #17150e, #080808 36%, #050505 70%, #121008 );
+    box-shadow: 0 24px 70px rgba(0,0,0,.7), 0 0 0 1px rgba(255,255,255,.025), 0 0 35px rgba(212,175,55,.08), inset 0 0 35px rgba(212,175,55,.035);
+}
+
+    .booster-mystery-card-inner::before {
+        content: "";
+        position: absolute;
+        inset: 8px;
+        border: 1px solid rgba(212,175,55,.24);
+        border-radius: 9px;
+        pointer-events: none;
+    }
+
+    .booster-mystery-card-inner::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: .22;
+        pointer-events: none;
+        background-image: linear-gradient( 45deg, rgba(212,175,55,.055) 25%, transparent 25%, transparent 75%, rgba(212,175,55,.055) 75% );
+        background-size: 26px 26px;
+    }
+
+.booster-mystery-kicker {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 22px;
+    color: rgba(255,255,255,.34);
+    font-size: .52rem;
+    font-weight: 900;
+    letter-spacing: .28em;
+}
+
+.booster-mystery-symbol {
+    position: relative;
+    z-index: 2;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(212,175,55,.4);
+    border-radius: 50%;
+    color: var(--booster-gold);
+    font-size: 4.2rem;
+    font-weight: 900;
+    line-height: 1;
+    text-shadow: 0 0 15px rgba(212,175,55,.35);
+    box-shadow: 0 0 0 8px rgba(212,175,55,.025), inset 0 0 25px rgba(212,175,55,.04);
+}
+
+.booster-mystery-divider {
+    position: relative;
+    z-index: 2;
+    width: 70px;
+    height: 1px;
+    margin: 25px 0 14px;
+    background: linear-gradient( 90deg, transparent, rgba(212,175,55,.7), transparent );
+}
+
+.booster-mystery-label {
+    position: relative;
+    z-index: 2;
+    color: rgba(255,255,255,.55);
+    font-size: .47rem;
+    font-weight: 900;
+    letter-spacing: .22em;
+}
+
+/* ============================================================
+   PETIT DESKTOP / TABLETTE
+   ============================================================ */
+
+@media (max-width: 1100px) {
+    .booster-card-visual .tcg-card {
+        --card-width: clamp(205px, min(24vw, 32dvh), 258px);
+    }
+
+    .booster-rarity-display {
+        left: 50%;
+        top: 16px;
+        width: calc(100% - 32px);
+        align-items: center;
+        transform: translateX(-50%);
+        text-align: center;
+    }
+
+    .booster-rarity-name {
+        max-width: 100%;
+        white-space: normal;
+        text-align: center;
+    }
+}
+
+/* ============================================================
+   TABLETTE
+   ============================================================ */
+
+@media (max-width: 900px) {
+    .booster-opening {
+        height: auto;
+        min-height: calc(100dvh - var(--booster-topbar-height));
+    }
+
+    .booster-opening-stage {
+        min-height: 520px;
+        /*
+         * Réserve de l'espace pour le résumé du bas.
+         */
+        padding-bottom: 110px;
+    }
+
+    .booster-card-visual .tcg-card {
+        --card-width: clamp(195px, min(32vw, 30dvh), 242px);
+    }
+
+    .booster-summary {
+        top: auto;
+        right: auto;
+        bottom: 10px;
+        left: 50%;
+        width: min(calc(100% - 24px), 500px);
+        height: 98px;
+        transform: translateX(-50%);
+    }
+
+        .booster-summary::after {
+            top: 47px;
+        }
+
+    .booster-summary-header {
+        top: 9px;
+        left: 12px;
+        right: 12px;
+    }
+
+    .booster-summary-track {
+        top: auto;
+        bottom: 11px;
+        left: 14px;
+        right: 14px;
+        width: auto;
+        height: 1px;
+        transform: none;
+    }
+
+    .booster-summary-line {
+        width: 100%;
+        height: 1px;
+        background: linear-gradient( 90deg, rgba(212,175,55,.18), rgba(212,175,55,.04), transparent );
+    }
+
+    .booster-summary-footer {
+        display: none;
+    }
+
+    .booster-opening-instruction {
+        bottom: 115px;
+        white-space: normal;
+    }
+
+    .booster-rarity-display {
+        top: 13px;
+    }
+
+    .booster-last-warning {
+        top: 48px;
+    }
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 650px) {
+    :root {
+        --booster-topbar-height: 56px;
+    }
+
+    .booster-opening {
+        min-height: calc( 100dvh - var(--booster-topbar-height) );
+    }
+
+    .booster-opening-header {
+        min-height: 54px;
+        padding: 0 12px;
+    }
+
+    .booster-opening-header-left {
+        max-width: 72%;
+    }
+
+    .booster-opening-kicker {
+        font-size: .4rem;
+        letter-spacing: .2em;
+    }
+
+    .booster-opening-title {
+        font-size: .7rem;
+    }
+
+    .booster-opening-progress {
+        font-size: .8rem;
+    }
+
+    .booster-opening-stage {
+        min-height: 525px;
+        padding-bottom: 102px;
+    }
+
+    .booster-card-visual .tcg-card {
+        --card-width: clamp(185px, min(52vw, 29dvh), 225px);
+    }
+
+    .booster-summary {
+        bottom: 7px;
+        width: calc(100% - 16px);
+        height: 88px;
+    }
+
+    .booster-summary-header {
+        top: 8px;
+        left: 10px;
+        right: 10px;
+    }
+
+        .booster-summary-header h2 {
+            font-size: .57rem;
+        }
+
+    .booster-summary-kicker {
+        font-size: .32rem;
+    }
+
+    #summary-count {
+        font-size: .54rem;
+    }
+
+    .booster-opening-instruction {
+        bottom: 101px;
+        width: calc(100% - 24px);
+        font-size: .42rem;
+        line-height: 1.35;
+        letter-spacing: .1em;
+    }
+
+    .booster-rarity-pretitle {
+        font-size: .37rem;
+        letter-spacing: .18em;
+    }
+
+    .booster-rarity-name {
+        font-size: .78rem;
+        line-height: 1.15;
+        letter-spacing: .13em;
+    }
+
+    .booster-last-warning {
+        top: 40px;
+        gap: 6px;
+        font-size: .4rem;
+        letter-spacing: .12em;
+    }
+
+    .booster-last-warning-line {
+        width: 18px;
+    }
+
+    .booster-opening-footer {
+        min-height: 60px;
+        padding: 8px;
+        background: #000;
+    }
+
+    .booster-opening-actions {
+        width: 100%;
+        gap: 7px;
+    }
+
+    .booster-opening-action {
+        min-width: 0;
+        height: 38px;
+        flex: 1;
+        padding: 0 9px;
+        font-size: .59rem;
+        white-space: nowrap;
+    }
+
+        .booster-opening-action svg {
+            width: 14px;
+            height: 14px;
+        }
+
+    .booster-skip-button {
+        width: min(100%, 280px);
+        justify-content: center;
+    }
+
+    .booster-mystery-card {
+        width: clamp(185px, min(52vw, 29dvh), 225px);
+    }
+
+    .booster-mystery-symbol {
+        width: 75px;
+        height: 75px;
+        font-size: 3rem;
+    }
+
+    .booster-mystery-kicker {
+        margin-bottom: 16px;
+        font-size: .4rem;
+    }
+
+    .booster-mystery-divider {
+        margin: 18px 0 10px;
+    }
+
+    .booster-mystery-label {
+        font-size: .38rem;
+        letter-spacing: .17em;
+    }
+}
+
+/* ============================================================
+   PETIT MOBILE
+   ============================================================ */
+
+@media (max-width: 480px) {
+    .booster-opening-header {
+        min-height: 50px;
+    }
+
+    .booster-opening-stage {
+        min-height: 500px;
+        padding-bottom: 98px;
+    }
+
+    .booster-card-visual .tcg-card {
+        --card-width: clamp(178px, min(50vw, 28dvh), 212px);
+    }
+
+    .booster-summary {
+        width: calc(100% - 12px);
+        height: 84px;
+        bottom: 6px;
+    }
+
+    .booster-opening-instruction {
+        bottom: 96px;
+    }
+
+    .booster-mystery-card {
+        width: clamp(178px, min(50vw, 28dvh), 212px);
+    }
+
+    .booster-opening-actions {
+        flex-wrap: nowrap;
+    }
+
+    .booster-opening-action {
+        font-size: .54rem;
+    }
+}
+
+/* ============================================================
+   TRÈS PETIT MOBILE
+   ============================================================ */
+
+@media (max-width: 380px) {
+    .booster-opening-stage {
+        min-height: 470px;
+    }
+
+    .booster-card-visual .tcg-card {
+        --card-width: clamp(168px, min(54vw, 27dvh), 198px);
+    }
+
+    .booster-mystery-card {
+        width: clamp(168px, min(54vw, 27dvh), 198px);
+    }
+
+    .booster-opening-title {
+        font-size: .62rem;
+    }
+
+    .booster-opening-action {
+        padding: 0 6px;
+    }
+
+        .booster-opening-action span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .booster-opening *,
+    .booster-opening *::before,
+    .booster-opening *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}

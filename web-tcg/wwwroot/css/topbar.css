@@ -1,0 +1,647 @@
+﻿/* =========================================================
+   WORLDS TCG - TOPBAR
+   ========================================================= */
+
+.tcg-topbar {
+    position: relative;
+    z-index: 100;
+    width: 100%;
+    height: 60px;
+    flex-shrink: 0;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    background: #0d0e10;
+}
+
+.tcg-topbar-inner {
+    width: 100%;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0 22px;
+}
+
+.tcg-topbar-user {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 9px;
+    margin-left: auto;
+}
+
+/* =========================================================
+   BALANCES
+   ========================================================= */
+
+.tcg-topbar .tcg-balance-widget {
+    width: auto;
+    min-width: 0;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 9px;
+    padding: 5px 10px;
+    flex-shrink: 0;
+    border: 1px solid rgba(244,196,48,.18);
+    border-radius: 10px;
+    background: #090a0b;
+}
+
+.tcg-topbar .tcg-balance-icon {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border: 1px solid rgba(244,196,48,.14);
+    border-radius: 8px;
+    color: #f4c430;
+    background: rgba(244,196,48,.05);
+}
+
+    .tcg-topbar .tcg-balance-icon svg {
+        width: 15px;
+        height: 15px;
+    }
+
+.tcg-topbar .tcg-balance-content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+    line-height: 1;
+}
+
+.tcg-topbar .tcg-balance-label {
+    display: block;
+    color: #737373;
+    font-size: .5rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    white-space: nowrap;
+}
+
+.tcg-topbar #userBalance,
+.tcg-topbar #userCardBalance {
+    color: #f5f5f5;
+    font-size: .82rem;
+    font-weight: 850;
+    line-height: 1;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* =========================================================
+   BALANCE PRINCIPALE - JAUNE
+   ========================================================= */
+
+.tcg-topbar .tcg-balance-timer {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 3px;
+    padding-left: 9px;
+    border-left: 1px solid rgba(255,255,255,.07);
+    color: #f4c430;
+    font-size: .61rem;
+    font-weight: 750;
+    white-space: nowrap;
+}
+
+    .tcg-topbar .tcg-balance-timer svg {
+        width: 13px;
+        height: 13px;
+    }
+
+/* =========================================================
+   BALANCE MARCHÉ - ROUGE
+   ========================================================= */
+
+.tcg-topbar .tcg-card-balance-widget {
+    border-color: rgba(239,68,68,.22);
+    background: linear-gradient( 135deg, rgba(239,68,68,.035), transparent 60% ), #090a0b;
+}
+
+.tcg-topbar .tcg-card-balance-icon {
+    border-color: rgba(239,68,68,.18);
+    color: #ef4444;
+    background: rgba(239,68,68,.07);
+}
+
+.tcg-topbar .tcg-card-balance-label {
+    color: rgba(239,68,68,.72);
+}
+
+.tcg-card-balance-value {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+}
+
+.tcg-card-balance-unit {
+    color: #ef4444;
+    font-size: .61rem;
+    font-weight: 900;
+}
+
+/* =========================================================
+   NOTIFICATION
+   ========================================================= */
+
+.tcg-topbar .tcg-notification {
+    flex-shrink: 0;
+}
+
+.tcg-topbar .tcg-notification-trigger,
+.tcg-topbar-icon-button {
+    position: relative;
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    background: transparent;
+    color: #777;
+    cursor: pointer;
+    transition: color .18s ease, background .18s ease, border-color .18s ease;
+}
+
+    .tcg-topbar .tcg-notification-trigger:hover,
+    .tcg-topbar-icon-button:hover {
+        color: #f4c430;
+        border-color: rgba(244,196,48,.15);
+        background: rgba(244,196,48,.04);
+    }
+
+/* =========================================================
+   USER
+   ========================================================= */
+
+.tcg-user-menu {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.tcg-user-profile {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 3px 7px 3px 3px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    transition: background .18s ease, border-color .18s ease;
+}
+
+    .tcg-user-profile:hover,
+    .tcg-user-menu.is-open .tcg-user-profile {
+        border-color: rgba(255,255,255,.07);
+        background: rgba(255,255,255,.025);
+    }
+
+.tcg-user-avatar {
+    width: 38px;
+    height: 38px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 9px;
+    background: linear-gradient( 135deg, #ffe172, #f4c430 );
+    color: #080808;
+    font-size: .83rem;
+    font-weight: 900;
+}
+
+    .tcg-user-avatar img,
+    .tcg-user-dropdown-avatar img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+    }
+
+    .tcg-user-avatar svg {
+        width: 17px;
+        height: 17px;
+    }
+
+.tcg-user-info {
+    min-width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    text-align: left;
+}
+
+    .tcg-user-info strong {
+        max-width: 135px;
+        overflow: hidden;
+        color: #f5f5f5;
+        font-size: .72rem;
+        font-weight: 800;
+        line-height: 1.15;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+.tcg-user-role {
+    color: #707070;
+    font-size: .48rem;
+    font-weight: 850;
+    letter-spacing: .07em;
+}
+
+    .tcg-user-role.admin {
+        color: #f4c430;
+    }
+
+.tcg-user-chevron {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    color: #555;
+    transition: transform .2s ease, color .2s ease;
+}
+
+.tcg-user-menu.is-open .tcg-user-chevron {
+    color: #f4c430;
+    transform: rotate(180deg);
+}
+
+/* =========================================================
+   USER DROPDOWN
+   ========================================================= */
+
+.tcg-user-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 500;
+    width: 265px;
+    padding: 8px;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 12px;
+    background: #0c0d0f;
+    box-shadow: 0 18px 45px rgba(0,0,0,.55);
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-6px) scale(.98);
+    transform-origin: top right;
+    transition: opacity .16s ease, transform .16s ease, visibility .16s ease;
+}
+
+.tcg-user-menu.is-open .tcg-user-dropdown {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+}
+
+.tcg-user-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px;
+}
+
+.tcg-user-dropdown-avatar {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 9px;
+    background: linear-gradient( 135deg, #ffe172, #f4c430 );
+    color: #080808;
+    font-size: .78rem;
+    font-weight: 900;
+}
+
+.tcg-user-dropdown-header > div:last-child {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.tcg-user-dropdown-header strong {
+    max-width: 170px;
+    overflow: hidden;
+    color: #f5f5f5;
+    font-size: .72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tcg-user-dropdown-header span {
+    color: #6f6f6f;
+    font-size: .56rem;
+}
+
+.tcg-user-dropdown-separator {
+    height: 1px;
+    margin: 6px 4px;
+    background: rgba(255,255,255,.06);
+}
+
+.tcg-user-dropdown-item {
+    width: 100%;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 9px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #c8c8c8;
+    font: inherit;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background .16s ease, color .16s ease;
+}
+
+    .tcg-user-dropdown-item:hover {
+        color: #fff;
+        background: rgba(255,255,255,.04);
+    }
+
+    .tcg-user-dropdown-item > svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+        color: #f4c430;
+    }
+
+    .tcg-user-dropdown-item > span {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .tcg-user-dropdown-item strong {
+        font-size: .68rem;
+        font-weight: 750;
+    }
+
+    .tcg-user-dropdown-item small {
+        color: #5f5f5f;
+        font-size: .53rem;
+    }
+
+.tcg-user-dropdown-form {
+    margin: 0;
+}
+
+.tcg-user-dropdown-logout {
+    color: #cfcfcf;
+}
+
+    .tcg-user-dropdown-logout > svg {
+        color: #b8b8b8;
+    }
+
+    .tcg-user-dropdown-logout:hover {
+        color: #f4c430;
+        background: rgba(244,196,48,.045);
+    }
+
+        .tcg-user-dropdown-logout:hover > svg {
+            color: #f4c430;
+        }
+
+/* =========================================================
+   RESPONSIVE <= 1100
+   ========================================================= */
+
+@media (max-width: 1100px) {
+    .tcg-topbar-inner {
+        padding: 0 16px;
+    }
+
+    /*
+     * Le timer est le premier élément sacrifié.
+     * Les deux balances restent visibles.
+     */
+    .tcg-topbar .tcg-balance-timer {
+        display: none;
+    }
+
+    .tcg-topbar .tcg-balance-widget {
+        width: auto;
+        min-width: 0;
+    }
+
+    .tcg-topbar .tcg-balance-content {
+        display: flex;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE <= 850
+   ========================================================= */
+
+@media (max-width: 850px) {
+    .tcg-topbar-user {
+        gap: 6px;
+    }
+
+    .tcg-topbar .tcg-balance-widget {
+        height: 40px;
+        gap: 7px;
+        padding: 4px 8px;
+    }
+
+    .tcg-topbar .tcg-balance-icon {
+        width: 28px;
+        height: 28px;
+    }
+
+    .tcg-user-info {
+        min-width: 75px;
+    }
+
+    .tcg-user-role {
+        display: none;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE <= 700
+   ========================================================= */
+
+@media (max-width: 700px) {
+    .tcg-topbar {
+        height: 56px;
+    }
+
+    .tcg-topbar-inner {
+        height: 56px;
+        padding: 0 10px;
+    }
+
+    .tcg-topbar-user {
+        gap: 5px;
+    }
+
+    .tcg-topbar .tcg-balance-widget {
+        width: auto;
+        height: 38px;
+        gap: 6px;
+        padding: 4px 7px;
+        justify-content: flex-start;
+    }
+
+    .tcg-topbar .tcg-balance-content {
+        display: flex;
+    }
+
+    .tcg-topbar .tcg-balance-label {
+        display: none;
+    }
+
+    .tcg-topbar #userBalance,
+    .tcg-topbar #userCardBalance {
+        font-size: .74rem;
+    }
+
+    .tcg-user-profile {
+        height: 42px;
+    }
+
+    .tcg-user-avatar {
+        width: 36px;
+        height: 36px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE <= 580
+   ========================================================= */
+
+@media (max-width: 580px) {
+    .tcg-topbar-inner {
+        padding: 0 8px;
+    }
+
+    .tcg-user-info {
+        display: none;
+    }
+
+    .tcg-user-chevron {
+        margin-left: 0;
+    }
+
+    .tcg-topbar .tcg-notification-trigger,
+    .tcg-topbar-icon-button {
+        width: 36px;
+        height: 36px;
+    }
+
+    .tcg-user-dropdown {
+        position: fixed;
+        top: 62px;
+        right: 8px;
+        width: min(265px, calc(100vw - 16px));
+    }
+}
+
+/* =========================================================
+   RESPONSIVE <= 460
+   ========================================================= */
+
+@media (max-width: 460px) {
+    .tcg-topbar-inner {
+        padding: 0 6px;
+    }
+
+    .tcg-topbar-user {
+        width: 100%;
+        justify-content: flex-end;
+        gap: 4px;
+    }
+
+    /*
+     * Sur très petit écran on retire uniquement les icônes
+     * des monnaies. Les valeurs restent visibles.
+     */
+    .tcg-topbar .tcg-balance-icon {
+        display: none;
+    }
+
+    .tcg-topbar .tcg-balance-widget {
+        width: auto;
+        min-width: 0;
+        padding: 5px 8px;
+    }
+
+    .tcg-topbar #userBalance,
+    .tcg-topbar #userCardBalance {
+        font-size: .7rem;
+    }
+
+    .tcg-card-balance-unit {
+        font-size: .52rem;
+    }
+
+    .tcg-user-avatar {
+        width: 34px;
+        height: 34px;
+    }
+
+    .tcg-user-profile {
+        height: 38px;
+        gap: 3px;
+        padding-right: 3px;
+    }
+
+    .tcg-user-chevron {
+        width: 11px;
+        height: 11px;
+    }
+}
+
+/* =========================================================
+   RESPONSIVE <= 360
+   ========================================================= */
+
+@media (max-width: 360px) {
+    .tcg-topbar-user {
+        gap: 3px;
+    }
+
+    .tcg-topbar .tcg-balance-widget {
+        padding: 4px 6px;
+    }
+
+    .tcg-topbar #userBalance,
+    .tcg-topbar #userCardBalance {
+        font-size: .65rem;
+    }
+
+    .tcg-topbar .tcg-notification-trigger,
+    .tcg-topbar-icon-button {
+        width: 32px;
+        height: 32px;
+    }
+
+    .tcg-user-avatar {
+        width: 32px;
+        height: 32px;
+    }
+}

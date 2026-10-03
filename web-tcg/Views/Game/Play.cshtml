@@ -1,0 +1,290 @@
+@model web_tcg.Models.Game.GameViewModel
+
+@{
+    ViewData["Title"] = "Partie";
+}
+
+@foreach (var card in Model.VisibleCards)
+{
+    <template id="card-template-@card.Id">@await Component.InvokeAsync("Card", new { model = card })</template>
+}
+
+<link rel="stylesheet"
+      href="~/css/game.css"
+      asp-append-version="true" />
+
+<div class="game-page"
+     id="gamePage"
+     data-match-id="@Model.MatchId">
+
+    <div id="gameStatNotifications" class="game-stat-notifications" role="log" aria-live="polite" aria-label="Gains et pertes de statistiques"></div>
+    <section class="game-board">
+
+        <div class="game-player-zone game-opponent-zone">
+
+            <header class="game-player-header">
+                <div class="game-player-identity">
+                    <img id="opponentAvatar"
+                         class="game-player-avatar"
+                         alt="" />
+
+                    <div>
+                        <strong id="opponentName">Adversaire</strong>
+                        <span>ADVERSAIRE</span>
+                    </div>
+                </div>
+
+
+            </header>
+
+            <div class="game-board-row">
+
+                <div class="game-side-zone">
+                    <div class="game-location-slot"
+                         id="opponentLocation">
+                        <span>LIEU</span>
+                    </div>
+
+
+                </div>
+
+                <div class="game-main-board">
+
+                    <div class="game-character-row"
+                         id="opponentCharacters">
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="game-character-slot"
+                                 data-slot="@i">
+                            </div>
+                        }
+                    </div>
+
+                    <div class="game-leader-slot"
+                         id="opponentLeader">
+                    </div>
+                </div>
+
+
+            </div>
+        </div>
+
+        <div class="game-center">
+            <div class="game-player-counters game-opponent-counters">
+                <span class="game-counter-owner">Adversaire</span>
+                <div class="game-player-timer"
+                     id="opponentTimer">
+                    20:00
+                </div>
+                <div class="game-money">
+                        <i data-lucide="coins"></i>
+                        <strong id="opponentMoney">0</strong>
+                    </div>
+                <div class="game-deck-zone">
+
+                    <div class="game-deck"
+                         id="opponentDeck">
+                        <i data-lucide="layers-3"></i>
+                        <strong>0</strong>
+                        <span>PIOCHE</span>
+                    </div>
+
+                    <div class="game-graveyard"
+                         id="opponentGraveyard">
+                        <i data-lucide="skull"></i>
+                        <strong>0</strong>
+                        <span>CIMETIÈRE</span>
+                    </div>
+
+                </div>
+            </div>
+            <div class="game-center-actions">
+
+            <div class="game-action-feedback">
+                <span id="gameActionStatus" role="status" aria-live="polite">Sélectionnez une carte de votre main pour la jouer.</span>
+                <button type="button" id="playCardButton" class="game-end-turn-button" hidden>Poser la carte</button>
+            </div>
+
+            <div class="game-turn-indicator">
+                <span id="gameTurnLabel">
+                    TOUR
+                </span>
+
+                <strong id="gameActivePlayer">
+                    Chargement...
+                </strong>
+            </div>
+
+            <button type="button"
+                    id="endTurnButton"
+                    class="game-end-turn-button">
+                Terminer le tour
+            </button>
+
+        </div>
+            <div class="game-player-counters game-self-counters">
+                <span class="game-counter-owner">Vous</span>
+                <div class="game-player-timer"
+                     id="selfTimer">
+                    20:00
+                </div>
+                <div class="game-money">
+                        <i data-lucide="coins"></i>
+                        <strong id="selfMoney">0</strong>
+                    </div>
+                <div class="game-deck-zone">
+
+                    <div class="game-deck"
+                         id="selfDeck">
+                        <i data-lucide="layers-3"></i>
+                        <strong>0</strong>
+                        <span>PIOCHE</span>
+                    </div>
+
+                    <div class="game-graveyard"
+                         id="selfGraveyard">
+                        <i data-lucide="skull"></i>
+                        <strong>0</strong>
+                        <span>CIMETIÈRE</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="game-player-zone game-self-zone">
+
+            <div class="game-board-row">
+
+                <div class="game-side-zone">
+                    <div class="game-location-slot"
+                         id="selfLocation">
+                        <span>LIEU</span>
+                    </div>
+
+
+                </div>
+
+                <div class="game-main-board">
+
+                    <div class="game-character-row"
+                         id="selfCharacters">
+                        @for (var i = 0; i < 4; i++)
+                        {
+                            <div class="game-character-slot"
+                                 data-slot="@i">
+                            </div>
+                        }
+                    </div>
+
+                    <div class="game-leader-slot"
+                         id="selfLeader">
+                    </div>
+
+                </div>
+
+
+
+            </div>
+
+            <div class="game-hand"
+                 id="selfHand">
+            </div>
+
+            <footer class="game-player-header">
+                <div class="game-player-identity">
+                    <img id="selfAvatar"
+                         class="game-player-avatar"
+                         alt="" />
+
+                    <div>
+                        <strong id="selfName">Joueur</strong>
+                        <span>VOUS</span>
+                    </div>
+                </div>
+
+
+            </footer>
+
+        </div>
+
+    </section>
+
+    <aside class="game-sidebar">
+
+        <div class="game-sidebar-tabs">
+            <button type="button"
+                    class="game-sidebar-tab active"
+                    data-tab="history">
+                Historique
+            </button>
+
+            <button type="button"
+                    class="game-sidebar-tab"
+                    data-tab="chat">
+                Chat
+            </button>
+        </div>
+
+        <div class="game-sidebar-panel active"
+             data-panel="history"
+             id="gameHistory">
+        </div>
+
+        <div class="game-sidebar-panel"
+             data-panel="chat">
+
+            <div class="game-chat-messages"
+                 id="gameChatMessages">
+            </div>
+
+            <form id="gameChatForm"
+                  class="game-chat-form">
+
+                <input type="text"
+                       id="gameChatInput"
+                       maxlength="300"
+                       autocomplete="off"
+                       placeholder="Écrire un message..." />
+
+                <button type="submit">
+                    <i data-lucide="send"></i>
+                </button>
+
+            </form>
+
+        </div>
+
+        <button type="button"
+                id="surrenderButton"
+                class="game-surrender-button">
+            <i data-lucide="flag"></i>
+            Abandonner
+        </button>
+
+    </aside>
+
+</div>
+
+<div id="gameTargetBar" class="game-target-bar" hidden>
+    <span id="gameTargetLabel" role="status" aria-live="polite"></span>
+    <button id="gameTargetCancel" type="button">Annuler</button>
+</div>
+<dialog id="gameCardDialog" class="game-card-dialog" aria-labelledby="gameCardDialogTitle">
+    <button type="button" id="gameCardDialogClose" class="game-dialog-close" aria-label="Fermer">×</button>
+    <div class="game-card-dialog-layout">
+        <div id="gameCardDialogPreview" class="game-card-dialog-preview"></div>
+        <div class="game-card-dialog-details">
+            <h2 id="gameCardDialogTitle">Carte</h2>
+            <p id="gameCardDialogStatus" role="status" aria-live="polite"></p>
+            <div id="gameCardDialogActions" class="game-card-dialog-actions"></div>
+        </div>
+    </div>
+</dialog>
+
+@section Scripts {
+    <script src="~/js/card-components.js" asp-append-version="true"></script>
+    <script src="~/js/game.js"
+            asp-append-version="true">
+    </script>
+}

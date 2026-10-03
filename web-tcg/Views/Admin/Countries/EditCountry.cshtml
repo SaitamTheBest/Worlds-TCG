@@ -1,0 +1,484 @@
+﻿@model web_tcg.Models.Admin.CreateCountryViewModel
+
+@{
+    ViewData["Title"] = "Modifier un pays";
+    Layout = "_Layout";
+
+    var countryId = (int)ViewBag.CountryId;
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-country-create.css"
+      asp-append-version="true" />
+
+<div class="admin-create-country-page">
+
+    <div class="admin-create-country-background">
+        <div class="admin-create-country-grid"></div>
+
+        <div class="admin-create-country-glow admin-create-country-glow-1"></div>
+        <div class="admin-create-country-glow admin-create-country-glow-2"></div>
+    </div>
+
+
+    <div class="admin-create-country-container">
+
+        <!-- HEADER -->
+        <header class="admin-create-country-header">
+
+            <div class="admin-create-country-breadcrumb-row">
+
+                <a asp-controller="Admin"
+                   asp-action="Countries"
+                   class="admin-create-country-back">
+
+                    <i data-lucide="arrow-left"></i>
+
+                    <span>
+                        Pays
+                    </span>
+
+                </a>
+
+                <i data-lucide="chevron-right"
+                   class="admin-create-country-breadcrumb-icon"></i>
+
+                <span class="admin-create-country-breadcrumb-current">
+                    MODIFICATION
+                </span>
+
+            </div>
+
+
+            <div class="admin-create-country-title">
+
+                <div class="admin-create-country-title-icon">
+                    <i data-lucide="pencil"></i>
+                </div>
+
+                <div>
+
+                    <div class="admin-create-country-eyebrow">
+                        ADMINISTRATION
+                    </div>
+
+                    <h1>
+                        Modifier le
+                        <span>Pays</span>
+                    </h1>
+
+                    <p>
+                        Modifiez les informations et le rattachement
+                        régional de ce pays.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- ERRORS -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="admin-create-country-alert">
+
+                <div class="admin-create-country-alert-icon">
+                    <i data-lucide="alert-triangle"></i>
+                </div>
+
+                <div class="admin-create-country-alert-content">
+
+                    <strong>
+                        Vérifiez les informations
+                    </strong>
+
+                    <ul>
+
+                        @foreach (var entry in ViewData.ModelState)
+                        {
+                            foreach (var error in entry.Value.Errors)
+                            {
+                                if (!string.IsNullOrWhiteSpace(error.ErrorMessage))
+                                {
+                                    <li>
+                                        @error.ErrorMessage
+                                    </li>
+                                }
+                            }
+                        }
+
+                    </ul>
+
+                </div>
+
+            </div>
+        }
+
+
+        <form asp-controller="Admin"
+              asp-action="EditCountry"
+              asp-route-id="@countryId"
+              method="post"
+              class="admin-create-country-layout">
+
+            @Html.AntiForgeryToken()
+
+
+            <!-- FORM -->
+            <div class="admin-create-country-form">
+
+                <section class="admin-create-country-section">
+
+                    <div class="admin-create-country-section-heading">
+
+                        <div class="admin-create-country-section-number">
+                            01
+                        </div>
+
+                        <div>
+
+                            <span>
+                                CONFIGURATION
+                            </span>
+
+                            <h2>
+                                Informations du pays
+                            </h2>
+
+                            <p>
+                                Modifiez l'identité et la région
+                                associée à ce pays.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="admin-create-country-fields">
+
+                        <!-- NAME -->
+                        <div class="admin-create-country-field">
+
+                            <label asp-for="Name">
+                                Nom du pays
+                                <span>*</span>
+                            </label>
+
+                            <div class="admin-create-country-input-wrapper">
+
+                                <i data-lucide="map-pin"></i>
+
+                                <input asp-for="Name"
+                                       id="Name"
+                                       autocomplete="off" />
+
+                            </div>
+
+                            <span asp-validation-for="Name"
+                                  class="admin-create-country-validation">
+                            </span>
+
+                            <small>
+                                Nom officiel ou nom d'affichage du pays.
+                            </small>
+
+                        </div>
+
+
+                        <!-- CODE -->
+                        <div class="admin-create-country-field">
+
+                            <label asp-for="Code">
+                                Code
+                                <span>*</span>
+                            </label>
+
+                            <div class="admin-create-country-input-wrapper">
+
+                                <i data-lucide="hash"></i>
+
+                                <input asp-for="Code"
+                                       id="Code"
+                                       maxlength="3"
+                                       autocomplete="off" />
+
+                            </div>
+
+                            <span asp-validation-for="Code"
+                                  class="admin-create-country-validation">
+                            </span>
+
+                            <small>
+                                Code court du pays, maximum 3 caractères.
+                            </small>
+
+                        </div>
+
+
+                        <!-- REGION -->
+                        <div class="admin-create-country-field field-full">
+
+                            <label asp-for="RegionId">
+                                Région / Faction
+                                <span>*</span>
+                            </label>
+
+                            <div class="admin-create-country-input-wrapper">
+
+                                <i data-lucide="layers-3"></i>
+
+                                <select asp-for="RegionId"
+                                        asp-items="ViewBag.Regions"
+                                        id="RegionId">
+
+                                    <option value="">
+                                        -- Sélectionnez une région --
+                                    </option>
+
+                                </select>
+
+                                <i data-lucide="chevron-down"
+                                   class="admin-create-country-select-arrow"></i>
+
+                            </div>
+
+                            <span asp-validation-for="RegionId"
+                                  class="admin-create-country-validation">
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </section>
+
+
+                <!-- ACTIONS -->
+                <div class="admin-create-country-actions">
+
+                    <a asp-controller="Admin"
+                       asp-action="Countries"
+                       class="admin-create-country-cancel">
+
+                        <i data-lucide="arrow-left"></i>
+
+                        <span>
+                            Annuler
+                        </span>
+
+                    </a>
+
+
+                    <button type="submit"
+                            class="admin-create-country-submit">
+
+                        <i data-lucide="save"></i>
+
+                        <span>
+                            Enregistrer les modifications
+                        </span>
+
+                        <i data-lucide="arrow-up-right"></i>
+
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <!-- SIDE PANEL -->
+            <aside class="admin-create-country-sidebar">
+
+                <div class="admin-create-country-sidebar-panel">
+
+                    <div class="admin-create-country-sidebar-header">
+
+                        <div>
+
+                            <span>
+                                MODIFICATION
+                            </span>
+
+                            <h2>
+                                Pays #@countryId
+                            </h2>
+
+                        </div>
+
+                        <div class="admin-create-country-live">
+                            <span></span>
+                            ÉDITION
+                        </div>
+
+                    </div>
+
+
+                    <div class="admin-create-country-structure">
+
+                        <div class="admin-create-country-structure-item">
+
+                            <div class="admin-create-country-structure-icon">
+                                <i data-lucide="globe-2"></i>
+                            </div>
+
+                            <div>
+
+                                <span>
+                                    PAYS
+                                </span>
+
+                                <strong id="sideCountryName">
+                                    @Model.Name
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="admin-create-country-structure-line">
+                        </div>
+
+
+                        <div class="admin-create-country-structure-item">
+
+                            <div class="admin-create-country-structure-icon">
+                                <i data-lucide="layers-3"></i>
+                            </div>
+
+                            <div>
+
+                                <span>
+                                    RÉGION
+                                </span>
+
+                                <strong id="sideRegionName">
+                                    Région actuelle
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="admin-create-country-sidebar-info">
+
+                        <div class="admin-create-country-sidebar-info-icon">
+                            <i data-lucide="info"></i>
+                        </div>
+
+                        <p>
+                            Les modifications seront appliquées
+                            immédiatement après l'enregistrement.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const nameInput =
+                document.getElementById('Name');
+
+            const codeInput =
+                document.getElementById('Code');
+
+            const regionInput =
+                document.getElementById('RegionId');
+
+            const sideCountryName =
+                document.getElementById('sideCountryName');
+
+            const sideRegionName =
+                document.getElementById('sideRegionName');
+
+
+            function updatePreview() {
+
+                const name =
+                    nameInput.value.trim();
+
+                const selectedOption =
+                    regionInput.options[
+                    regionInput.selectedIndex
+                    ];
+
+
+                sideCountryName.textContent =
+                    name || 'Nouveau pays';
+
+
+                if (
+                    selectedOption &&
+                    selectedOption.value
+                ) {
+                    sideRegionName.textContent =
+                        selectedOption.textContent.trim();
+                }
+                else {
+                    sideRegionName.textContent =
+                        'Non sélectionnée';
+                }
+
+            }
+
+
+            codeInput.addEventListener(
+                'input',
+                function() {
+
+                    this.value =
+                        this.value
+                            .toUpperCase()
+                            .replace(/[^A-Z0-9]/g, '')
+                            .slice(0, 3);
+
+                }
+            );
+
+
+            nameInput.addEventListener(
+                'input',
+                updatePreview
+            );
+
+
+            regionInput.addEventListener(
+                'change',
+                updatePreview
+            );
+
+
+            updatePreview();
+
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+        });
+
+    </script>
+}

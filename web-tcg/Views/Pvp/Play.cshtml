@@ -1,0 +1,267 @@
+@using web_tcg.Models.Home
+@model HomeViewModel
+
+@{
+    ViewData["Title"] = "PVP";
+}
+
+<link rel="stylesheet"
+      href="~/css/pvp.css"
+      asp-append-version="true" />
+
+@Html.AntiForgeryToken()
+
+<main class="worlds-pvp">
+
+    <div class="worlds-container">
+
+        <header class="worlds-pvp-header">
+
+            <span class="worlds-kicker">
+                AFFRONTEMENT
+            </span>
+
+            <h1>
+                Mode PVP
+            </h1>
+
+            <p class="worlds-pvp-subtitle">
+                Combattez en temps réel et grimpez les classements.
+            </p>
+
+        </header>
+
+        <!-- =========================================================
+             DEUX MODES DE JEU
+             ========================================================= -->
+
+        <div class="worlds-pvp-modes">
+
+            <div class="worlds-matchmaking-activity" role="status" aria-live="polite">
+                <span><strong id="matchmakingPlayersInGame">—</strong> joueurs en partie</span>
+                <span><strong id="matchmakingPlayersInQueue">—</strong> joueurs en file d’attente</span>
+            </div>
+
+            <!-- ========= MODE JOUEUR vs JOUEUR ========= -->
+
+            <div class="worlds-pvp-mode-section">
+
+                <article class="worlds-pvp-card">
+
+                    <header class="worlds-pvp-card-header">
+
+                        <span>
+                            VS JOUEUR
+                        </span>
+
+                        <h2>
+                            <i data-lucide="users"></i> PVP
+                        </h2>
+
+                    </header>
+
+                    @if (Model.UserDecks.Count == 0)
+                    {
+                        <p class="worlds-pvp-empty">
+                            Créez un deck pour lancer une partie PVP contre un autre joueur.
+                        </p>
+                    }
+                        <div class="worlds-pvp-body">
+
+                            <div class="worlds-pvp-field">
+
+                                <label for="worldsVsPvpDeckSelect">
+                                    Deck
+                                </label>
+
+                                <select id="worldsVsPvpDeckSelect">
+                                    @foreach (var deck in Model.UserDecks)
+                                    {
+                                        <option value="@deck.Id">
+                                            @deck.Name
+                                        </option>
+                                    }
+                                </select>
+
+                            </div>
+
+                            <button type="button"
+                                    id="worldsVsPvpJoinButton"
+                                    class="worlds-btn worlds-btn-gold">
+
+                                <i data-lucide="zap"></i>
+
+                                <span>
+                                    Rechercher un joueur
+                                </span>
+
+                            </button>
+
+                            <div class="worlds-pvp-status"
+                                 id="worldsVsPvpStatus">
+                            </div>
+
+                        </div>
+
+                </article>
+
+                <!-- FILE D'ATTENTE PVP -->
+
+                <section class="worlds-pvp-queue"
+                         id="worldsVsPvpQueueSection"
+                         hidden>
+
+                    <article class="worlds-pvp-card">
+
+                        <header class="worlds-pvp-card-header">
+
+                            <span>
+                                MATCHMAKING
+                            </span>
+
+                            <h2>
+                                En attente...
+                            </h2>
+
+                        </header>
+
+                        <div class="worlds-pvp-queue-content">
+
+                            <div class="worlds-pvp-queue-animation">
+                                <div class="worlds-pvp-queue-spinner"></div>
+                            </div>
+
+                            <p id="worldsVsPvpQueueMessage">
+                                Recherche d'un adversaire...
+                            </p>
+
+                            <button type="button"
+                                    id="worldsVsPvpCancelButton"
+                                    class="worlds-btn worlds-btn-ghost">
+
+                                <i data-lucide="x"></i>
+
+                                <span>
+                                    Annuler
+                                </span>
+
+                            </button>
+
+                        </div>
+
+                    </article>
+
+                </section>
+
+            </div>
+
+            <!-- ========= MODE JOUEUR vs IA ========= -->
+
+            <div class="worlds-pvp-mode-section">
+
+                <article class="worlds-pvp-card">
+
+                    <header class="worlds-pvp-card-header">
+
+                        <span>
+                            VS IA
+                        </span>
+
+                        <h2>
+                            <i data-lucide="bot"></i> Contre l'IA
+                        </h2>
+
+                    </header>
+
+                    @if (Model.UserDecks.Count == 0)
+                    {
+                        <p class="worlds-pvp-empty">
+                            Créez un deck pour affronter l'IA.
+                        </p>
+                    }
+                        <div class="worlds-pvp-body">
+
+                            <div class="worlds-pvp-field">
+
+                                <label for="worldsVsIaDeckSelect">
+                                    Deck
+                                </label>
+
+                                <select id="worldsVsIaDeckSelect">
+                                    @foreach (var deck in Model.UserDecks)
+                                    {
+                                        <option value="@deck.Id">
+                                            @deck.Name
+                                        </option>
+                                    }
+                                </select>
+
+                            </div>
+
+                            <button type="button"
+                                    id="worldsVsIaPlayButton"
+                                    class="worlds-btn worlds-btn-secondary">
+
+                                <i data-lucide="bot"></i>
+
+                                <span>
+                                    Lancer la partie
+                                </span>
+
+                            </button>
+
+                            <div class="worlds-pvp-status"
+                                 id="worldsVsIaStatus">
+                            </div>
+
+                        </div>
+
+                </article>
+
+                <!-- ÉCRAN DE LANCEMENT IA -->
+
+                <section class="worlds-pvp-queue"
+                         id="worldsVsIaQueueSection"
+                         hidden>
+
+                    <article class="worlds-pvp-card">
+
+                        <header class="worlds-pvp-card-header">
+
+                            <span>
+                                DÉMARRAGE
+                            </span>
+
+                            <h2>
+                                Préparation...
+                            </h2>
+
+                        </header>
+
+                        <div class="worlds-pvp-queue-content">
+
+                            <div class="worlds-pvp-queue-animation">
+                                <div class="worlds-pvp-queue-spinner"></div>
+                            </div>
+
+                            <p id="worldsVsIaQueueMessage">
+                                Lancement de la partie contre l'IA...
+                            </p>
+
+                        </div>
+
+                    </article>
+
+                </section>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</main>
+
+<script src="~/js/pvp-lobby.js"
+        asp-append-version="true"></script>
+

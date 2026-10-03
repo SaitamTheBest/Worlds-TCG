@@ -1,0 +1,460 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="utf-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <title>
+        @ViewData["Title"] - Worlds TCG
+    </title>
+
+    <link rel="stylesheet"
+          href="~/css/variables.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/output.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/components.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/admin-forms.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/sidebar.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/inventory.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/notifications.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/topbar.css"
+          asp-append-version="true" />
+
+    <link rel="stylesheet"
+          href="~/css/footer.css"
+          asp-append-version="true" />
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.21.0/jquery.validate.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+
+    <script defer
+            src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js">
+    </script>
+
+    <script defer
+            src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/ScrollTrigger.min.js">
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="icon"
+          type="image/png"
+          href="/favicon/favicon-96x96.png"
+          sizes="96x96"
+          asp-append-version="true" />
+
+    <link rel="icon"
+          type="image/svg+xml"
+          href="/favicon/favicon.svg"
+          asp-append-version="true" />
+
+    <link rel="shortcut icon"
+          href="/favicon/favicon.ico"
+          asp-append-version="true" />
+
+    <link rel="apple-touch-icon"
+          sizes="180x180"
+          href="/favicon/apple-touch-icon.png"
+          asp-append-version="true" />
+
+    <link rel="manifest"
+          href="/favicon/site.webmanifest"
+          asp-append-version="true" />
+</head>
+
+<body class="bg-dark-50"
+      style="font-family:'Roboto',sans-serif;">
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <aside class="sidebar">
+
+        <div class="sidebar-brand">
+
+            <a href="/"
+               class="sidebar-logo">
+
+                <img src="~/worlds-tcg-logo.png"
+                     alt="Worlds TCG"
+                     class="sidebar-logo-img" />
+
+            </a>
+
+        </div>
+
+        <nav class="sidebar-nav">
+
+            <a href="@Url.Action("Index", "Home")"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["Action"]?.ToString() == "Index" ? "active" : "")"
+               title="Accueil">
+
+                <i data-lucide="house"></i>
+
+                <span class="sidebar-label">
+                    Accueil
+                </span>
+
+            </a>
+
+            <a href="@Url.Action("Index", "Booster")"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Booster" ? "active" : "")"
+               title="Boosters">
+
+                <i data-lucide="package-open"></i>
+
+                <span class="sidebar-label">
+                    Boosters
+                </span>
+
+            </a>
+
+            <a href="@Url.Action("Index", "Inventory")"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Inventory" ? "active" : "")"
+               title="Inventaire">
+
+                <i data-lucide="library"></i>
+
+                <span class="sidebar-label">
+                    Inventaire
+                </span>
+
+            </a>
+
+            <a href="@Url.Action("Play", "Pvp")"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Pvp" ? "active" : "")"
+               title="PVP">
+
+                <i data-lucide="zap"></i>
+
+                <span class="sidebar-label">
+                    PVP
+                </span>
+
+            </a>
+
+            <a href="@Url.Action("Manage", "Deck")"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Deck" ? "active" : "")"
+               title="Decks">
+
+                <i data-lucide="cards"></i>
+
+                <span class="sidebar-label">
+                    Decks
+                </span>
+
+            </a>
+
+            @if (User.IsInRole("Admin"))
+            {
+                <div class="sidebar-divider"></div>
+
+                <a asp-controller="Admin"
+                   asp-action="CreateCard"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "CreateCard" ? "active" : "")"
+                   title="Créer Carte">
+
+                    <i data-lucide="plus-square"></i>
+
+                    <span class="sidebar-label">
+                        Créer Carte
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="Cards"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Cards" ? "active" : "")"
+                   title="Gérer Cartes">
+
+                    <i data-lucide="layers-3"></i>
+
+                    <span class="sidebar-label">
+                        Gérer Cartes
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="CreateCardSet"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "CreateCardSet" ? "active" : "")"
+                   title="Créer Extension">
+
+                    <i data-lucide="package-plus"></i>
+
+                    <span class="sidebar-label">
+                        Créer Extension
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="CardSets"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "CardSets" ? "active" : "")"
+                   title="Gérer Extensions">
+
+                    <i data-lucide="library-big"></i>
+
+                    <span class="sidebar-label">
+                        Gérer Extensions
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="CreateRegion"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "CreateRegion" ? "active" : "")"
+                   title="Créer Région">
+
+                    <i data-lucide="globe-2"></i>
+
+                    <span class="sidebar-label">
+                        Créer Région
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="Regions"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Regions" ? "active" : "")"
+                   title="Gérer Régions">
+
+                    <i data-lucide="map"></i>
+
+                    <span class="sidebar-label">
+                        Gérer Régions
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="CreateCountry"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "CreateCountry" ? "active" : "")"
+                   title="Créer Pays">
+
+                    <i data-lucide="flag"></i>
+
+                    <span class="sidebar-label">
+                        Créer Pays
+                    </span>
+
+                </a>
+
+                <a asp-controller="Admin"
+                   asp-action="Countries"
+                   class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Countries" ? "active" : "")"
+                   title="Gérer Pays">
+
+                    <i data-lucide="list"></i>
+
+                    <span class="sidebar-label">
+                        Gérer Pays
+                    </span>
+
+                </a>
+            }
+
+        </nav>
+
+        <div class="sidebar-footer">
+
+            <form method="post"
+                  asp-controller="Auth"
+                  asp-action="Logout">
+
+                <button type="submit"
+                        class="sidebar-nav-item sidebar-logout"
+                        title="Déconnexion">
+
+                    <i data-lucide="log-out"></i>
+
+                    <span class="sidebar-label">
+                        Déconnexion
+                    </span>
+
+                </button>
+
+            </form>
+
+        </div>
+
+    </aside>
+
+    <div class="main-with-sidebar">
+
+        <header class="tcg-topbar">
+
+            <div class="tcg-topbar-inner">
+
+                <div class="tcg-topbar-user">
+
+                    @await Component.InvokeAsync("Balance")
+
+                    @await Component.InvokeAsync("CardBalance")
+
+                    @await Component.InvokeAsync("Notification")
+
+                    @await Component.InvokeAsync("UserMenu")
+
+                </div>
+
+            </div>
+
+        </header>
+
+        <main class="w-full bg-dark-900 text-white">
+            @RenderBody()
+        </main>
+
+        <partial name="_Footer" />
+
+    </div>
+}
+else
+{
+    <header>
+        <nav class="bg-dark-900 border-b border-dark-200">
+
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+                <div class="flex justify-between items-center h-16">
+
+                    <a asp-controller="Home"
+                       asp-action="Index"
+                       class="text-2xl font-bold text-primary-yellow">
+
+                        Worlds TCG
+
+                    </a>
+
+                    <span class="text-sm text-gray-500">
+                        Veuillez vous connecter
+                    </span>
+
+                </div>
+
+            </div>
+
+        </nav>
+    </header>
+
+    <main class="w-full bg-dark-900 text-white">
+        @RenderBody()
+    </main>
+
+    <partial name="_Footer" />
+}
+
+<script src="~/js/site.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/card-balance.js"
+        asp-append-version="true"></script>
+
+<script src="~/js/notifications.js"
+        asp-append-version="true"></script>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== "undefined") {
+            lucide.createIcons();
+        }
+
+        const userMenu =
+            document.getElementById("tcgUserMenu");
+
+        const trigger =
+            document.getElementById("tcgUserMenuTrigger");
+
+        const dropdown =
+            document.getElementById("tcgUserDropdown");
+
+        if (!userMenu || !trigger || !dropdown)
+            return;
+
+        function setUserMenuOpen(open) {
+            userMenu.classList.toggle(
+                "is-open",
+                open
+            );
+
+            trigger.setAttribute(
+                "aria-expanded",
+                open ? "true" : "false"
+            );
+
+            dropdown.setAttribute(
+                "aria-hidden",
+                open ? "false" : "true"
+            );
+        }
+
+        trigger.addEventListener(
+            "click",
+            event => {
+                event.stopPropagation();
+
+                const isOpen =
+                    userMenu.classList.contains(
+                        "is-open"
+                    );
+
+                setUserMenuOpen(!isOpen);
+            }
+        );
+
+        document.addEventListener(
+            "click",
+            event => {
+                if (!userMenu.contains(event.target)) {
+                    setUserMenuOpen(false);
+                }
+            }
+        );
+
+        document.addEventListener(
+            "keydown",
+            event => {
+                if (event.key === "Escape") {
+                    setUserMenuOpen(false);
+                    trigger.focus();
+                }
+            }
+        );
+    });
+</script>
+
+@await RenderSectionAsync(
+    "Scripts",
+    required: false
+)
+
+</body>
+</html>

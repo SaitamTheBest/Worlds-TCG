@@ -1,0 +1,1967 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering
+@using web_tcg.Data.Enums
+@model web_tcg.Models.Admin.CreateCardViewModel
+
+@{
+    var isEdit = Model.Id.HasValue;
+
+    ViewData["Title"] = isEdit
+        ? $"Modifier - {Model.Name}"
+        : "Créer une carte";
+
+    var cardTypes = (SelectList)ViewBag.CardTypes
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var cardRarities = (SelectList)ViewBag.CardRarities
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var cardSets = (SelectList)ViewBag.CardSets
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var regions = (SelectList)ViewBag.Regions
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var countries = (SelectList)ViewBag.Countries
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var cardArtTypes = (SelectList)ViewBag.CardArtTypes
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var abilityTypes = (SelectList)ViewBag.AbilityTypes
+        ?? new SelectList(Enumerable.Empty<SelectListItem>());
+
+    var backUrl = isEdit
+        ? Url.Action("Cards", "Admin", new { cardSetId = Model.CardSetId })
+        : Url.Action("Cards", "Admin");
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-create-card.css"
+      asp-append-version="true" />
+
+<link rel="stylesheet"
+      href="~/css/card-image-upload.css"
+      asp-append-version="true" />
+
+<div class="admin-create-page">
+
+    <!-- =========================================================
+         BACKGROUND
+         ========================================================= -->
+
+    <div class="admin-create-background">
+        <div class="admin-create-grid"></div>
+        <div class="admin-create-glow admin-create-glow-1"></div>
+        <div class="admin-create-glow admin-create-glow-2"></div>
+    </div>
+
+    <div class="admin-create-content">
+
+        <!-- =====================================================
+             HEADER
+             ===================================================== -->
+
+        <header class="create-card-header">
+            <div>
+
+                <a href="@backUrl"
+                   class="create-back-link">
+                    <i data-lucide="arrow-left"></i>
+                    <span>Retour au catalogue</span>
+                </a>
+
+                <div class="create-eyebrow">
+                    <span></span>
+                    <i data-lucide="@(isEdit ? "pencil" : "plus-square")"></i>
+                    ADMINISTRATION
+                </div>
+
+                <h1>
+                    @(isEdit ? "Modifier une" : "Créer une")
+                    <span>carte</span>
+                </h1>
+
+                <p>
+                    @if (isEdit)
+                    {
+                        <text>
+                            Modifiez les caractéristiques, illustrations,
+                            variantes et capacités de cette carte.
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                            Configurez les caractéristiques, l'identité visuelle
+                            et les capacités de votre nouvelle carte.
+                        </text>
+                    }
+                </p>
+            </div>
+
+            <div class="create-header-badge">
+                <i data-lucide="@(isEdit ? "pencil" : "sparkles")"></i>
+
+                <div>
+                    <span>ÉDITEUR</span>
+                    <strong>
+                        @(isEdit ? "MODIFICATION" : "NOUVELLE CARTE")
+                    </strong>
+                </div>
+            </div>
+        </header>
+
+        <!-- =====================================================
+             VALIDATION
+             ===================================================== -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="create-validation">
+                <div class="create-validation-icon">
+                    <i data-lucide="triangle-alert"></i>
+                </div>
+
+                <div class="create-validation-content">
+                    <h3>Vérification nécessaire</h3>
+
+                    <ul>
+                        @foreach (var modelState in ViewData.ModelState.Values)
+                        {
+                            foreach (var error in modelState.Errors)
+                            {
+                                <li>
+                                    <i data-lucide="circle-x"></i>
+                                    <span>@error.ErrorMessage</span>
+                                </li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
+        <!-- =====================================================
+             FORM
+             ===================================================== -->
+
+        <form asp-controller="Admin"
+              asp-action="CreateCard"
+              asp-route-id="@Model.Id"
+              method="post"
+              id="createCardForm"
+              class="create-card-layout"
+              data-card-image-upload-url="@Url.Action("Upload", "CardImage")">
+
+            @Html.AntiForgeryToken()
+
+            @if (Model.Id.HasValue)
+            {
+                <input type="hidden"
+                       name="Id"
+                       value="@Model.Id" />
+            }
+
+            <!-- =================================================
+                 LEFT COLUMN
+                 ================================================= -->
+
+            <div class="create-form-column">
+
+                <!-- =============================================
+                     01 - IDENTITY
+                     ============================================= -->
+
+                <section class="create-section">
+                    <div class="create-section-header">
+                        <div class="create-section-number">01</div>
+
+                        <div>
+                            <div class="create-section-kicker">
+                                IDENTITÉ
+                            </div>
+
+                            <h2>Informations principales</h2>
+
+                            <p>
+                                Définissez l'identité et les caractéristiques
+                                fondamentales de la carte.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="create-fields-grid">
+
+                        <!-- Name -->
+
+                        <div class="create-field create-field-full">
+                            <label for="Name">
+                                Nom de la carte
+                                <span>*</span>
+                            </label>
+
+                            <div class="create-input-wrapper">
+                                <i data-lucide="type"></i>
+
+                                <input type="text"
+                                       id="Name"
+                                       name="Name"
+                                       value="@Model.Name"
+                                       required
+                                       maxlength="150"
+                                       autocomplete="off"
+                                       placeholder="Ex. Le Roi des Mers" />
+                            </div>
+                        </div>
+
+                        <!-- Type -->
+
+                        <div class="create-field">
+                            <label for="Type">
+                                Type de carte
+                                <span>*</span>
+                            </label>
+
+                            <div class="create-select-wrapper">
+                                <i data-lucide="layers-3"></i>
+
+                                <select id="Type"
+                                        name="Type"
+                                        required>
+                                    <option value="">
+                                        Sélectionnez un type
+                                    </option>
+
+                                    @foreach (var item in cardTypes)
+                                    {
+                                        var selected =
+                                            item.Value == ((int)Model.Type).ToString()
+                                            || item.Value == Model.Type.ToString();
+
+                                        <option value="@item.Value"
+                                                selected="@selected">
+                                            @item.Text
+                                        </option>
+                                    }
+                                </select>
+
+                                <i data-lucide="chevron-down"
+                                   class="select-chevron"></i>
+                            </div>
+                        </div>
+
+                        <!-- Rarity -->
+
+                        <div id="rarityField"
+                             class="create-field create-conditional-field">
+
+                            <label for="Rarity">
+                                Rareté
+                            </label>
+
+                            <div class="create-select-wrapper">
+                                <i data-lucide="gem"></i>
+
+                                <select id="Rarity"
+                                        name="Rarity">
+                                    <option value="">
+                                        Pas de rareté
+                                    </option>
+
+                                    @foreach (var item in cardRarities.Where(x =>
+                                        !string.IsNullOrWhiteSpace(x.Value)))
+                                    {
+                                        var selected =
+                                            Model.Rarity.HasValue &&
+                                            (
+                                                item.Value == ((int)Model.Rarity.Value).ToString()
+                                                || item.Value == Model.Rarity.Value.ToString()
+                                            );
+
+                                        <option value="@item.Value"
+                                                selected="@selected">
+                                            @item.Text
+                                        </option>
+                                    }
+                                </select>
+
+                                <i data-lucide="chevron-down"
+                                   class="select-chevron"></i>
+                            </div>
+                        </div>
+
+                        <!-- Extension -->
+
+                        <div class="create-field">
+                            <label for="CardSetId">
+                                Extension
+                                <span>*</span>
+                            </label>
+
+                            <div class="create-select-wrapper">
+                                <i data-lucide="package"></i>
+
+                                <select id="CardSetId"
+                                        name="CardSetId"
+                                        required>
+                                    <option value="">
+                                        Sélectionnez une extension
+                                    </option>
+
+                                    @foreach (var item in cardSets)
+                                    {
+                                        var selected =
+                                            item.Value == Model.CardSetId.ToString();
+
+                                        <option value="@item.Value"
+                                                selected="@selected"
+                                                data-code="@item.Text">
+                                            @item.Text
+                                        </option>
+                                    }
+                                </select>
+
+                                <i data-lucide="chevron-down"
+                                   class="select-chevron"></i>
+                            </div>
+                        </div>
+
+                        <!-- Collection number -->
+
+                        <div class="create-field">
+                            <label for="CollectionNumber">
+                                Numéro de collection
+                                <span>*</span>
+                            </label>
+
+                            <div class="create-input-wrapper">
+                                <i data-lucide="hash"></i>
+
+                                <input type="number"
+                                       id="CollectionNumber"
+                                       name="CollectionNumber"
+                                       value="@Model.CollectionNumber"
+                                       required
+                                       min="1"
+                                       max="999"
+                                       placeholder="42" />
+                            </div>
+
+                            <small>
+                                Entre 1 et 999.
+                            </small>
+                        </div>
+
+                        <!-- Usage cost -->
+
+                    </div>
+                    <div class="create-characteristics">
+                        <div class="create-characteristics-heading">
+                            <i data-lucide="sliders-horizontal"></i>
+                            <div><h3>Caractéristiques de jeu</h3><p>Définissez le coût de pose et la résistance de la carte. Les capacités ont leur propre coût.</p></div>
+                        </div>
+                        <div class="create-fields-grid">
+
+                        <div id="usageCostField" class="create-field" hidden="@(Model.Type == CardType.Leader)">
+                            <label for="UsageCost">
+                                Coût de pose
+                                <span>*</span>
+                            </label>
+
+                            <div class="create-input-wrapper create-cost-input">
+                                <i data-lucide="circle-dollar-sign"></i>
+
+                                <input type="number"
+                                       id="UsageCost"
+                                       name="UsageCost"
+                                       value="@Model.UsageCost"
+                                       required
+                                       min="0"
+                                       max="99"
+                                       placeholder="5" />
+
+                                <span class="input-suffix">
+                                    ◈
+                                </span>
+                            </div>
+                            <small>Énergie dépensée pour jouer cette carte depuis la main.</small>
+                        </div>
+
+                        <!-- Health -->
+
+                        <div id="healthPointsField"
+                             class="create-field create-conditional-field">
+
+                            <label for="HealthPoints">
+                                Points de vie
+                            </label>
+
+                            <div class="create-input-wrapper">
+                                <i data-lucide="heart"></i>
+
+                                <input type="number"
+                                       id="HealthPoints"
+                                       name="HealthPoints"
+                                       value="@Model.HealthPoints"
+                                       min="10"
+                                       max="1500"
+                                       placeholder="100" />
+                            </div>
+
+                            <small>
+                                Entre 10 et 1500, pour les personnages et les Leaders.
+                            </small>
+                        </div>
+
+                    </div>
+                    </div>
+                </section>
+
+                <!-- =============================================
+                     02 - LOCATION
+                     ============================================= -->
+
+                <section class="create-section">
+                    <div class="create-section-header">
+                        <div class="create-section-number">02</div>
+
+                        <div>
+                            <div class="create-section-kicker">
+                                GÉOGRAPHIE
+                            </div>
+
+                            <h2>Région et localisation</h2>
+
+                            <p>
+                                Associez la carte à une région et éventuellement
+                                à un pays.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="create-fields-grid">
+
+                        <!-- Region -->
+
+                        <div class="create-field">
+                            <label for="RegionId">
+                                Région / Faction
+                                <span>*</span>
+                            </label>
+
+                            <div class="create-select-wrapper">
+                                <i data-lucide="map"></i>
+
+                                <select id="RegionId"
+                                        name="RegionId"
+                                        required>
+                                    <option value="">
+                                        Sélectionnez une région
+                                    </option>
+
+                                    @foreach (var item in regions)
+                                    {
+                                        var selected =
+                                            item.Value == Model.RegionId.ToString();
+
+                                        <option value="@item.Value"
+                                                selected="@selected">
+                                            @item.Text
+                                        </option>
+                                    }
+                                </select>
+
+                                <i data-lucide="chevron-down"
+                                   class="select-chevron"></i>
+                            </div>
+                        </div>
+
+                        <!-- Country -->
+
+                        <div class="create-field">
+                            <label for="CountryId">
+                                Pays
+                                <em>OPTIONNEL</em>
+                            </label>
+
+                            <div class="create-select-wrapper">
+                                <i data-lucide="flag"></i>
+
+                                <select id="CountryId"
+                                        name="CountryId">
+                                    <option value="">
+                                        Pas de pays
+                                    </option>
+
+                                    @foreach (var item in countries)
+                                    {
+                                        var selected =
+                                            item.Value == Model.CountryId?.ToString();
+
+                                        <option value="@item.Value"
+                                                selected="@selected">
+                                            @item.Text
+                                        </option>
+                                    }
+                                </select>
+
+                                <i data-lucide="chevron-down"
+                                   class="select-chevron"></i>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- =============================================
+                     03 - ART / VARIANTS
+                     ============================================= -->
+
+                <section class="create-section">
+                    <div class="create-section-header">
+                        <div class="create-section-number">03</div>
+
+                        <div>
+                            <div class="create-section-kicker">
+                                DIRECTION ARTISTIQUE
+                            </div>
+
+                            <h2>Illustration & variantes</h2>
+
+                            <p>
+                                Définissez l'illustration normale puis ajoutez
+                                autant de variantes que nécessaire.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Base card -->
+
+                    <div class="create-base-art">
+                        <div class="create-base-art-header">
+                            <div>
+                                <span class="create-art-number">
+                                    BASE
+                                </span>
+
+                                <div>
+                                    <span>ILLUSTRATION PRINCIPALE</span>
+                                    <strong>Version normale</strong>
+                                </div>
+                            </div>
+
+                            <span class="create-normal-badge">
+                                NORMAL
+                            </span>
+                        </div>
+
+                        <div class="create-field">
+                            <label>
+                                Illustration normale
+                                <span>*</span>
+                            </label>
+
+                            <input type="hidden"
+                                   id="MainImageUrl"
+                                   name="MainImageUrl"
+                                   value="@Model.MainImageUrl"
+                                   class="card-image-path" />
+
+                            <div class="card-image-uploader"
+                                 data-card-image-uploader>
+
+                                <input type="file"
+                                       class="card-image-file"
+                                       accept="image/png,image/jpeg,image/webp"
+                                       tabindex="-1" />
+
+                                <div class="card-image-preview @(string.IsNullOrWhiteSpace(Model.MainImageUrl) ? "is-empty" : "")">
+                                    <img src="@Model.MainImageUrl"
+                                         alt="Aperçu de l'illustration principale"
+                                         class="card-image-preview-img"
+                                         hidden="@string.IsNullOrWhiteSpace(Model.MainImageUrl)" />
+
+                                    <div class="card-image-preview-empty">
+                                        <i data-lucide="image"></i>
+                                        <span>Aucune illustration</span>
+                                    </div>
+                                </div>
+
+                                <button type="button"
+                                        class="card-image-dropzone"
+                                        data-card-image-dropzone>
+
+                                    <span class="card-image-dropzone-icon">
+                                        <i data-lucide="upload-cloud"></i>
+                                    </span>
+
+                                    <span class="card-image-dropzone-copy">
+                                        <strong>Déposez votre image ici</strong>
+                                        <small>
+                                            Cliquez, glissez-déposez ou collez une image
+                                        </small>
+                                    </span>
+
+                                    <span class="card-image-dropzone-format">
+                                        PNG · JPG · WEBP · 8 Mo max.
+                                    </span>
+                                </button>
+
+                                <div class="card-image-upload-status"
+                                     data-card-image-status>
+                                    @if (!string.IsNullOrWhiteSpace(Model.MainImageUrl))
+                                    {
+                                        <span class="is-success">
+                                            <i data-lucide="circle-check"></i>
+                                            Illustration interne enregistrée
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+
+                            <small>
+                                L'image est copiée dans le stockage interne de Worlds TCG.
+                                Aucune URL externe n'est nécessaire.
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Variants -->
+
+                    <div class="create-variants-heading">
+                        <div>
+                            <span>VARIANTES</span>
+                            <strong>Illustrations alternatives</strong>
+                        </div>
+
+                        <span id="variantCount">
+                            @Model.Variants.Count variante(s)
+                        </span>
+                    </div>
+
+                    <div id="variantsContainer"
+                         class="variants-container">
+
+                        @for (var i = 0; i < Model.Variants.Count; i++)
+                        {
+                            var variant = Model.Variants[i];
+
+                            <div class="variant-item"
+                                 data-variant-key="@i"
+                                 data-variant-number="@variant.VariantNumber">
+
+                                <!-- Collection ModelBinder -->
+
+                                <input type="hidden"
+                                       name="Variants.Index"
+                                       value="@i" />
+
+                                <!-- Existing database ID -->
+
+                                <input type="hidden"
+                                       name="Variants[@i].Id"
+                                       value="@variant.Id" />
+
+                                <!-- Existing serial number -->
+
+                                <input type="hidden"
+                                       name="Variants[@i].VariantNumber"
+                                       value="@variant.VariantNumber" />
+
+                                <div class="variant-item-header">
+                                    <div class="variant-item-title">
+                                        <span class="variant-position">
+                                            @(variant.VariantNumber?.ToString("00")
+                                              ?? (i + 1).ToString("00"))
+                                        </span>
+
+                                        <div>
+                                            <span>VARIANTE</span>
+
+                                            <strong class="variant-display-name">
+                                                Variante @(variant.VariantNumber ?? i + 1)
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="variant-item-header-right">
+                                        <span class="variant-serial-preview">
+                                            -@(variant.VariantNumber ?? i + 1)
+                                        </span>
+
+                                        <button type="button"
+                                                class="variant-remove"
+                                                onclick="removeVariant(this)">
+                                            <i data-lucide="trash-2"></i>
+                                            <span>Supprimer</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div class="create-fields-grid">
+
+                                    <div class="create-field">
+                                        <label>
+                                            Type d'illustration
+                                            <span>*</span>
+                                        </label>
+
+                                        <div class="create-select-wrapper">
+                                            <i data-lucide="sparkles"></i>
+
+                                            <select name="Variants[@i].ArtType"
+                                                    required>
+                                                <option value="">
+                                                    Sélectionnez un type
+                                                </option>
+
+                                                @foreach (var artType in cardArtTypes.Where(
+                                                    x => x.Value != ((int)CardArtType.Normal).ToString()))
+                                                {
+                                                    var selected =
+                                                        artType.Value == ((int)variant.ArtType).ToString()
+                                                        || artType.Value == variant.ArtType.ToString();
+
+                                                    <option value="@artType.Value"
+                                                            selected="@selected">
+                                                        @artType.Text
+                                                    </option>
+                                                }
+                                            </select>
+
+                                            <i data-lucide="chevron-down"
+                                               class="select-chevron"></i>
+                                        </div>
+                                    </div>
+
+                                    <div class="create-field create-field-full">
+                                        <label>
+                                            Illustration de la variante
+                                            <span>*</span>
+                                        </label>
+
+                                        <input type="hidden"
+                                               name="Variants[@i].ImageUrl"
+                                               value="@variant.ImageUrl"
+                                               class="card-image-path" />
+
+                                        <div class="card-image-uploader"
+                                             data-card-image-uploader>
+
+                                            <input type="file"
+                                                   class="card-image-file"
+                                                   accept="image/png,image/jpeg,image/webp"
+                                                   tabindex="-1" />
+
+                                            <div class="card-image-preview @(string.IsNullOrWhiteSpace(variant.ImageUrl) ? "is-empty" : "")">
+                                                <img src="@variant.ImageUrl"
+                                                     alt="Aperçu de la variante @(variant.VariantNumber ?? i + 1)"
+                                                     class="card-image-preview-img"
+                                                     hidden="@string.IsNullOrWhiteSpace(variant.ImageUrl)" />
+
+                                                <div class="card-image-preview-empty">
+                                                    <i data-lucide="images"></i>
+                                                    <span>Aucune illustration</span>
+                                                </div>
+                                            </div>
+
+                                            <button type="button"
+                                                    class="card-image-dropzone"
+                                                    data-card-image-dropzone>
+
+                                                <span class="card-image-dropzone-icon">
+                                                    <i data-lucide="upload-cloud"></i>
+                                                </span>
+
+                                                <span class="card-image-dropzone-copy">
+                                                    <strong>Déposez l'illustration</strong>
+                                                    <small>
+                                                        Cliquez, glissez-déposez ou collez une image
+                                                    </small>
+                                                </span>
+
+                                                <span class="card-image-dropzone-format">
+                                                    PNG · JPG · WEBP · 8 Mo max.
+                                                </span>
+                                            </button>
+
+                                            <div class="card-image-upload-status"
+                                                 data-card-image-status>
+                                                @if (!string.IsNullOrWhiteSpace(variant.ImageUrl))
+                                                {
+                                                    <span class="is-success">
+                                                        <i data-lucide="circle-check"></i>
+                                                        Illustration interne enregistrée
+                                                    </span>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+
+                    <button type="button"
+                            class="add-variant-button"
+                            onclick="addVariant()">
+                        <i data-lucide="plus"></i>
+                        <span>Ajouter une variante</span>
+                    </button>
+                </section>
+
+                <!-- =============================================
+                     04 - ABILITIES
+                     ============================================= -->
+
+                <section class="create-section">
+                    <div class="create-section-header">
+                        <div class="create-section-number">04</div>
+
+                        <div>
+                            <div class="create-section-kicker">
+                                GAMEPLAY
+                            </div>
+
+                            <h2>Capacités</h2>
+
+                            <p>
+                                Ajoutez les effets et compétences associés
+                                à cette carte.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div id="abilitiesContainer"
+                         class="abilities-container">
+
+                        @for (var i = 0; i < Model.Abilities.Count; i++)
+                        {
+                            var ability = Model.Abilities[i];
+
+                            <div class="ability-item"
+                                 data-ability-key="@i">
+
+                                <!-- Permet d'avoir des indices non continus -->
+
+                                <input type="hidden"
+                                       name="Abilities.Index"
+                                       value="@i" />
+
+                                <!-- IMPORTANT en modification -->
+
+                                <input type="hidden"
+                                       name="Abilities[@i].Id"
+                                       value="@ability.Id" />
+
+                                <input type="hidden"
+                                       name="Abilities[@i].DisplayOrder"
+                                       value="@ability.DisplayOrder"
+                                       class="ability-display-order" />
+
+                                <div class="ability-item-header">
+                                    <div class="ability-item-title">
+                                        <span class="ability-index">
+                                            @(i + 1).ToString("00")
+                                        </span>
+
+                                        <div>
+                                            <span>CAPACITÉ</span>
+                                            <strong class="ability-display-name">
+                                                Capacité @(i + 1)
+                                            </strong>
+                                        </div>
+                                    </div>
+
+                                    <button type="button"
+                                            class="ability-remove"
+                                            onclick="removeAbility(this)">
+                                        <i data-lucide="trash-2"></i>
+                                        <span>Supprimer</span>
+                                    </button>
+                                </div>
+
+                                <div class="create-fields-grid">
+
+                                    <!-- Type -->
+
+                                    <div class="create-field">
+                                        <label>
+                                            Type
+                                            <span>*</span>
+                                        </label>
+
+                                        <div class="create-select-wrapper">
+                                            <i data-lucide="zap"></i>
+
+                                            <select name="Abilities[@i].Type"
+                                                    required>
+
+                                                @foreach (var item in abilityTypes)
+                                                {
+                                                    var selected =
+                                                        item.Value == ((int)ability.Type).ToString()
+                                                        || item.Value == ability.Type.ToString();
+
+                                                    <option value="@item.Value"
+                                                            selected="@selected">
+                                                        @item.Text
+                                                    </option>
+                                                }
+
+                                            </select>
+
+                                            <i data-lucide="chevron-down"
+                                               class="select-chevron"></i>
+                                        </div>
+                                    </div>
+
+                                    <!-- Cost -->
+
+                                    <div class="create-field">
+                                        <label>
+                                            Coût d'usage
+                                        </label>
+
+                                        <div class="create-input-wrapper">
+                                            <i data-lucide="circle-dollar-sign"></i>
+
+                                            <input type="number"
+                                                   name="Abilities[@i].UsageCost"
+                                                   value="@ability.UsageCost"
+                                                   min="0"
+                                                   max="99" />
+
+                                            <span class="input-suffix">
+                                                ◈
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Name -->
+
+                                    <div class="create-field create-field-full">
+                                        <label>
+                                            Nom
+                                            <span>*</span>
+                                        </label>
+
+                                        <div class="create-input-wrapper">
+                                            <i data-lucide="tag"></i>
+
+                                            <input type="text"
+                                                   name="Abilities[@i].Name"
+                                                   value="@ability.Name"
+                                                   required
+                                                   maxlength="150"
+                                                   autocomplete="off"
+                                                   placeholder="Ex. Attaque puissante" />
+                                        </div>
+                                    </div>
+
+                                    <!-- Description -->
+
+                                    <div class="create-field create-field-full">
+                                        <label>
+                                            Description
+                                            <span>*</span>
+                                        </label>
+
+                                        <textarea name="Abilities[@i].Description"
+                                                  required
+                                                  maxlength="1000"
+                                                  rows="4"
+                                                  placeholder="Décrivez l'effet de cette capacité...">@ability.Description</textarea>
+                                    </div>
+
+                                </div>
+                            </div>
+                        }
+
+                    </div>
+
+                    <button type="button"
+                            class="add-ability-button"
+                            onclick="addAbility()">
+                        <i data-lucide="plus"></i>
+
+                        <span>
+                            Ajouter une capacité
+                        </span>
+                    </button>
+                </section>
+
+                <!-- =============================================
+                     ACTIONS
+                     ============================================= -->
+
+                <section class="create-actions">
+
+                    <a href="@backUrl"
+                       class="create-cancel-button">
+                        <i data-lucide="arrow-left"></i>
+                        Annuler
+                    </a>
+
+                    <div class="create-action-group">
+
+                        <button type="button"
+                                onclick="previewCard()"
+                                class="create-preview-button">
+                            <i data-lucide="eye"></i>
+                            Aperçu
+                        </button>
+
+                        <button type="submit"
+                                class="create-submit-button">
+
+                            <i data-lucide="@(isEdit ? "save" : "check")"></i>
+
+                            <span>
+                                @(isEdit
+                                    ? "Enregistrer les modifications"
+                                    : "Créer la carte")
+                            </span>
+
+                        </button>
+
+                    </div>
+
+                </section>
+
+            </div>
+
+            <!-- =================================================
+                 PREVIEW COLUMN
+                 ================================================= -->
+
+            <aside class="create-preview-column">
+                <div class="preview-sticky">
+                    <div class="preview-panel">
+
+                        <div class="preview-header">
+                            <div>
+                                <div class="preview-kicker">
+                                    VISUALISATION
+                                </div>
+
+                                <h2>
+                                    @(isEdit ? "Aperçu des modifications" : "Aperçu")
+                                </h2>
+                            </div>
+
+                            <div class="preview-status">
+                                <span></span>
+                                LIVE
+                            </div>
+                        </div>
+
+                        <div id="cardPreviewContainer"
+                             class="card-preview-container">
+
+                            <div class="preview-empty">
+                                <div class="preview-empty-icon">
+                                    <i data-lucide="image"></i>
+                                </div>
+
+                                <h3>
+                                    @(isEdit ? Model.Name : "Votre carte")
+                                </h3>
+
+                                <p>
+                                    Cliquez sur Aperçu pour visualiser
+                                    la carte avec les données actuelles.
+                                </p>
+
+                                <div class="preview-empty-hint">
+                                    <i data-lucide="eye"></i>
+                                    <span>
+                                        L'aperçu apparaîtra ici
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <div class="preview-footer">
+                            <div>
+                                <i data-lucide="shield-check"></i>
+                                <span>Prévisualisation locale</span>
+                            </div>
+
+                            <span>
+                                TCG ADMIN
+                            </span>
+                        </div>
+
+                    </div>
+                </div>
+            </aside>
+
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+
+    <partial name="_ValidationScriptsPartial" />
+
+    <script src="~/js/card-image-upload.js"
+            asp-append-version="true"></script>
+
+    <script type="application/json" id="abilityRulesData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Abilities, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
+    <script type="application/json" id="abilityGeographyData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+        regions = regions.Where(x => int.TryParse(x.Value, out _)).Select(x => new { id = int.Parse(x.Value), name = x.Text }),
+        countries = countries.Where(x => int.TryParse(x.Value, out _)).Select(x => new { id = int.Parse(x.Value), name = x.Text })
+    }))</script>
+    <script src="~/js/admin-ability-editor.js" asp-append-version="true"></script>
+
+    <script>
+
+        /* =========================================================
+           TYPE
+           ========================================================= */
+
+        function updateCardTypeFields() {
+            const type = document.getElementById("Type")?.value;
+            const rarityField = document.getElementById("rarityField");
+            const rarityInput = document.getElementById("Rarity");
+            const healthField = document.getElementById("healthPointsField");
+            const healthInput = document.getElementById("HealthPoints");
+            const costField = document.getElementById("usageCostField");
+            const costInput = document.getElementById("UsageCost");
+
+            const leader = "@((int)CardType.Leader)";
+            const character = "@((int)CardType.Character)";
+            const isLeader = type === leader || type === "Leader";
+            if (costField) costField.hidden = isLeader;
+            if (costInput) {
+                costInput.disabled = isLeader;
+                costInput.required = !isLeader;
+                if (isLeader) costInput.value = "0";
+            }
+
+            if (isLeader) {
+                rarityField?.classList.add("hidden");
+
+                if (rarityInput) {
+                    rarityInput.value = "";
+                }
+
+                healthField?.classList.remove("hidden");
+                return;
+            }
+
+            rarityField?.classList.remove("hidden");
+
+            if (type === character) {
+                healthField?.classList.remove("hidden");
+                return;
+            }
+
+            healthField?.classList.add("hidden");
+
+            if (healthInput) {
+                healthInput.value = "";
+            }
+        }
+
+
+        /* =========================================================
+           VARIANTS
+           ========================================================= */
+
+        let variantCounter = @Model.Variants.Count;
+
+        function addVariant() {
+            const container =
+                document.getElementById("variantsContainer");
+
+            if (!container) return;
+
+            const key = variantCounter++;
+
+            const html = `
+                        <div class="variant-item variant-item-new"
+                             data-variant-key="${key}">
+
+                            <input type="hidden"
+                                   name="Variants.Index"
+                                   value="${key}" />
+
+                            <input type="hidden"
+                                   name="Variants[${key}].Id"
+                                   value="" />
+
+                            <input type="hidden"
+                                   name="Variants[${key}].VariantNumber"
+                                   value="" />
+
+                            <div class="variant-item-header">
+
+                                <div class="variant-item-title">
+
+                                    <span class="variant-position">
+                                        NEW
+                                    </span>
+
+                                    <div>
+                                        <span>VARIANTE</span>
+
+                                        <strong class="variant-display-name">
+                                            Nouvelle variante
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                                <div class="variant-item-header-right">
+
+                                    <span class="variant-serial-preview">
+                                        NOUVELLE
+                                    </span>
+
+                                    <button type="button"
+                                            class="variant-remove"
+                                            onclick="removeVariant(this)">
+
+                                        <i data-lucide="trash-2"></i>
+                                        <span>Supprimer</span>
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                            <div class="create-fields-grid">
+
+                                <div class="create-field">
+
+                                    <label>
+                                        Type d'illustration
+                                        <span>*</span>
+                                    </label>
+
+                                    <div class="create-select-wrapper">
+
+                                        <i data-lucide="sparkles"></i>
+
+                                        <select name="Variants[${key}].ArtType"
+                                                required>
+
+                                            <option value="">
+                                                Sélectionnez un type
+                                            </option>
+
+                                            @foreach (var artType in cardArtTypes.Where(
+                                                    x => x.Value != ((int)CardArtType.Normal).ToString()))
+                                            {
+                                                    <text>
+                                                            <option value="@artType.Value">
+                                                                    @artType.Text
+                                                            </option>
+                                                    </text>
+                                            }
+
+                                        </select>
+
+                                        <i data-lucide="chevron-down"
+                                           class="select-chevron"></i>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="create-field create-field-full">
+
+                                    <label>
+                                        Illustration de la variante
+                                        <span>*</span>
+                                    </label>
+
+                                    <input type="hidden"
+                                           name="Variants[${key}].ImageUrl"
+                                           value=""
+                                           class="card-image-path" />
+
+                                    <div class="card-image-uploader"
+                                         data-card-image-uploader>
+
+                                        <input type="file"
+                                               class="card-image-file"
+                                               accept="image/png,image/jpeg,image/webp"
+                                               tabindex="-1" />
+
+                                        <div class="card-image-preview is-empty">
+                                            <img src=""
+                                                 alt="Aperçu de la variante"
+                                                 class="card-image-preview-img"
+                                                 hidden />
+
+                                            <div class="card-image-preview-empty">
+                                                <i data-lucide="images"></i>
+                                                <span>Aucune illustration</span>
+                                            </div>
+                                        </div>
+
+                                        <button type="button"
+                                                class="card-image-dropzone"
+                                                data-card-image-dropzone>
+
+                                            <span class="card-image-dropzone-icon">
+                                                <i data-lucide="upload-cloud"></i>
+                                            </span>
+
+                                            <span class="card-image-dropzone-copy">
+                                                <strong>Déposez l'illustration</strong>
+                                                <small>
+                                                    Cliquez, glissez-déposez ou collez une image
+                                                </small>
+                                            </span>
+
+                                            <span class="card-image-dropzone-format">
+                                                PNG · JPG · WEBP · 8 Mo max.
+                                            </span>
+                                        </button>
+
+                                        <div class="card-image-upload-status"
+                                             data-card-image-status>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>`;
+
+            container.insertAdjacentHTML(
+                "beforeend",
+                html
+            );
+
+            refreshVariants();
+
+            if (typeof lucide !== "undefined") {
+                lucide.createIcons();
+            }
+
+            container.lastElementChild?.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+
+
+        function removeVariant(button) {
+            const variant =
+                button.closest(".variant-item");
+
+            if (!variant) return;
+
+            variant.style.opacity = "0";
+            variant.style.transform = "translateY(-8px)";
+
+            setTimeout(() => {
+                variant.remove();
+                refreshVariants();
+            }, 180);
+        }
+
+
+        function refreshVariants() {
+            const variants =
+                document.querySelectorAll(".variant-item");
+
+            const counter =
+                document.getElementById("variantCount");
+
+            const cardSetSelect =
+                document.getElementById("CardSetId");
+
+            const collectionInput =
+                document.getElementById("CollectionNumber");
+
+            const selectedSet =
+                cardSetSelect?.selectedOptions?.[0];
+
+            const setCode =
+                selectedSet?.dataset?.code?.trim() || "SET";
+
+            const collectionNumber =
+                parseInt(collectionInput?.value || "0");
+
+            const baseSerial =
+                collectionNumber > 0
+                    ? `${setCode}-${String(collectionNumber).padStart(2, "0")}`
+                    : `${setCode}-XX`;
+
+            variants.forEach((variant, index) => {
+
+                const displayPosition =
+                    variant.querySelector(".variant-position");
+
+                const displayName =
+                    variant.querySelector(".variant-display-name");
+
+                const serial =
+                    variant.querySelector(".variant-serial-preview");
+
+                const existingNumber =
+                    variant.dataset.variantNumber;
+
+                // =====================================================
+                // VARIANTE DÉJÀ EXISTANTE
+                // =====================================================
+
+                if (existingNumber &&
+                    existingNumber !== "") {
+
+                    const number =
+                        parseInt(existingNumber);
+
+                    if (displayPosition) {
+                        displayPosition.textContent =
+                            String(number).padStart(2, "0");
+                    }
+
+                    if (displayName) {
+                        displayName.textContent =
+                            `Variante ${number}`;
+                    }
+
+                    if (serial) {
+                        serial.textContent =
+                            `${baseSerial}-${number}`;
+                    }
+
+                    return;
+                }
+
+                // =====================================================
+                // NOUVELLE VARIANTE
+                // =====================================================
+
+                if (displayPosition) {
+                    displayPosition.textContent =
+                        "NEW";
+                }
+
+                if (displayName) {
+                    displayName.textContent =
+                        `Nouvelle variante`;
+                }
+
+                if (serial) {
+                    serial.textContent =
+                        `${baseSerial}-NEW`;
+                }
+            });
+
+            if (counter) {
+                counter.textContent =
+                    `${variants.length} variante(s)`;
+            }
+        }
+
+
+        /* =========================================================
+           ABILITIES
+           ========================================================= */
+
+        let abilityCounter = @Model.Abilities.Count;
+
+        function addAbility() {
+            const container =
+                document.getElementById("abilitiesContainer");
+
+            if (!container) return;
+
+            const key = abilityCounter++;
+
+            const html = `
+                        <div class="ability-item ability-item-new"
+                             data-ability-key="${key}">
+
+                            <input type="hidden"
+                                   name="Abilities.Index"
+                                   value="${key}" />
+
+                            <input type="hidden"
+                                   name="Abilities[${key}].Id"
+                                   value="" />
+
+                            <input type="hidden"
+                                   name="Abilities[${key}].DisplayOrder"
+                                   value="0"
+                                   class="ability-display-order" />
+
+                            <div class="ability-item-header">
+
+                                <div class="ability-item-title">
+
+                                    <span class="ability-index">
+                                        00
+                                    </span>
+
+                                    <div>
+                                        <span>CAPACITÉ</span>
+
+                                        <strong class="ability-display-name">
+                                            Nouvelle capacité
+                                        </strong>
+                                    </div>
+
+                                </div>
+
+                                <button type="button"
+                                        class="ability-remove"
+                                        onclick="removeAbility(this)">
+
+                                    <i data-lucide="trash-2"></i>
+                                    <span>Supprimer</span>
+
+                                </button>
+
+                            </div>
+
+                            <div class="create-fields-grid">
+
+                                <div class="create-field">
+
+                                    <label>
+                                        Type
+                                        <span>*</span>
+                                    </label>
+
+                                    <div class="create-select-wrapper">
+
+                                        <i data-lucide="zap"></i>
+
+                                        <select name="Abilities[${key}].Type"
+                                                required>
+
+                                            @foreach (var item in abilityTypes)
+                                            {
+                                                    <text>
+                                                            <option value="@item.Value">
+                                                                    @item.Text
+                                                            </option>
+                                                    </text>
+                                            }
+
+                                        </select>
+
+                                        <i data-lucide="chevron-down"
+                                           class="select-chevron"></i>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="create-field">
+
+                                    <label>
+                                        Coût d'usage
+                                    </label>
+
+                                    <div class="create-input-wrapper">
+
+                                        <i data-lucide="circle-dollar-sign"></i>
+
+                                        <input type="number"
+                                               name="Abilities[${key}].UsageCost"
+                                               value="0"
+                                               min="0"
+                                               max="99" />
+
+                                        <span class="input-suffix">
+                                            ◈
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                                <div class="create-field create-field-full">
+
+                                    <label>
+                                        Nom
+                                        <span>*</span>
+                                    </label>
+
+                                    <div class="create-input-wrapper">
+
+                                        <i data-lucide="tag"></i>
+
+                                        <input type="text"
+                                               name="Abilities[${key}].Name"
+                                               required
+                                               maxlength="150"
+                                               autocomplete="off"
+                                               placeholder="Ex. Attaque puissante" />
+
+                                    </div>
+
+                                </div>
+
+                                <div class="create-field create-field-full">
+
+                                    <label>
+                                        Description
+                                        <span>*</span>
+                                    </label>
+
+                                    <textarea name="Abilities[${key}].Description"
+                                              required
+                                              maxlength="1000"
+                                              rows="4"
+                                              placeholder="Décrivez l'effet de cette capacité..."></textarea>
+
+                                </div>
+
+                            </div>
+
+                        </div>`;
+
+            container.insertAdjacentHTML(
+                "beforeend",
+                html
+            );
+
+            refreshAbilities();
+
+            if (typeof lucide !== "undefined") {
+                lucide.createIcons();
+            }
+
+            container.lastElementChild?.scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
+        }
+
+
+        function removeAbility(button) {
+            const ability =
+                button.closest(".ability-item");
+
+            if (!ability) return;
+
+            ability.style.opacity = "0";
+            ability.style.transform = "translateY(-8px)";
+
+            setTimeout(() => {
+                ability.remove();
+                refreshAbilities();
+            }, 180);
+        }
+
+
+        function refreshAbilities() {
+            const abilities =
+                document.querySelectorAll(".ability-item");
+
+            abilities.forEach((ability, index) => {
+                const position =
+                    ability.querySelector(".ability-index");
+
+                const displayName =
+                    ability.querySelector(".ability-display-name");
+
+                const order =
+                    ability.querySelector(".ability-display-order");
+
+                if (position) {
+                    position.textContent =
+                        String(index + 1).padStart(2, "0");
+                }
+
+                if (displayName) {
+                    displayName.textContent =
+                        `Capacité ${index + 1}`;
+                }
+
+                if (order) {
+                    order.value = index;
+                }
+            });
+        }
+
+
+        /* =========================================================
+           PREVIEW
+           ========================================================= */
+
+        async function previewCard() {
+            const container =
+                document.getElementById("cardPreviewContainer");
+
+            const form =
+                document.getElementById("createCardForm");
+
+            if (!container || !form) {
+                return;
+            }
+
+            container.innerHTML = `
+                        <div class="preview-loading">
+                            <div class="preview-spinner"></div>
+                            <span>Génération de l'aperçu...</span>
+                        </div>
+                    `;
+
+            const formData =
+                new FormData(form);
+
+            const regionSelect =
+                form.querySelector('[name="RegionId"]');
+
+            const countrySelect =
+                form.querySelector('[name="CountryId"]');
+
+            const regionOption =
+                regionSelect?.selectedOptions[0];
+
+            const countryOption =
+                countrySelect?.selectedOptions[0];
+
+            const previewData = {
+                name:
+                    formData.get("Name") ||
+                    "Nom de la carte",
+
+                type:
+                    parseInt(formData.get("Type")) ||
+                    0,
+
+                rarity:
+                    formData.get("Rarity")
+                        ? parseInt(formData.get("Rarity"))
+                        : null,
+
+                usageCost:
+                    parseInt(formData.get("UsageCost")) ||
+                    0,
+
+                healthPoints:
+                    formData.get("HealthPoints")
+                        ? parseInt(formData.get("HealthPoints"))
+                        : null,
+
+                imageUrl:
+                    formData.get("MainImageUrl") ||
+                    "https://via.placeholder.com/250x350?text=Carte",
+
+                cardSetCode:
+                    form.querySelector('[name="CardSetId"]')
+                        ?.selectedOptions[0]
+                        ?.dataset.code || "",
+
+                // La carte principale est toujours normale.
+                mainArtType:
+                            @((int)CardArtType.Normal),
+
+                collectionNumber:
+                    formData.get("CollectionNumber") ||
+                    "XX",
+
+                regionName:
+                    regionOption?.textContent?.trim() ||
+                    "Région",
+
+                countryName:
+                    countryOption?.value
+                        ? countryOption.textContent.trim()
+                        : "",
+
+                regionColor:
+                    regionOption?.dataset.color ||
+                    "#FFD700",
+
+                abilities:
+                    getPreviewAbilities()
+            };
+
+            try {
+                const response =
+                    await fetch(
+                        '@Url.Action("PreviewCard", "Admin")',
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type": "application/json",
+                                "X-Requested-With": "XMLHttpRequest"
+                            },
+
+                            body:
+                                JSON.stringify(previewData)
+                        }
+                    );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `HTTP ${response.status}`
+                    );
+                }
+
+                const html =
+                    await response.text();
+
+                container.innerHTML =
+                    html;
+
+                container.classList.remove(
+                    "preview-fade-in"
+                );
+
+                void container.offsetWidth;
+
+                container.classList.add(
+                    "preview-fade-in"
+                );
+
+                if (typeof lucide !== "undefined") {
+                    lucide.createIcons();
+                }
+            }
+            catch (error) {
+                console.error(
+                    "Erreur lors de la prévisualisation :",
+                    error
+                );
+
+                container.innerHTML = `
+                            <div class="preview-error">
+
+                                <div class="preview-error-icon">
+                                    <i data-lucide="circle-x"></i>
+                                </div>
+
+                                <h3>
+                                    Aperçu indisponible
+                                </h3>
+
+                                <p>
+                                    Vérifiez que les champs obligatoires
+                                    sont correctement renseignés.
+                                </p>
+
+                                <small>
+                                    ${error.message}
+                                </small>
+
+                            </div>
+                        `;
+
+                if (typeof lucide !== "undefined") {
+                    lucide.createIcons();
+                }
+            }
+        }
+
+
+        function getPreviewAbilities() {
+            const abilities = [];
+
+            document
+                .querySelectorAll(".ability-item")
+                .forEach((item, index) => {
+
+                    const type =
+                        item.querySelector(
+                            '[name$=".Type"]'
+                        )?.value;
+
+                    const name =
+                        item.querySelector(
+                            '[name$=".Name"]'
+                        )?.value?.trim() || "";
+
+                    const description =
+                        item.querySelector(
+                            '[name$=".Description"]'
+                        )?.value?.trim() || "";
+
+                    const usageCost =
+                        parseInt(
+                            item.querySelector(
+                                '[name$=".UsageCost"]'
+                            )?.value
+                        ) || 0;
+
+                    if (!name && !description) {
+                        return;
+                    }
+
+                    abilities.push({
+                        type:
+                            parseInt(type) || 0,
+
+                        usageCost:
+                            usageCost,
+
+                        name:
+                            name,
+
+                        description:
+                            description,
+
+                        displayOrder:
+                            index
+                    });
+                });
+
+            return abilities;
+        }
+
+
+        /* =========================================================
+           FORM SUBMIT
+           ========================================================= */
+
+        document
+            .getElementById("createCardForm")
+            ?.addEventListener(
+                "submit",
+                () => {
+
+                    /*
+                     * Garantit que l'ordre affiché des capacités
+                     * correspond bien au DisplayOrder envoyé.
+                     */
+                    refreshAbilities();
+                }
+            );
+
+
+        /* =========================================================
+           INIT
+           ========================================================= */
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            () => {
+
+                updateCardTypeFields();
+                refreshVariants();
+                refreshAbilities();
+
+                document
+                    .getElementById("Type")
+                    ?.addEventListener(
+                        "change",
+                        updateCardTypeFields
+                    );
+
+                if (typeof lucide !== "undefined") {
+                    lucide.createIcons();
+                }
+            }
+        );
+
+    </script>
+}

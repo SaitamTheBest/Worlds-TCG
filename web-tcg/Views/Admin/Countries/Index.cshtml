@@ -1,0 +1,560 @@
+﻿@using web_tcg.Data.Entities
+
+@model List<Country>
+
+@{
+    ViewData["Title"] = "Gestion des Pays";
+    Layout = "_Layout";
+
+    var successMessage = TempData["SuccessMessage"] as string;
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-countries.css"
+      asp-append-version="true" />
+
+<div class="admin-countries-page">
+
+    <!-- BACKGROUND -->
+    <div class="admin-countries-background">
+        <div class="admin-countries-grid"></div>
+
+        <div class="admin-countries-glow admin-countries-glow-1"></div>
+        <div class="admin-countries-glow admin-countries-glow-2"></div>
+    </div>
+
+
+    <div class="admin-countries-container">
+
+        <!-- HEADER -->
+        <header class="admin-countries-header">
+
+            <div class="admin-countries-heading">
+
+                <div class="admin-countries-eyebrow">
+                    ADMINISTRATION
+                </div>
+
+                <div class="admin-countries-title-row">
+
+                    <div class="admin-countries-title-icon">
+                        <i data-lucide="globe-2"></i>
+                    </div>
+
+                    <div>
+
+                        <h1>
+                            Gestion des
+                            <span>Pays</span>
+                        </h1>
+
+                        <p>
+                            Gérez les pays disponibles et leur
+                            rattachement aux différentes régions du TCG.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <a asp-controller="Admin"
+               asp-action="CreateCountry"
+               class="admin-countries-create">
+
+                <i data-lucide="plus"></i>
+
+                <span>
+                    Nouveau pays
+                </span>
+
+                <i data-lucide="arrow-up-right"></i>
+
+            </a>
+
+        </header>
+
+
+        <!-- SUCCESS -->
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="admin-countries-success">
+
+                <div class="admin-countries-success-icon">
+                    <i data-lucide="check"></i>
+                </div>
+
+                <div>
+                    <strong>
+                        Opération effectuée
+                    </strong>
+
+                    <span>
+                        @successMessage
+                    </span>
+                </div>
+
+            </div>
+        }
+
+
+        <!-- STATS -->
+        <div class="admin-countries-stats">
+
+            <div class="admin-countries-stat">
+
+                <div class="admin-countries-stat-icon">
+                    <i data-lucide="globe-2"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        PAYS
+                    </span>
+
+                    <strong>
+                        @Model.Count
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-countries-stat">
+
+                <div class="admin-countries-stat-icon">
+                    <i data-lucide="layers-3"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        RÉGIONS
+                    </span>
+
+                    <strong>
+                        @(Model
+                        .Where(x => x.Region != null)
+                        .Select(x => x.RegionId)
+                        .Distinct()
+                        .Count())
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="admin-countries-stat">
+
+                <div class="admin-countries-stat-icon">
+                    <i data-lucide="credit-card"></i>
+                </div>
+
+                <div>
+
+                    <span>
+                        CARTES ASSOCIÉES
+                    </span>
+
+                    <strong>
+                        @Model.Sum(x => x.Cards?.Count ?? 0)
+                    </strong>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- TOOLBAR -->
+        <div class="admin-countries-toolbar">
+
+            <div class="admin-countries-search">
+
+                <i data-lucide="search"></i>
+
+                <input type="search"
+                       id="countrySearch"
+                       placeholder="Rechercher un pays ou un code..."
+                       autocomplete="off" />
+
+                <span id="countrySearchCount">
+                    @Model.Count
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <!-- CONTENT -->
+        @if (Model.Any())
+        {
+            <div class="admin-countries-panel">
+
+                <div class="admin-countries-panel-header">
+
+                    <div>
+
+                        <span>
+                            CATALOGUE
+                        </span>
+
+                        <h2>
+                            Pays disponibles
+                        </h2>
+
+                    </div>
+
+                    <div class="admin-countries-live">
+                        <span></span>
+                        DONNÉES ACTIVES
+                    </div>
+
+                </div>
+
+
+                <!-- DESKTOP TABLE -->
+                <div class="admin-countries-table-wrapper">
+
+                    <table class="admin-countries-table">
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    Pays
+                                </th>
+
+                                <th>
+                                    Code
+                                </th>
+
+                                <th>
+                                    Région
+                                </th>
+
+                                <th>
+                                    Cartes
+                                </th>
+
+                                <th>
+                                    Actions
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody id="countriesTableBody">
+
+                            @foreach (var country in Model.OrderBy(x => x.Name))
+                            {
+                                var regionColor =
+                                    country.Region?.Color ?? "#6B7280";
+
+                                <tr class="country-row"
+                                    data-search="
+                                    @country.Name.ToLowerInvariant()
+                                    @country.Code.ToLowerInvariant()
+                                    @(country.Region?.Name?.ToLowerInvariant() ?? "")
+                                    ">
+
+                                    <!-- COUNTRY -->
+                                    <td>
+
+                                        <div class="admin-country-identity">
+
+                                            <div class="admin-country-color"
+                                                 style="background-color:@regionColor;">
+
+                                                <i data-lucide="globe-2"></i>
+
+                                            </div>
+
+                                            <div>
+
+                                                <strong>
+                                                    @country.Name
+                                                </strong>
+
+                                                <span>
+                                                    ID #@country.Id
+                                                </span>
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+
+                                    <!-- CODE -->
+                                    <td>
+
+                                        <span class="admin-country-code">
+                                            @country.Code.ToUpperInvariant()
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- REGION -->
+                                    <td>
+
+                                        @if (country.Region != null)
+                                        {
+                                            <div class="admin-country-region">
+
+                                                <span class="admin-country-region-color"
+                                                      style="background-color:@regionColor;">
+                                                </span>
+
+                                                <span>
+                                                    @country.Region.Name
+                                                </span>
+
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-country-no-region">
+                                                Région inconnue
+                                            </span>
+                                        }
+
+                                    </td>
+
+
+                                    <!-- CARDS -->
+                                    <td>
+
+                                        <span class="admin-country-cards-count">
+                                            <i data-lucide="layers-3"></i>
+                                            @(country.Cards?.Count ?? 0)
+                                        </span>
+
+                                    </td>
+
+
+                                    <!-- ACTIONS -->
+                                    <td>
+
+                                        <div class="admin-country-actions">
+
+                                            <a asp-controller="Admin"
+                                               asp-action="EditCountry"
+                                               asp-route-id="@country.Id"
+                                               class="admin-country-action admin-country-action-edit"
+                                               title="Modifier">
+
+                                                <i data-lucide="pencil"></i>
+
+                                                <span>
+                                                    Modifier
+                                                </span>
+
+                                            </a>
+
+
+                                            <form asp-controller="Admin"
+                                                  asp-action="DeleteCountry"
+                                                  asp-route-id="@country.Id"
+                                                  method="post"
+                                                  class="admin-country-delete-form"
+                                                  onsubmit="return confirmDelete('@country.Name.Replace("'", "\\'")');">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <button type="submit"
+                                                        class="admin-country-action admin-country-action-delete"
+                                                        title="Supprimer">
+
+                                                    <i data-lucide="trash-2"></i>
+
+                                                    <span>
+                                                        Supprimer
+                                                    </span>
+
+                                                </button>
+
+                                            </form>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- EMPTY SEARCH -->
+                <div id="countrySearchEmpty"
+                     class="admin-countries-search-empty">
+
+                    <div>
+                        <i data-lucide="search-x"></i>
+                    </div>
+
+                    <strong>
+                        Aucun résultat
+                    </strong>
+
+                    <p>
+                        Aucun pays ne correspond à votre recherche.
+                    </p>
+
+                </div>
+
+            </div>
+        }
+        else
+        {
+            <!-- EMPTY STATE -->
+            <div class="admin-countries-empty">
+
+                <div class="admin-countries-empty-icon">
+                    <i data-lucide="globe-2"></i>
+                </div>
+
+                <span>
+                    CATALOGUE VIDE
+                </span>
+
+                <h2>
+                    Aucun pays
+                </h2>
+
+                <p>
+                    Aucun pays n'a encore été ajouté.
+                    Commencez par créer votre premier pays.
+                </p>
+
+                <a asp-controller="Admin"
+                   asp-action="CreateCountry"
+                   class="admin-countries-create">
+
+                    <i data-lucide="plus"></i>
+
+                    <span>
+                        Créer un pays
+                    </span>
+
+                </a>
+
+            </div>
+        }
+
+    </div>
+
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            const searchInput =
+                document.getElementById('countrySearch');
+
+            const searchCount =
+                document.getElementById('countrySearchCount');
+
+            const rows =
+                Array.from(
+                    document.querySelectorAll('.country-row')
+                );
+
+            const empty =
+                document.getElementById('countrySearchEmpty');
+
+
+            function filterCountries() {
+
+                const query =
+                    searchInput.value
+                        .trim()
+                        .toLowerCase();
+
+                let visibleCount = 0;
+
+                rows.forEach(function(row) {
+
+                    const searchable =
+                        row.dataset.search || '';
+
+                    const matches =
+                        searchable.includes(query);
+
+                    row.style.display =
+                        matches ? '' : 'none';
+
+                    if (matches) {
+                        visibleCount++;
+                    }
+
+                });
+
+
+                if (searchCount) {
+                    searchCount.textContent =
+                        visibleCount;
+                }
+
+
+                if (empty) {
+                    empty.classList.toggle(
+                        'is-visible',
+                        visibleCount === 0
+                    );
+                }
+
+            }
+
+
+            if (searchInput) {
+
+                searchInput.addEventListener(
+                    'input',
+                    filterCountries
+                );
+
+            }
+
+
+            if (window.lucide) {
+                lucide.createIcons();
+            }
+
+        });
+
+
+        function confirmDelete(countryName) {
+
+            return window.confirm(
+                'Supprimer le pays "' +
+                countryName +
+                '" ?\n\n' +
+                'Cette action peut être impossible si ' +
+                'des cartes sont encore associées à ce pays.'
+            );
+
+        }
+
+    </script>
+}

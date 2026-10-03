@@ -1,0 +1,204 @@
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using web_tcg.Data.Entities;
+
+namespace web_tcg.Data
+{
+    public class ApplicationDbContext: IdentityDbContext<ApplicationUser>
+    {
+        public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
+            : base(options)
+        {
+        }
+        public DbSet<CardSet> CardSets { get; set; }
+        public DbSet<Card> Cards { get; set; }
+
+        public DbSet<Region> Regions { get; set; }
+
+        public DbSet<Country> Countries { get; set; }
+
+        public DbSet<CardAbility> CardAbilities { get; set; }
+
+        public DbSet<LeaderCard> LeaderCards { get; set; }
+
+        public DbSet<CharacterCard> CharacterCards { get; set; }
+
+        public DbSet<PoliticalDecisionCard> PoliticalDecisionCards { get; set; }
+
+        public DbSet<LocationCard> LocationCards { get; set; }
+
+        public DbSet<UserCardCollection> UserCardCollections { get; set; }
+
+        public DbSet<BoosterOpening> BoosterOpenings { get; set; }
+
+        public DbSet<BoosterOpeningCard> BoosterOpeningCards { get; set; }
+
+        public DbSet<Notification> Notifications { get; set; }
+
+        public DbSet<UserProfileShowcaseCard> UserProfileShowcaseCards { get; set; }
+
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<Card>()
+                .HasIndex(x => new
+                {
+                    x.CardSetId,
+                    x.RegionId,
+                    x.CollectionNumber
+                });
+
+            modelBuilder.Entity<Card>()
+                .HasOne(c => c.BaseCard)
+                .WithMany(c => c.Variants)
+                .HasForeignKey(c => c.BaseCardId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Card>()
+                .HasIndex(c => new
+                {
+                    c.BaseCardId,
+                    c.VariantNumber
+                })
+                .IsUnique();
+
+            modelBuilder.Entity<Card>()
+                .HasIndex(x => new
+                {
+                    x.CardSetId,
+                    x.RegionId,
+                    x.CollectionNumber
+                })
+                .IsUnique()
+                .HasFilter("\"BaseCardId\" IS NULL");
+
+            modelBuilder.Entity<Region>()
+                .HasIndex(x => x.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Country>()
+                .HasIndex(x => x.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<CardSet>()
+                .HasIndex(x => x.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<CardSet>()
+                .Property(x => x.ReleaseDate)
+                .HasColumnType("timestamp with time zone");
+
+            modelBuilder.Entity<LeaderCard>()
+                .HasIndex(x => x.CardId)
+                .IsUnique();
+
+            modelBuilder.Entity<CharacterCard>()
+                .HasIndex(x => x.CardId)
+                .IsUnique();
+
+            modelBuilder.Entity<PoliticalDecisionCard>()
+                .HasIndex(x => x.CardId)
+                .IsUnique();
+
+            modelBuilder.Entity<LocationCard>()
+                .HasIndex(x => x.CardId)
+                .IsUnique();
+
+            modelBuilder.Entity<UserCardCollection>()
+                .HasIndex(x => new { x.UserId, x.CardId })
+                .IsUnique();
+
+            modelBuilder.Entity<UserCardCollection>()
+                .HasIndex(x => x.UserId);
+
+            modelBuilder.Entity<UserCardCollection>()
+                .HasIndex(x => x.AcquiredDate);
+
+            modelBuilder.Entity<UserCardCollection>()
+                .Property(x => x.AcquiredDate)
+                .HasColumnType("timestamp with time zone");
+
+            modelBuilder.Entity<BoosterOpening>()
+                .HasMany(x => x.Cards)
+                .WithOne(x => x.BoosterOpening)
+                .HasForeignKey(x => x.BoosterOpeningId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<BoosterOpeningCard>()
+                .HasOne(x => x.Card)
+                .WithMany()
+                .HasForeignKey(x => x.CardId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserCardCollection>()
+                .HasOne(x => x.Card)
+                .WithMany()
+                .HasForeignKey(x => x.CardId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<UserCardCollection>()
+                .HasIndex(x => new
+                {
+                    x.UserId,
+                    x.CardId
+                })
+                .IsUnique();
+
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.HasOne(x => x.User)
+                    .WithMany()
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.IsRead
+                });
+
+                entity.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.CreatedAt
+                });
+            });
+
+            modelBuilder.Entity<UserProfileShowcaseCard>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+
+                entity.HasOne(x => x.User)
+                    .WithMany(x => x.ShowcaseCards)
+                    .HasForeignKey(x => x.UserId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(x => x.Card)
+                    .WithMany()
+                    .HasForeignKey(x => x.CardId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.CardId
+                })
+                .IsUnique();
+
+                entity.HasIndex(x => new
+                {
+                    x.UserId,
+                    x.Position
+                })
+                .IsUnique();
+            });
+
+            modelBuilder.ConfigureGameModel();
+        }
+    }
+}

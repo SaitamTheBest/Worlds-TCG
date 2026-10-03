@@ -1,0 +1,94 @@
+﻿@model web_tcg.Models.Balance.BalanceViewModel
+
+<div class="tcg-balance-widget"
+     data-balance="@Model.Balance"
+     data-next-reward="@Model.NextRewardAt?.ToString("O")">
+
+    <div class="tcg-balance-icon">
+        <i data-lucide="coins"></i>
+    </div>
+
+    <div class="tcg-balance-content">
+        <span class="tcg-balance-label">
+            SOLDE
+        </span>
+
+        <strong class="tcg-balance-value" id="userBalance">
+            @Model.Balance.ToString("0")
+        </strong>
+    </div>
+
+    <div class="tcg-balance-timer">
+        <i data-lucide="clock"></i>
+
+        <span class="tcg-balance-countdown">
+            --:--
+        </span>
+    </div>
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", async () => {
+        const balanceElement =
+            document.getElementById("userBalance");
+
+        if (!balanceElement)
+            return;
+
+        const connection =
+            new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/balance")
+                .withAutomaticReconnect()
+                .build();
+
+        connection.on("BalanceUpdated", data => {
+            const balanceElement =
+                document.getElementById("userBalance");
+
+            if (!balanceElement)
+                return;
+
+            console.log("BalanceUpdated reçu :", data);
+
+            if (data.balance !== undefined && data.balance !== null) {
+                balanceElement.textContent =
+                    Number(data.balance)
+                        .toLocaleString("fr-FR");
+            }
+
+            if (
+                data.nextRewardAt &&
+                window.updateBalanceNextReward
+            ) {
+                window.updateBalanceNextReward(
+                    data.nextRewardAt
+                );
+            }
+
+            balanceElement.classList.add(
+                "balance-updated"
+            );
+
+            setTimeout(() => {
+                balanceElement.classList.remove(
+                    "balance-updated"
+                );
+            }, 700);
+        });
+
+        try {
+            await connection.start();
+
+            console.log(
+                "SignalR Balance connecté."
+            );
+        }
+        catch (error) {
+            console.error(
+                "Impossible de connecter SignalR :",
+                error
+            );
+        }
+    });
+</script>

@@ -1,0 +1,690 @@
+﻿@using web_tcg.Data.Enums
+@using web_tcg.Models.Admin
+@model List<AdminCardListItemViewModel>
+
+@{
+    ViewData["Title"] = "Gestion des Cartes";
+
+    var cardSetId = ViewBag.CardSetId as int?;
+    var successMessage = TempData["SuccessMessage"] as string;
+
+    var baseCardCount = Model.Count(x => !x.IsVariant);
+    var variantCount = Model.Count(x => x.IsVariant);
+}
+
+<link rel="stylesheet"
+      href="~/css/admin-cards.css"
+      asp-append-version="true" />
+
+<div class="admin-cards-page">
+
+    <!-- =========================================================
+         BACKGROUND
+         ========================================================= -->
+
+    <div class="admin-cards-background">
+        <div class="admin-cards-grid"></div>
+        <div class="admin-cards-glow admin-cards-glow-1"></div>
+        <div class="admin-cards-glow admin-cards-glow-2"></div>
+    </div>
+
+    <div class="admin-cards-content">
+
+        <!-- =====================================================
+             HEADER
+             ===================================================== -->
+
+        <header class="admin-cards-header">
+
+            <div class="admin-cards-heading">
+
+                <div class="admin-cards-eyebrow">
+                    <span class="eyebrow-line"></span>
+                    <i data-lucide="layers-3"></i>
+                    ADMINISTRATION
+                </div>
+
+                <h1>
+                    Gestion des
+                    <span>cartes</span>
+                </h1>
+
+                <p>
+                    Créez, modifiez et gérez les cartes normales
+                    et leurs variantes graphiques.
+                </p>
+
+            </div>
+
+            <a asp-controller="Admin"
+               asp-action="CreateCard"
+               class="admin-primary-button">
+
+                <i data-lucide="plus"></i>
+
+                <span>
+                    Nouvelle carte
+                </span>
+
+            </a>
+
+        </header>
+
+        <!-- =====================================================
+             SUCCESS
+             ===================================================== -->
+        @if (!string.IsNullOrWhiteSpace(successMessage))
+        {
+            <div class="admin-success-message">
+
+                <div class="admin-success-icon">
+                    <i data-lucide="check"></i>
+                </div>
+
+                <div>
+                    <strong>
+                        Opération réussie
+                    </strong>
+
+                    <span>
+                        @successMessage
+                    </span>
+                </div>
+
+                <button type="button"
+                        class="admin-alert-close"
+                        aria-label="Fermer">
+
+                    <i data-lucide="x"></i>
+
+                </button>
+
+            </div>
+        }
+
+        <!-- =====================================================
+             STATS
+             ===================================================== -->
+
+        <section class="admin-card-stats">
+
+            <div class="admin-stat">
+
+                <div class="admin-stat-icon">
+                    <i data-lucide="layers-3"></i>
+                </div>
+
+                <div>
+                    <span class="admin-stat-label">
+                        Cartes totales
+                    </span>
+
+                    <strong class="admin-stat-value">
+                        @Model.Count
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="admin-stat">
+
+                <div class="admin-stat-icon">
+                    <i data-lucide="image"></i>
+                </div>
+
+                <div>
+                    <span class="admin-stat-label">
+                        Cartes normales
+                    </span>
+
+                    <strong class="admin-stat-value">
+                        @baseCardCount
+                    </strong>
+                </div>
+
+            </div>
+
+            <div class="admin-stat">
+
+                <div class="admin-stat-icon">
+                    <i data-lucide="sparkles"></i>
+                </div>
+
+                <div>
+                    <span class="admin-stat-label">
+                        Variantes
+                    </span>
+
+                    <strong class="admin-stat-value">
+                        @variantCount
+                    </strong>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- =====================================================
+             CATALOGUE
+             ===================================================== -->
+
+        <section class="admin-cards-panel">
+
+            <div class="admin-panel-header">
+
+                <div>
+
+                    <div class="admin-panel-kicker">
+                        CATALOGUE
+                    </div>
+
+                    <h2>
+                        Toutes les cartes
+                    </h2>
+
+                    <p>
+                        Les cartes normales et leurs variantes sont
+                        affichées séparément dans le catalogue.
+                    </p>
+
+                </div>
+
+                <div class="admin-panel-count">
+
+                    <span>
+                        @Model.Count
+                    </span>
+
+                    <small>
+                        CARTE@(Model.Count > 1 ? "S" : "")
+                    </small>
+
+                </div>
+
+            </div>
+
+            @if (!Model.Any())
+            {
+                <!-- =================================================
+                     EMPTY
+                     ================================================= -->
+
+                <div class="admin-empty-state">
+
+                    <div class="admin-empty-icon">
+                        <i data-lucide="layers-3"></i>
+                    </div>
+
+                    <h3>
+                        Aucune carte
+                    </h3>
+
+                    <p>
+                        Aucune carte n'est actuellement enregistrée
+                        dans votre catalogue.
+                    </p>
+
+                    <a asp-controller="Admin"
+                       asp-action="CreateCard"
+                       class="admin-primary-button">
+
+                        <i data-lucide="plus"></i>
+
+                        <span>
+                            Créer la première carte
+                        </span>
+
+                    </a>
+
+                </div>
+            }
+            else
+            {
+                <!-- =================================================
+                     TABLE
+                     ================================================= -->
+
+                <div class="admin-table-wrapper">
+
+                    <table class="admin-cards-table">
+
+                        <thead>
+                            <tr>
+
+                                <th class="column-number">
+                                    #
+                                </th>
+
+                                <th class="column-card-preview">
+                                    Carte
+                                </th>
+
+                                <th>
+                                    Informations
+                                </th>
+
+                                <th>
+                                    Extension
+                                </th>
+
+                                <th>
+                                    Illustration
+                                </th>
+
+                                <th>
+                                    Type
+                                </th>
+
+                                <th>
+                                    Rareté
+                                </th>
+
+                                <th>
+                                    Région
+                                </th>
+
+                                <th class="column-actions">
+                                    Actions
+                                </th>
+
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            @foreach (var item in Model)
+                            {
+                                var rarityClass = item.Rarity switch
+                                {
+                                    CardRarity.Common => "rarity-common",
+                                    CardRarity.Rare => "rarity-rare",
+                                    CardRarity.SuperRare => "rarity-super",
+                                    CardRarity.UltraRare => "rarity-ultra",
+                                    _ => "rarity-default"
+                                };
+
+                                var rarityLabel = item.Rarity switch
+                                {
+                                    CardRarity.Common => "C",
+                                    CardRarity.Rare => "R",
+                                    CardRarity.SuperRare => "SR",
+                                    CardRarity.UltraRare => "UR",
+                                    _ => "—"
+                                };
+
+                                var typeLabel = item.Type switch
+                                {
+                                    CardType.Leader => "Président",
+                                    CardType.Character => "Personnage",
+                                    CardType.PoliticalDecision => "Décision",
+                                    CardType.Location => "Lieu",
+                                    _ => item.Type.ToString()
+                                };
+
+                                var artLabel = item.ArtType switch
+                                {
+                                    CardArtType.Normal => "Normal",
+                                    CardArtType.FullArt => "Full Art",
+                                    CardArtType.AlternateArt => "Alternate Art",
+                                    _ => item.ArtType.ToString()
+                                };
+
+                                <tr class="@(item.IsVariant ? "admin-card-row-variant" : "admin-card-row-base")">
+
+                                    <!-- =================================================
+                                         SERIAL NUMBER
+                                         ================================================= -->
+
+                                    <td class="card-number-cell">
+
+                                        <span class="card-number">
+                                            @item.SerialNumber
+                                        </span>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         CARD COMPONENT
+                                         ================================================= -->
+
+                                    <td class="admin-card-component-cell">
+
+                                        <div class="admin-card-component-preview">
+
+                                            <div class="admin-card-component-inner">
+
+                                                @await Component.InvokeAsync(
+                                                    "Card",
+                                                    new
+                                                    {
+                                                        model = item.Card
+                                                    }
+                                                )
+
+                                            </div>
+
+                                        </div>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         INFORMATION
+                                         ================================================= -->
+
+                                    <td>
+
+                                        <div class="admin-card-list-info">
+
+                                            <strong class="admin-card-list-name">
+                                                @item.Name
+                                            </strong>
+
+                                            @if (item.IsVariant)
+                                            {
+                                                <div class="admin-card-list-subline">
+
+                                                    <span class="admin-variant-indicator">
+                                                        <i data-lucide="sparkles"></i>
+
+                                                        Variante
+                                                        @item.VariantNumber
+                                                    </span>
+
+                                                    <span>
+                                                        Variant ID @item.VariantId
+                                                    </span>
+
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <div class="admin-card-list-subline">
+
+                                                    <span class="admin-normal-indicator">
+                                                        <i data-lucide="image"></i>
+                                                        Carte normale
+                                                    </span>
+
+                                                    <span>
+                                                        Card ID @item.CardId
+                                                    </span>
+
+                                                </div>
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         EXTENSION
+                                         ================================================= -->
+
+                                    <td>
+
+                                        <div class="admin-extension">
+
+                                            <span class="admin-extension-code">
+                                                @item.CardSetCode
+                                            </span>
+
+                                            <span class="admin-extension-name">
+                                                @item.CardSetName
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         ART
+                                         ================================================= -->
+
+                                    <td>
+
+                                        <span class="admin-art-badge @(item.IsVariant ? "admin-art-badge-variant" : "")">
+
+                                            @if (item.IsVariant)
+                                            {
+                                                <i data-lucide="sparkles"></i>
+                                            }
+                                            else
+                                            {
+                                                <i data-lucide="image"></i>
+                                            }
+
+                                            @artLabel
+
+                                        </span>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         TYPE
+                                         ================================================= -->
+
+                                    <td>
+
+                                        <span class="admin-type-badge">
+                                            @typeLabel
+                                        </span>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         RARITY
+                                         ================================================= -->
+
+                                    <td>
+
+                                        @if (item.Rarity.HasValue)
+                                        {
+                                            <span class="admin-rarity @rarityClass">
+
+                                                <span class="rarity-dot"></span>
+
+                                                @rarityLabel
+
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="admin-muted">
+                                                —
+                                            </span>
+                                        }
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         REGION
+                                         ================================================= -->
+
+                                    <td>
+
+                                        <div class="admin-region">
+
+                                            <span class="admin-region-dot"
+                                                  style="background-color: @item.RegionColor;">
+                                            </span>
+
+                                            <span>
+                                                @item.RegionName
+                                            </span>
+
+                                        </div>
+
+                                    </td>
+
+                                    <!-- =================================================
+                                         ACTIONS
+                                         ================================================= -->
+
+                                    <td>
+
+                                        <div class="admin-actions">
+
+                                            <!--
+                                                Même éditeur pour la carte
+                                                normale et ses variantes.
+                                            -->
+
+                                            <a asp-controller="Admin"
+                                               asp-action="CreateCard"
+                                               asp-route-id="@item.CardId"
+                                               class="admin-cardsets-action admin-cardsets-action-edit"
+                                               title="Modifier @item.Name">
+
+                                                <i data-lucide="pencil"></i>
+
+                                                <span>
+                                                    Modifier
+                                                </span>
+
+                                            </a>
+
+                                            @if (item.IsVariant)
+                                            {
+                                                <form asp-controller="Admin"
+                                                      asp-action="DeleteCardVariant"
+                                                      asp-route-id="@item.VariantId"
+                                                      method="post"
+                                                      class="admin-delete-form">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <button type="submit"
+                                                            class="admin-action-button admin-action-delete"
+                                                            onclick="return confirm('Supprimer uniquement la variante @item.SerialNumber ?');">
+
+                                                        <i data-lucide="trash-2"></i>
+                                                        <span>Supprimer</span>
+
+                                                    </button>
+
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <form asp-controller="Admin"
+                                                      asp-action="DeleteCard"
+                                                      asp-route-id="@item.CardId"
+                                                      method="post"
+                                                      class="admin-delete-form">
+
+                                                    @Html.AntiForgeryToken()
+
+                                                    <button type="submit"
+                                                            class="admin-action-button admin-action-delete"
+                                                            onclick="return confirm('Supprimer la carte @item.SerialNumber et toutes ses variantes ?');">
+
+                                                        <i data-lucide="trash-2"></i>
+                                                        <span>Supprimer</span>
+
+                                                    </button>
+
+                                                </form>
+                                            }
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+                            }
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+            }
+
+        </section>
+
+    </div>
+
+</div>
+
+@section Scripts {
+
+    <script>
+
+        document.addEventListener(
+            "DOMContentLoaded",
+            () => {
+
+                /* =================================================
+                   LUCIDE
+                   ================================================= */
+
+                if (typeof lucide !== "undefined") {
+                    lucide.createIcons();
+                }
+
+
+                /* =================================================
+                   SUCCESS
+                   ================================================= */
+
+                const closeButton =
+                    document.querySelector(
+                        ".admin-alert-close"
+                    );
+
+                const alert =
+                    document.querySelector(
+                        ".admin-success-message"
+                    );
+
+                if (closeButton && alert) {
+
+                    closeButton.addEventListener(
+                        "click",
+                        () => {
+
+                            alert.style.opacity = "0";
+                            alert.style.transform = "translateY(-8px)";
+
+                            setTimeout(
+                                () => alert.remove(),
+                                250
+                            );
+                        }
+                    );
+                }
+
+
+                /* =================================================
+                   TABLE ANIMATION
+                   ================================================= */
+
+                document
+                    .querySelectorAll(
+                        ".admin-cards-table tbody tr"
+                    )
+                    .forEach(
+                        (row, index) => {
+
+                            row.style.opacity = "0";
+                            row.style.transform = "translateY(10px)";
+
+                            setTimeout(
+                                () => {
+
+                                    row.style.transition =
+                                        "opacity .35s ease, transform .35s ease";
+
+                                    row.style.opacity = "1";
+                                    row.style.transform = "translateY(0)";
+                                },
+                                40 + index * 25
+                            );
+                        }
+                    );
+
+            }
+        );
+
+    </script>
+}

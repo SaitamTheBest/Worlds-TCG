@@ -1,0 +1,471 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const vm = require('node:vm');
+const path = require('node:path');
+const script = name => fs.readFileSync(path.join(__dirname, '../web-tcg/wwwroot/js', name), 'utf8');
+const tick = () => new Promise(resolve => setImmediate(resolve));
+
+class Element {
+    constructor() {
+        this.value = ''; this.hidden = false; this.disabled = false; this.style = {}; this.dataset = {};
+        this.textContent = ''; this.innerHTML = ''; this.listeners = {}; this.children = []; this.isConnected = true;
+        const classes = new Set();
+        this.classList = { toggle(name,on) { if (on) classes.add(name); else classes.delete(name); }, add(...names) { names.forEach(n => classes.add(n)); }, remove(...names) { names.forEach(n => classes.delete(n)); }, contains(name) { return classes.has(name); } };
+    }
+    addEventListener(name, handler) { this.listeners[name] = handler; }
+    async click() { if (!this.disabled) await this.listeners.click?.({ target: this }); }
+    setAttribute(name, value) { if (name === 'hidden') this.hidden = true; else this[name] = value; }
+    removeAttribute(name) { if (name === 'hidden') this.hidden = false; }
+    appendChild(child) { this.children.push(child); }
+    replaceChildren(...children) { this.children = children; }
+    querySelectorAll() { return []; }
+    before() {}
+    focus() {}
+}
+
+function lobby(home = false, activity = false) {
+    const ids = home ? ['worldsDeckSelect', 'worldsPlayPvpButton', 'worldsPlayAiButton', 'worldsPlayStatus']
+        : ['worldsVsPvpDeckSelect', 'worldsVsIaDeckSelect', 'worldsVsPvpJoinButton', 'worldsVsIaPlayButton', 'worldsVsPvpCancelButton', 'worldsVsPvpStatus', 'worldsVsIaStatus', 'worldsVsPvpQueueSection', 'worldsVsIaQueueSection'];
+    const elements = Object.fromEntries(ids.map(id => [id, new Element()]));
+    if (activity) { elements.matchmakingPlayersInGame = new Element(); elements.matchmakingPlayersInQueue = new Element(); }
+    const select = elements[home ? 'worldsDeckSelect' : 'worldsVsPvpDeckSelect']; select.value = 'deck-1';
+    if (!home) elements.worldsVsIaDeckSelect.value = 'deck-1';
+    const handlers = {};
+    const calls = [];
+    let failStart = false, failJoin = false;
+    const hub = {
+        state: 'Disconnected',
+        on(name, fn) { handlers[name] = fn; },
+        onclose(fn) { handlers.close = fn; }, onreconnecting(fn) { handlers.reconnecting = fn; }, onreconnected(fn) { handlers.reconnected = fn; },
+        async start() { if (failStart) throw new Error('Connexion impossible'); this.state = 'Connected'; },
+        async invoke(name, ...args) {
+            calls.push({ name, args });
+            if (name === 'JoinQueue') {
+                if (failJoin) throw new Error('Le deck doit contenir exactement 40 cartes. Actuellement : 12.');
+                handlers.QueueStatusUpdated('waiting');
+            }
+        },
+        async stop() { this.state = 'Disconnected'; }
+    };
+    const fetches = [];
+    const timers = [];
+    let activityFailure = false;
+    const context = {
+        document: { getElementById: id => elements[id] || null, querySelector: () => ({ value: 'csrf' }), addEventListener() {} },
+        window: { location: {}, addEventListener() {}, setTimeout(fn, delay) { timers.push({ fn, delay }); return timers.length; }, clearTimeout() {} },
+        signalR: {
+            HubConnectionState: { Connected: 'Connected' },
+            HubConnectionBuilder: class { withUrl() { return this; } withAutomaticReconnect() { return this; } build() { return hub; } }
+        },
+        fetch: async (url, options) => {
+            fetches.push({ url, options });
+            if (url === '/Pvp/Activity') return { ok: !activityFailure, json: async () => ({ playersInGame: 8, playersInQueue: 3 }) };
+            return { ok: false, text: async () => 'Le deck doit contenir exactement 40 cartes. Actuellement : 12.' };
+        }, console
+    };
+    vm.runInNewContext(script('pvp-lobby.js'), context);
+    return {
+        elements, handlers, calls, fetches, hub, timers, failActivity(value) { activityFailure = value; },
+        join: elements[home ? 'worldsPlayPvpButton' : 'worldsVsPvpJoinButton'],
+        play: elements[home ? 'worldsPlayAiButton' : 'worldsVsIaPlayButton'],
+        status: elements[home ? 'worldsPlayStatus' : 'worldsVsPvpStatus'],
+        failStart(value) { failStart = value; }, failJoin(value) { failJoin = value; }
+    };
+}
+
+test('PVP affiche la cause du refus et permet une nouvelle tentative', async () => {
+    const app = lobby(); app.failJoin(true);
+    await app.join.click();
+    assert.match(app.status.textContent, /40 cartes.*12/);
+    assert.equal(app.status.role, 'alert');
+    assert.equal(app.join.disabled, false);
+    app.failJoin(false); await app.join.click();
+    assert.equal(app.elements.worldsVsPvpCancelButton.disabled, false);
+});
+
+test('échec de connexion puis nouvelle tentative', async () => {
+    const app = lobby(); app.failStart(true); await app.join.click();
+    assert.match(app.status.textContent, /Connexion impossible/);
+    app.failStart(false); await app.join.click();
+    assert.equal(app.calls.filter(call => call.name === 'JoinQueue').length, 1);
+});
+
+test('annulation, perte de connexion et erreur adverse débloquent les contrôles', async () => {
+    const app = lobby(); await app.join.click();
+    assert.equal(app.play.disabled, true);
+    await app.elements.worldsVsPvpCancelButton.click();
+    assert.equal(app.calls.at(-1).name, 'LeaveQueue'); assert.equal(app.play.disabled, false);
+    await app.join.click(); app.handlers.QueueError('Le deck adverse est invalide.');
+    assert.equal(app.status.textContent, 'Le deck adverse est invalide.'); assert.equal(app.join.disabled, false);
+    await app.join.click(); app.handlers.reconnecting(); assert.equal(app.join.disabled, true);
+    app.handlers.reconnected(); assert.equal(app.join.disabled, false);
+});
+
+test('accueil : le bouton de recherche devient un bouton d’annulation utilisable', async () => {
+    const app = lobby(true); await app.join.click();
+    assert.equal(app.join.disabled, false); assert.equal(app.join.innerHTML, 'Annuler la recherche');
+    await app.join.click(); assert.equal(app.calls.at(-1).name, 'LeaveQueue');
+});
+
+test('IA envoie un JSON avec antiforgery et affiche le refus des 40 cartes', async () => {
+    const app = lobby(); await app.play.click();
+    const { url, options } = app.fetches[0];
+    assert.equal(url, '/Pvp/PlayVsIA'); assert.equal(options.headers.RequestVerificationToken, 'csrf');
+    assert.deepEqual(JSON.parse(options.body), { deckId: 'deck-1' });
+    assert.match(app.elements.worldsVsIaStatus.textContent, /40 cartes.*12/);
+    assert.equal(app.play.disabled, false); assert.equal(app.join.disabled, false);
+});
+
+function deckBuilder() {
+    const elements = new Map();
+    const get = id => { if (!elements.has(id)) elements.set(id, new Element()); return elements.get(id); };
+    const body = new Element();
+    const document = {
+        readyState: 'loading', body, activeElement: new Element(),
+        getElementById: get, querySelector: () => ({ value: 'csrf' }), querySelectorAll: () => [],
+        createElement: () => new Element(), addEventListener() {}, dispatchEvent() {}
+    };
+    const requests = [];
+    const context = {
+        document, window: {}, console: { log() {}, error() {} }, confirm: () => true,
+        CustomEvent: class {},
+        fetch: async (url, options) => {
+            requests.push({ url, options });
+            if (url === '/Deck/MyDecks') return { ok: true, json: async () => [] };
+            return { ok: false, text: async () => 'Vous ne possédez pas suffisamment d’exemplaires.' };
+        }
+    };
+    // Accès aux fonctions privées dans ce contexte de test uniquement.
+    const source = script('deck-management-page.js').replace('// Initialiser au chargement du DOM',
+        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, renderCardGroup }; // Initialiser au chargement du DOM');
+    vm.runInNewContext(source, context);
+    context.builder.initDOM();
+    get('worldsDeckModal').hidden = false;
+    return { ...context.builder, get, requests };
+}
+
+test('deck : possession exacte, plafond partagé entre variantes, retrait', () => {
+    const app = deckBuilder();
+    app.state.cardsGrouped.set(10, { name: 'Carte', variants: [{ cardId: 10, ownedQuantity: 1 }, { cardId: 11, ownedQuantity: 4 }] });
+    app.increaseVariant(10); app.increaseVariant(10);
+    assert.equal(app.state.selectedCards.get(10), 1);
+    for (let i = 0; i < 5; i++) app.increaseVariant(11);
+    assert.equal(app.state.selectedCards.get(11), 3);
+    app.decreaseVariant(10); app.increaseVariant(11);
+    assert.equal(app.state.selectedCards.has(10), false); assert.equal(app.state.selectedCards.get(11), 4);
+});
+
+test('deck : plafond global de 40, brouillon enregistrable', () => {
+    const app = deckBuilder(); app.state.cardsGrouped.set(1, { name: 'Carte', variants: [{ cardId: 1, ownedQuantity: 4 }] });
+    for (let i = 2; i <= 11; i++) app.state.selectedCards.set(i, 4);
+    app.increaseVariant(1); assert.equal(app.state.selectedCards.has(1), false);
+    app.get('worldsDeckName').value = 'Brouillon'; app.get('worldsDeckLeaderSelect').value = '100';
+    app.state.selectedCards.clear(); app.updateCardCount(); assert.equal(app.get('worldsDeckSaveButton').disabled, false);
+});
+
+test('deck : erreur serveur lisible, antiforgery et route de suppression correcte', async () => {
+    const app = deckBuilder();
+    app.get('worldsDeckName').value = 'Brouillon'; app.get('worldsDeckLeaderSelect').value = '100'; app.updateCardCount();
+    await app.saveDeck();
+    assert.equal(app.requests[0].options.headers.RequestVerificationToken, 'csrf');
+    assert.match(app.get('worldsDeckError').textContent, /suffisamment/); assert.equal(app.get('worldsDeckSaveButton').disabled, false);
+    await app.deleteDeck('deck-123');
+    assert.equal(app.requests.at(-1).url, '/Deck/deck-123/Delete');
+});
+
+test('variantes utilisent le composant Card et le vrai ArtType', () => {
+    const app = deckBuilder();
+    const html = app.renderCardGroup(10, { name: 'Carte', variants: [{ cardId: 11, ownedQuantity: 1, artType: 3 }] });
+    assert.match(html, /data-card-component="11"/); assert.match(html, /Alternate Art/); assert.doesNotMatch(html, /<img/);
+});
+
+test('composants : cache commun aux copies, reprise après erreur', async () => {
+    let requests = 0, fail = true;
+    const context = { window: {}, document: { getElementById: () => null }, fetch: async () => {
+        requests++; return { ok: !fail, text: async () => '<div class="tcg-card">Carte</div>' };
+    } };
+    vm.runInNewContext(script('card-components.js'), context);
+    const first = new Element(); first.dataset.cardComponent = '42';
+    const second = new Element(); second.dataset.cardComponent = '42';
+    const root = { querySelectorAll: () => [first, second] };
+    context.window.worldsCardComponents.hydrate(root); await tick();
+    assert.equal(requests, 1); assert.equal(first.textContent, 'Carte indisponible');
+    fail = false; context.window.worldsCardComponents.hydrate(root); await tick();
+    assert.equal(requests, 2); assert.match(first.innerHTML, /tcg-card/); assert.equal(first.innerHTML, second.innerHTML);
+});
+
+function game(motion = false) {
+    const animations = [];
+    let now = Date.UTC(2026, 9, 2, 12), clockTick;
+    class GameElement extends Element {
+        set innerHTML(value) { this._html = value; this.children = []; }
+        get innerHTML() { return this._html; }
+        querySelector() { return this.strong ||= new GameElement(); }
+        showModal() { this.open = true; }
+        close() { this.open = false; }
+        appendChild(child) { child.parent = this; super.appendChild(child); }
+        remove() { if (this.parent) this.parent.children = this.parent.children.filter(child => child !== this); }
+        closest() {
+            let node = this;
+            while (node) { if (node.fixtureId?.startsWith('self')) return node; node = node.parent; }
+            return null;
+        }
+        getBoundingClientRect() { return this.parent?.fixtureId === 'selfHand' ? { left: 0, right: 96, top: 400, width: 96, height: 134 } : { left: 100, right: 220, top: 100, width: 120, height: 170 }; }
+        animate(frames, options) { animations.push({ node: this, frames, options }); return { finished: Promise.resolve() }; }
+        cloneNode() { const clone = new GameElement(); clone.dataset = { ...this.dataset }; clone.className = this.className; return clone; }
+    }
+    const elements = new Proxy({}, { get(target, id) { if (!target[id]) { target[id] = new GameElement(); target[id].fixtureId = id; } return target[id]; } });
+    elements.gamePage.dataset.matchId = 'match-1';
+    elements.gamePage.querySelectorAll = () => {
+        const cards = [];
+        function visit(node) { if (node.className === 'game-card') cards.push(node); node.children.forEach(visit); }
+        ['selfHand', 'selfLeader', 'selfCharacters', 'opponentLeader', 'opponentCharacters'].forEach(id => visit(elements[id]));
+        return cards;
+    };
+    const handlers = {}, calls = [];
+    let failure = null;
+    let onPlay = null;
+    const hub = {
+        on(name, fn) { handlers[name] = fn; }, onreconnected() {},
+        async start() {}, async invoke(name, ...args) {
+            calls.push({ name, args });
+            if (['PlayCard','UseAbility','PlayCardWithTarget'].includes(name) && failure) throw new Error(failure);
+            if (name === 'PlayCard') onPlay?.();
+        }
+    };
+    vm.runInNewContext(script('game.js'), {
+        document: { body: new GameElement(), addEventListener() {}, getElementById: id => elements[id], createElement: () => new GameElement(), querySelectorAll: () => [] },
+        window: { matchMedia: () => ({ matches: !motion }), setTimeout() {}, setInterval(fn) { clockTick = fn; return 1; }, clearInterval() {}, addEventListener() {} }, console,
+        Date: class extends Date { static now() { return now; } },
+        signalR: { HubConnectionBuilder: class { withUrl() { return this; } withAutomaticReconnect() { return this; } build() { return hub; } } }
+    });
+    const card = { instanceId: 'hand-1', cardId: 2, name: 'Personnage', type: 2, usageCost: 20 };
+    const player = () => ({ displayName: 'Test', money: 40, remainingSeconds: 1200, characters: [null, null, null, null], leader: { ...card, type: 1, instanceId: 'leader' }, hand: [card] });
+    const state = { isMyTurn: true, me: player(), opponent: player() };
+    handlers.GameStateUpdated(state);
+    return { elements, handlers, calls, state, animations, advance(ms) { now += ms; clockTick(); }, now: () => now, select: () => elements.selfHand.children[0].click(), fail(message) { failure = message; }, onPlay(fn) { onPlay = fn; } };
+}
+
+test('partie : la confirmation serveur anime la pose sans remplacer la carte animée', async () => {
+    const app = game(true); await app.select();
+    app.onPlay(() => {
+        const card = app.state.me.hand[0];
+        app.handlers.GameStateUpdated({ ...app.state, me: { ...app.state.me, hand: [], characters: [card, null, null, null] } });
+    });
+    await app.elements.playCardButton.click(); await tick();
+    const animation = app.animations.find(a => a.node.dataset.instanceId === 'hand-1');
+    assert.equal(animation.options.duration, 420);
+    assert.equal(animation.node, app.elements.selfCharacters.children[0].children[0]);
+    assert.match(animation.frames[0].transform, /translate\(-100px, 300px\)/);
+});
+
+test('partie : une carte sélectionnée peut être posée dans un emplacement précis', async () => {
+    const app = game(); await app.select();
+    assert.equal(app.elements.playCardButton.hidden, false);
+    await app.elements.selfCharacters.children[2].click(); await tick();
+    assert.deepEqual(app.calls.find(call => call.name === 'PlayCard').args, ['match-1', 'hand-1', 2]);
+    assert.equal(app.elements.playCardButton.hidden, true);
+});
+
+test('partie : bouton poser choisit le premier emplacement libre', async () => {
+    const app = game(); app.state.me.characters[0] = app.state.me.leader;
+    app.handlers.GameStateUpdated(app.state); await app.select();
+    await app.elements.playCardButton.click(); await tick();
+    assert.equal(app.calls.find(call => call.name === 'PlayCard').args[2], 1);
+});
+
+test('partie : refus serveur visible, sélection conservée et nouvelle tentative possible', async () => {
+    const app = game(); app.fail('HubException: Cet emplacement est déjà occupé.');
+    await app.select(); await app.elements.playCardButton.click(); await tick();
+    assert.equal(app.elements.gameActionStatus.textContent, 'Cet emplacement est déjà occupé.');
+    assert.equal(app.elements.gameActionStatus.role, 'alert');
+    assert.equal(app.elements.playCardButton.hidden, false);
+    assert.equal(app.elements.playCardButton.disabled, false);
+    app.fail(null); await app.elements.playCardButton.click(); await tick();
+    assert.equal(app.calls.filter(call => call.name === 'PlayCard').length, 2);
+});
+
+test('partie : hors tour ou énergie insuffisante ne déclenche aucune pose', async () => {
+    const app = game(); app.state.me.money = 5; await app.select();
+    assert.match(app.elements.gameActionStatus.textContent, /Énergie insuffisante/);
+    app.state.me.money = 40; app.state.isMyTurn = false; await app.select();
+    assert.match(app.elements.gameCardDialogStatus.textContent, /Attendez votre tour/);
+    assert.equal(app.calls.some(call => call.name === 'PlayCard'), false);
+});
+
+test('matchmaking : compteurs actualisés puis indisponibles si le serveur échoue', async () => {
+    const app = lobby(false, true); await tick();
+    assert.equal(app.elements.matchmakingPlayersInGame.textContent, 8);
+    assert.equal(app.elements.matchmakingPlayersInQueue.textContent, 3);
+    assert.equal(app.timers.at(-1).delay, 5000);
+    app.failActivity(true); await app.timers.at(-1).fn();
+    assert.equal(app.elements.matchmakingPlayersInGame.textContent, '—');
+    assert.equal(app.elements.matchmakingPlayersInQueue.textContent, '—');
+});
+
+test('partie : PV, énergie et baisse de coût notifiés sans doublon de rendu', () => {
+    const app = game();
+    assert.equal(app.elements.gameStatNotifications.children.length, 0);
+    const leader = { ...app.state.me.leader, currentHealth: 100, maxHealth: 100 };
+    app.handlers.GameStateUpdated({ ...app.state, me: { ...app.state.me, leader } });
+    const before = app.elements.gameStatNotifications.children.length;
+    const next = { ...app.state, me: { ...app.state.me, money: 60, leader: { ...leader, currentHealth: 75, maxHealth: 120, usageCost: 15 } } };
+    app.handlers.GameStateUpdated(next);
+    const notices = app.elements.gameStatNotifications.children.slice(before);
+    assert.ok(notices.some(n => /énergie : \+20/.test(n.title) && n.textContent === '+20' && n.className.includes('is-gain')));
+    assert.ok(notices.some(n => /PV : -25/.test(n.title) && n.textContent === '-25' && n.className.includes('is-loss')));
+    assert.ok(notices.some(n => /PV maximum : \+20/.test(n.title)));
+    assert.ok(notices.some(n => /coût : -5/.test(n.title) && n.className.includes('is-gain')));
+    const count = app.elements.gameStatNotifications.children.length;
+    app.handlers.GameStateUpdated(next);
+    assert.equal(app.elements.gameStatNotifications.children.length, count);
+    assert.equal(app.elements.selfLeader.children[0].children.some(n => n.className === 'game-card-name'), false);
+});
+
+test('partie : le clic ouvre les actions de pose et supprime le coût superposé', async () => {
+    const app = game(); await app.select();
+    assert.equal(app.elements.gameCardDialog.open, true);
+    const pose = app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Poser · emplacement 3');
+    await pose.click(); await tick();
+    assert.equal(app.calls.find(c => c.name === 'PlayCard').args[2], 2);
+    assert.equal(app.elements.gameCardDialog.open, false);
+    assert.equal(app.elements.selfHand.children[0].children.some(n => n.className === 'game-card-cost'), false);
+});
+
+test('partie : blocage, talent et compétence ciblée utilisent les actions du Hub', async () => {
+    const app = game(); app.state.me.turnsPlayed = 2;
+    app.state.opponent.leader.instanceId = 'enemy-leader';
+    app.state.me.leader.abilities = [{ id: 7, type: 1, name: 'Attaque', usageCost: 10, targetTypes: [22], cooldown: 0 }];
+    app.handlers.GameStateUpdated(app.state); await app.elements.selfLeader.children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Utiliser Attaque').click(); await tick();
+    assert.equal(app.elements.opponentLeader.children[0].classList.contains('is-targetable'),true);
+    assert.equal(app.calls.some(c => c.name === 'UseAbility'),false);
+    await app.elements.opponentLeader.children[0].click();
+    assert.match(app.elements.gameCardDialogStatus.textContent,/→/);
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Confirmer l’action').click(); await tick();
+    assert.deepEqual(app.calls.find(c => c.name === 'UseAbility').args, ['match-1', 'leader', 7, 'enemy-leader']);
+    await app.elements.selfLeader.children[0].click();
+    assert.equal(app.elements.gameCardDialogActions.children.some(n => n.textContent === 'Passer en blocage'), false);
+    app.state.me.characters[0] = { ...app.state.me.leader, type: 2, instanceId: 'own-character' };
+    app.handlers.GameStateUpdated(app.state); await app.elements.selfCharacters.children[0].children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Passer en blocage').click(); await tick();
+    assert.deepEqual(app.calls.find(c => c.name === 'Block').args, ['match-1', 'own-character']);
+});
+
+test('partie : inspection adverse et compétences épuisées ne proposent pas d’action active', async () => {
+    const app = game(); app.state.me.turnsPlayed = 2;
+    app.state.me.leader.isExhausted = true;
+    app.state.me.leader.abilities = [{ id: 8, type: 1, name: 'Compétence', usageCost: 1, cooldown: 0 }];
+    app.handlers.GameStateUpdated(app.state); await app.elements.selfLeader.children[0].click();
+    assert.equal(app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Utiliser Compétence').disabled, true);
+    app.state.opponent.leader.instanceId = 'opponent-only'; app.handlers.GameStateUpdated(app.state);
+    await app.elements.opponentLeader.children[0].click();
+    assert.match(app.elements.gameCardDialogStatus.textContent, /consultation uniquement/);
+    assert.equal(app.elements.gameCardDialogActions.children.length, 0);
+});
+
+test('partie : aucune action pendant l’épuisement et le Leader ne peut pas bloquer', async () => {
+    const app = game(); app.state.me.turnsPlayed = 1; app.state.me.leader.isExhausted = true;
+    app.state.me.leader.abilities = [
+        { id: 9, type: 2, name: 'Talent', usageCost: 1, cooldown: 0 },
+        { id: 10, type: 1, name: 'Compétence', usageCost: 1, cooldown: 0 }
+    ];
+    app.handlers.GameStateUpdated(app.state); await app.elements.selfLeader.children[0].click();
+    const actions = app.elements.gameCardDialogActions.children;
+    assert.equal(actions.some(n => n.textContent === 'Passer en blocage'), false);
+    assert.equal(actions.find(n => n.textContent === 'Utiliser Compétence').disabled, true);
+    assert.equal(actions.find(n => n.textContent === 'Utiliser Talent').disabled, true);
+    app.state.me.leader.isExhausted = false; app.handlers.GameStateUpdated({ ...app.state });
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Utiliser Talent').click(); await tick();
+    assert.deepEqual(app.calls.find(c => c.name === 'UseAbility').args, ['match-1', 'leader', 9, null]);
+});
+
+test('partie : la mise à jour du chrono préserve les actions de la popup', async () => {
+    const app = game(); await app.select();
+    const action = app.elements.gameCardDialogActions.children[0];
+    app.handlers.GameStateUpdated({ ...app.state, me: { ...app.state.me, remainingSeconds: 1199 } });
+    assert.equal(app.elements.gameCardDialogActions.children[0], action);
+});
+
+test('partie : la pose d’une décision transmet la cible choisie dans la popup', async () => {
+    const app = game(); app.state.me.hand[0].type = 3; app.state.me.hand[0].playTargetTypes = [22];
+    app.state.opponent.leader.instanceId = 'enemy-leader';
+    app.handlers.GameStateUpdated(app.state); await app.select();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Jouer la carte').click(); await tick();
+    await app.elements.opponentLeader.children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Confirmer l’action').click(); await tick();
+    assert.deepEqual(app.calls.find(c => c.name === 'PlayCardWithTarget').args, ['match-1', 'hand-1', null, 'enemy-leader']);
+});
+
+test('partie : bonus fixe de dégâts visible et variation notifiée près de la carte', async () => {
+    const app = game(); app.state.me.leader.damageBonus = 0;
+    app.handlers.GameStateUpdated(app.state);
+    app.handlers.GameStateUpdated({ ...app.state, me: { ...app.state.me, leader: { ...app.state.me.leader, damageBonus: 40 } } });
+    const badges = app.elements.selfLeader.children[0].children.find(n => n.className === 'game-card-states');
+    assert.equal(badges.children.some(n => n.textContent === 'Dégâts +40'), true);
+    assert.equal(app.elements.gameStatNotifications.children.some(n => n.title.includes('bonus de dégâts : +40')), true);
+});
+
+test('partie : chrono actif fluide, recalage serveur, changement de tour et gel à la fin', async () => {
+    const app = game(); app.advance(2100);
+    assert.equal(app.elements.selfTimer.textContent, '19:58');
+    assert.equal(app.elements.opponentTimer.textContent, '20:00');
+    await app.select(); assert.equal(app.elements.selfTimer.textContent, '19:58');
+    const state = { ...app.state, status: 2, serverTimeUtc: new Date(app.now()).toISOString(), clockAnchorUtc: new Date(app.now() - 20000).toISOString() };
+    app.handlers.GameStateUpdated(state); assert.equal(app.elements.selfTimer.textContent, '19:40');
+    app.advance(3000); assert.equal(app.elements.selfTimer.textContent, '19:37');
+    const opponentTurn = { ...state, isMyTurn: false, serverTimeUtc: new Date(app.now()).toISOString(), clockAnchorUtc: new Date(app.now()).toISOString(), me: { ...state.me, remainingSeconds: 1177 } };
+    app.handlers.GameStateUpdated(opponentTurn); app.advance(2000);
+    assert.equal(app.elements.selfTimer.textContent, '19:37');
+    assert.equal(app.elements.opponentTimer.textContent, '19:58');
+    app.handlers.GameFinished({ winnerUserId: 'me', xpReward: 1 }); app.advance(4000);
+    assert.equal(app.elements.opponentTimer.textContent, '19:58');
+});
+
+test('partie : les états et bonus sont affichés sur la carte et dans sa popup', async () => {
+    const app = game(); Object.assign(app.state.me.leader, { isExhausted: true, isBlocking: true, hasShield: true, isStealthed: true, damageMultiplier: 1.5, extraSkillUses: 1 });
+    app.handlers.GameStateUpdated(app.state);
+    const badges = app.elements.selfLeader.children[0].children.find(n => n.className === 'game-card-states');
+    assert.deepEqual(badges.children.map(n => n.textContent), ['Épuisé', 'En blocage', 'Bouclier', 'Furtif', 'Dégâts ×1.5', '+1 attaque(s)']);
+    await app.elements.selfLeader.children[0].click();
+    assert.match(app.elements.gameCardDialogStatus.textContent, /Épuisé.*En blocage.*Bouclier/);
+});
+
+test('ciblage : annulation sans paiement, carte interdite ignorée et retrait de cible', async () => {
+    const app = game(); app.state.me.turnsPlayed = 2; app.state.opponent.leader.instanceId = 'enemy';
+    app.state.me.leader.abilities = [{ id:7,type:1,name:'Soin',usageCost:1,targetTypes:[22],targetIds:['enemy'] }];
+    app.handlers.GameStateUpdated(app.state); await app.elements.selfLeader.children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Utiliser Soin').click();
+    await app.elements.selfLeader.children[0].click();
+    assert.equal(app.elements.gameCardDialog.open,false);
+    await app.elements.opponentLeader.children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Annuler').click();
+    assert.equal(app.calls.some(c => c.name === 'UseAbility'),false);
+    assert.equal(app.elements.gameTargetBar.hidden,true);
+    await app.elements.selfLeader.children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Utiliser Soin').click();
+    app.state.me.leader.abilities[0].targetIds=[]; app.handlers.GameStateUpdated({...app.state});
+    assert.equal(app.elements.gameTargetBar.hidden,true);
+    assert.match(app.elements.gameActionStatus.textContent,/plus disponible/);
+});
+
+test('ciblage : attaque animée après confirmation, refus sans animation', async () => {
+    const app=game(true); app.state.me.turnsPlayed=2; app.state.opponent.leader.instanceId='enemy';
+    app.state.me.leader.abilities=[{id:7,type:1,name:'Attaque',usageCost:1,targetTypes:[22],targetIds:['enemy'],isAttack:true}];
+    app.handlers.GameStateUpdated(app.state);
+    async function choose() {
+        await app.elements.selfLeader.children[0].click();
+        await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Utiliser Attaque').click();
+        await app.elements.opponentLeader.children[0].click();
+    }
+    await choose();
+    assert.equal(app.animations.some(a=>a.options.duration===650),false);
+    await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Confirmer l’action').click(); await tick();
+    assert.equal(app.animations.filter(a=>a.options.duration===650).length,1);
+    app.fail('HubException: Condition non remplie : au moins 20 énergie (actuellement 10).');
+    await choose(); await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Confirmer l’action').click(); await tick();
+    assert.equal(app.animations.filter(a=>a.options.duration===650).length,1);
+    assert.match(app.elements.gameCardDialogStatus.textContent,/Condition non remplie.*20/);
+    assert.equal(app.elements.gameCardDialogStatus.classList.contains('is-error'),true);
+});

@@ -1,0 +1,806 @@
+﻿/* =========================================================
+   WORLDS TCG - PROFILE
+   ========================================================= */
+
+.profile-page {
+    width: 100%;
+    min-height: 100dvh;
+    padding: 34px 4% 60px;
+    background: #050505;
+    color: #f5f5f5;
+}
+
+.profile-shell {
+    width: min(100%, 1450px);
+    margin: 0 auto;
+}
+
+/* =========================================================
+   PROFILE HEADER
+   ========================================================= */
+
+.profile-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 30px;
+    padding: 26px;
+    border: 1px solid rgba(255,255,255,.075);
+    border-radius: 18px;
+    background: radial-gradient(circle at 5% 0%, rgba(244,196,48,.08), transparent 30%), #0b0c0e;
+}
+
+.profile-user {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+.profile-avatar-large {
+    width: 86px;
+    height: 86px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(244,196,48,.32);
+    border-radius: 20px;
+    background: linear-gradient(135deg, #ffe070, #f4c430);
+    color: #080808;
+    font-size: 1.7rem;
+    font-weight: 900;
+}
+
+    .profile-avatar-large img {
+        width: 100%;
+        height: 100%;
+        display: block;
+        object-fit: cover;
+    }
+
+.profile-kicker,
+.profile-panel-header span {
+    color: #f4c430;
+    font-size: .62rem;
+    font-weight: 900;
+    letter-spacing: .17em;
+}
+
+.profile-user-main h1 {
+    margin: 5px 0;
+    color: #fff;
+    font-size: 2rem;
+    letter-spacing: -.04em;
+}
+
+.profile-member-since {
+    color: #777;
+    font-size: .68rem;
+}
+
+/* =========================================================
+   PROFILE STATS
+   ========================================================= */
+
+.profile-stats {
+    display: flex;
+    gap: 8px;
+}
+
+    .profile-stats > div {
+        min-width: 105px;
+        padding: 12px 15px;
+        border: 1px solid rgba(255,255,255,.065);
+        border-radius: 10px;
+        background: rgba(255,255,255,.018);
+    }
+
+    .profile-stats span {
+        display: block;
+        color: #676767;
+        font-size: .52rem;
+        font-weight: 800;
+        letter-spacing: .12em;
+    }
+
+    .profile-stats strong {
+        display: block;
+        margin-top: 5px;
+        color: #fff;
+        font-size: 1rem;
+    }
+
+/* =========================================================
+   LAYOUT
+   ========================================================= */
+
+.profile-layout {
+    display: grid;
+    grid-template-columns: .9fr 1.1fr;
+    align-items: start;
+    gap: 14px;
+    margin-top: 14px;
+}
+
+.profile-column {
+    min-width: 0;
+}
+
+.profile-panel {
+    min-width: 0;
+    padding: 23px;
+    border: 1px solid rgba(255,255,255,.07);
+    border-radius: 16px;
+    background: #0a0b0d;
+    box-shadow: 0 15px 38px rgba(0,0,0,.3);
+}
+
+.profile-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+    .profile-panel-header h2 {
+        margin: 5px 0 0;
+        color: #f4f4f4;
+        font-size: 1.05rem;
+    }
+
+    .profile-panel-header > svg {
+        width: 18px;
+        height: 18px;
+        color: #f4c430;
+    }
+
+.profile-panel-description {
+    margin: 13px 0 0;
+    color: #767676;
+    font-size: .7rem;
+    line-height: 1.55;
+}
+
+/* =========================================================
+   PROFILE SETTINGS
+   ========================================================= */
+
+.profile-settings {
+    margin-top: 25px;
+}
+
+.profile-setting-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 25px;
+}
+
+.profile-setting-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+    .profile-setting-copy strong {
+        color: #eee;
+        font-size: .76rem;
+    }
+
+    .profile-setting-copy span {
+        color: #666;
+        font-size: .61rem;
+    }
+
+.profile-setting-form,
+.profile-avatar-upload,
+.profile-avatar-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+    .profile-setting-form input {
+        width: 190px;
+        height: 38px;
+        padding: 0 11px;
+        border: 1px solid rgba(255,255,255,.09);
+        border-radius: 8px;
+        outline: none;
+        background: #070809;
+        color: #eee;
+        font-size: .7rem;
+        transition: border-color .18s ease, background .18s ease;
+    }
+
+        .profile-setting-form input:focus {
+            border-color: rgba(244,196,48,.45);
+            background: #090a0c;
+        }
+
+    .profile-setting-form button,
+    .profile-action-primary,
+    .profile-action-secondary,
+    .profile-file-button {
+        height: 38px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 0 12px;
+        border-radius: 8px;
+        font-size: .64rem;
+        font-weight: 800;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: border-color .18s ease, background .18s ease, color .18s ease, transform .18s ease;
+    }
+
+    .profile-setting-form button,
+    .profile-action-primary {
+        border: 1px solid #f4c430;
+        background: #f4c430;
+        color: #080808;
+    }
+
+        .profile-setting-form button:hover,
+        .profile-action-primary:hover {
+            border-color: #ffda4d;
+            background: #ffda4d;
+            transform: translateY(-1px);
+        }
+
+.profile-action-secondary,
+.profile-file-button {
+    border: 1px solid rgba(255,255,255,.09);
+    background: #0d0e10;
+    color: #cfcfcf;
+}
+
+    .profile-action-secondary:hover,
+    .profile-file-button:hover {
+        border-color: rgba(244,196,48,.25);
+        color: #fff;
+        background: #111214;
+    }
+
+    .profile-file-button svg {
+        width: 15px;
+        height: 15px;
+        color: #f4c430;
+    }
+
+.profile-divider {
+    height: 1px;
+    margin: 22px 0;
+    background: rgba(255,255,255,.055);
+}
+
+/* =========================================================
+   SHOWCASE
+   ========================================================= */
+
+.profile-showcase-panel {
+    overflow: hidden;
+}
+
+.profile-showcase {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: stretch;
+    gap: 14px;
+    margin-top: 23px;
+}
+
+.profile-showcase-slot {
+    position: relative;
+    min-width: 0;
+    min-height: 330px;
+    display: grid;
+    place-items: center;
+    padding: 14px;
+    overflow: hidden;
+    border: 1px solid rgba(244,196,48,.11);
+    border-radius: 14px;
+    background: #070809;
+}
+
+    .profile-showcase-slot.has-card {
+        border-color: rgba(244,196,48,.2);
+        background: radial-gradient( circle at 50% 42%, rgba(244,196,48,.045), transparent 62% ), #070809;
+    }
+
+.profile-showcase-card-render {
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    /*
+ * Le composant Card garde son fonctionnement normal.
+ * On contrôle uniquement sa largeur depuis le profil.
+ */
+    .profile-showcase-card-render .tcg-card {
+        --card-width: min(100%, 180px);
+        margin: auto;
+        flex: 0 0 auto;
+    }
+
+        /*
+ * Le hover du composant ne doit pas déplacer la carte
+ * à l'intérieur de la vitrine.
+ */
+        .profile-showcase-card-render .tcg-card:hover {
+            transform: none;
+        }
+
+.profile-showcase-empty {
+    width: 100%;
+    height: 100%;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #4e4e4e;
+    font-size: .6rem;
+}
+
+    .profile-showcase-empty svg {
+        width: 19px;
+        height: 19px;
+    }
+
+.profile-showcase-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    margin-top: 16px;
+}
+
+    .profile-showcase-actions > span {
+        color: #676767;
+        font-size: .6rem;
+    }
+
+/* =========================================================
+   OWNED CARDS
+   ========================================================= */
+
+.profile-owned-panel {
+    margin-top: 14px;
+    overflow: hidden;
+}
+
+.profile-owned-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    align-items: start;
+    gap: 16px;
+    margin-top: 22px;
+}
+
+/*
+ * Le bouton devient simplement le conteneur cliquable
+ * autour du vrai composant Card.
+ */
+.profile-owned-card {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    outline: none;
+    overflow: visible;
+    transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+    .profile-owned-card:hover {
+        border-color: rgba(244,196,48,.2);
+        background: rgba(244,196,48,.025);
+        transform: translateY(-3px);
+    }
+
+    .profile-owned-card:focus-visible {
+        border-color: rgba(244,196,48,.55);
+        box-shadow: 0 0 0 2px rgba(244,196,48,.12);
+    }
+
+    .profile-owned-card.is-selected {
+        border-color: rgba(244,196,48,.75);
+        background: rgba(244,196,48,.04);
+        box-shadow: 0 0 0 1px rgba(244,196,48,.08), 0 0 24px rgba(244,196,48,.07);
+    }
+
+.profile-owned-card-render {
+    width: 100%;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .profile-owned-card-render .tcg-card {
+        --card-width: min(100%, 175px);
+        margin: 0 auto;
+        flex: 0 0 auto;
+    }
+
+    /*
+ * Le clic doit être géré par .profile-owned-card.
+ * Le composant visuel à l'intérieur ne capture donc rien.
+ */
+    .profile-owned-card-render .tcg-card {
+        pointer-events: none;
+    }
+
+        .profile-owned-card-render .tcg-card:hover {
+            transform: none;
+        }
+
+/* =========================================================
+   SELECTED BADGE
+   ========================================================= */
+
+.profile-owned-card-selection {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 200;
+    width: 29px;
+    height: 29px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.18);
+    border-radius: 8px;
+    background: #121315;
+    color: #777;
+    opacity: 0;
+    transform: scale(.85);
+    box-shadow: 0 5px 15px rgba(0,0,0,.45);
+    pointer-events: none;
+    transition: opacity .18s ease, transform .18s ease, background .18s ease, color .18s ease;
+}
+
+.profile-owned-card:hover .profile-owned-card-selection {
+    opacity: .45;
+    transform: scale(1);
+}
+
+.profile-owned-card.is-selected .profile-owned-card-selection {
+    opacity: 1;
+    transform: scale(1);
+    border-color: #f4c430;
+    background: #f4c430;
+    color: #080808;
+}
+
+.profile-owned-card-selection svg {
+    width: 15px;
+    height: 15px;
+    stroke-width: 3;
+}
+
+/* =========================================================
+   EMPTY COLLECTION
+   ========================================================= */
+
+.profile-empty {
+    min-height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    color: #555;
+    font-size: .65rem;
+}
+
+    .profile-empty svg {
+        width: 24px;
+        height: 24px;
+    }
+
+/* =========================================================
+   MESSAGES
+   ========================================================= */
+
+.profile-message {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 12px;
+    padding: 11px 13px;
+    border-radius: 9px;
+    font-size: .67rem;
+}
+
+    .profile-message svg {
+        width: 16px;
+        height: 16px;
+        flex-shrink: 0;
+    }
+
+.profile-message-success {
+    border: 1px solid rgba(244,196,48,.18);
+    background: rgba(244,196,48,.04);
+    color: #ddd;
+}
+
+    .profile-message-success svg {
+        color: #f4c430;
+    }
+
+.profile-message-error {
+    border: 1px solid rgba(255,255,255,.1);
+    background: rgba(255,255,255,.025);
+    color: #ddd;
+}
+
+/* =========================================================
+   RESPONSIVE - LARGE
+   ========================================================= */
+
+@media (max-width: 1250px) {
+    .profile-showcase {
+        gap: 10px;
+    }
+
+    .profile-showcase-slot {
+        min-height: 300px;
+        padding: 10px;
+    }
+
+    .profile-showcase-card-render .tcg-card {
+        --card-width: min(100%, 160px);
+    }
+
+    .profile-owned-grid {
+        grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+        gap: 12px;
+    }
+
+    .profile-owned-card {
+        padding: 9px;
+    }
+
+    .profile-owned-card-render .tcg-card {
+        --card-width: min(100%, 160px);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE - TABLET
+   ========================================================= */
+
+@media (max-width: 950px) {
+    .profile-header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-showcase-slot {
+        min-height: 370px;
+    }
+
+    .profile-showcase-card-render .tcg-card {
+        --card-width: min(100%, 205px);
+    }
+
+    .profile-owned-grid {
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    }
+
+    .profile-owned-card-render .tcg-card {
+        --card-width: min(100%, 170px);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE - MOBILE
+   ========================================================= */
+
+@media (max-width: 700px) {
+    .profile-page {
+        padding: 20px 14px 45px;
+    }
+
+    .profile-header {
+        padding: 20px;
+    }
+
+    .profile-stats {
+        width: 100%;
+    }
+
+        .profile-stats > div {
+            min-width: 0;
+            flex: 1;
+        }
+
+    .profile-setting-block {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .profile-setting-form,
+    .profile-avatar-actions {
+        width: 100%;
+    }
+
+        .profile-setting-form input {
+            width: auto;
+            flex: 1;
+        }
+
+    .profile-showcase {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+
+    .profile-showcase-slot {
+        min-height: 395px;
+        padding: 16px;
+    }
+
+    .profile-showcase-card-render .tcg-card {
+        --card-width: min(100%, 220px);
+    }
+
+    .profile-showcase-empty {
+        min-height: 340px;
+    }
+
+    .profile-owned-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .profile-owned-card {
+        padding: 7px;
+    }
+
+    .profile-owned-card-render .tcg-card {
+        --card-width: min(100%, 155px);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE - SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 520px) {
+    .profile-user {
+        align-items: flex-start;
+    }
+
+    .profile-avatar-large {
+        width: 68px;
+        height: 68px;
+        border-radius: 16px;
+    }
+
+    .profile-user-main h1 {
+        font-size: 1.55rem;
+    }
+
+    .profile-stats {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+        .profile-stats > div {
+            padding: 10px;
+        }
+
+    .profile-avatar-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profile-avatar-upload {
+        width: 100%;
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .profile-setting-form {
+        width: 100%;
+    }
+
+        .profile-setting-form input {
+            min-width: 0;
+        }
+
+    .profile-showcase-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+        .profile-showcase-actions .profile-action-primary {
+            width: 100%;
+        }
+
+    .profile-owned-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile-owned-card-render .tcg-card {
+        --card-width: min(100%, 145px);
+    }
+}
+
+/* =========================================================
+   RESPONSIVE - VERY SMALL
+   ========================================================= */
+
+@media (max-width: 400px) {
+    .profile-page {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    .profile-panel {
+        padding: 18px;
+    }
+
+    .profile-header {
+        padding: 17px;
+    }
+
+    .profile-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-showcase-card-render .tcg-card {
+        --card-width: min(100%, 205px);
+    }
+
+    .profile-owned-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-owned-card {
+        padding: 12px;
+    }
+
+    .profile-owned-card-render .tcg-card {
+        --card-width: min(100%, 205px);
+    }
+}
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+    .profile-setting-form button,
+    .profile-action-primary,
+    .profile-action-secondary,
+    .profile-file-button,
+    .profile-owned-card,
+    .profile-owned-card-selection {
+        transition: none;
+    }
+}

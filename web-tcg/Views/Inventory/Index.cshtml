@@ -1,0 +1,421 @@
+@model web_tcg.Models.Inventory.InventoryViewModel
+
+@{
+    ViewData["Title"] = "Mon Inventaire";
+}
+
+<link rel="stylesheet"
+      href="~/css/inventory.css"
+      asp-append-version="true" />
+
+<div class="inventory-page">
+
+    <!-- =========================================================
+         HERO
+         ========================================================= -->
+
+    <section class="inventory-hero">
+
+        <div class="inventory-hero-grid"></div>
+
+        <div class="inventory-hero-glow inventory-hero-glow-left"></div>
+        <div class="inventory-hero-glow inventory-hero-glow-right"></div>
+
+        <div class="inventory-hero-content">
+
+            <div class="inventory-eyebrow">
+                <span class="inventory-eyebrow-dot"></span>
+                COLLECTION PERSONNELLE
+            </div>
+
+            <h1 class="inventory-title">
+                Mon
+                <span>Inventaire</span>
+            </h1>
+
+            <p class="inventory-subtitle">
+                Retrouvez et explorez toutes les cartes
+                que vous avez collectées.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         STATISTIQUES
+         ========================================================= -->
+
+    <section class="inventory-stats-section">
+
+        <div class="inventory-stat-card">
+
+            <div class="inventory-stat-icon">
+                <i data-lucide="layers"></i>
+            </div>
+
+            <div class="inventory-stat-content">
+
+                <span class="inventory-stat-label">
+                    CARTES TOTALES
+                </span>
+
+                <strong class="inventory-stat-value">
+                    @Model.TotalCards
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="inventory-stat-card">
+
+            <div class="inventory-stat-icon">
+                <i data-lucide="sparkles"></i>
+            </div>
+
+            <div class="inventory-stat-content">
+
+                <span class="inventory-stat-label">
+                    CARTES UNIQUES
+                </span>
+
+                <strong class="inventory-stat-value">
+                    @Model.UniqueCards
+                </strong>
+
+            </div>
+
+        </div>
+
+
+        <div class="inventory-stat-card">
+
+            <div class="inventory-stat-icon">
+                <i data-lucide="package"></i>
+            </div>
+
+            <div class="inventory-stat-content">
+
+                <span class="inventory-stat-label">
+                    COLLECTION
+                </span>
+
+                <strong class="inventory-stat-value">
+                    @(Model.Items?.Count() ?? 0)
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+         CONTENT
+         ========================================================= -->
+
+    <section class="inventory-content">
+
+        <!-- =====================================================
+             TOOLBAR
+             ===================================================== -->
+
+        <div class="inventory-toolbar">
+
+            <div class="inventory-toolbar-heading">
+
+                <span class="inventory-section-label">
+                    COLLECTION
+                </span>
+
+                <h2>
+                    Mes cartes
+                </h2>
+
+            </div>
+
+
+            <form method="get"
+                  class="inventory-controls">
+
+                <div class="inventory-search">
+
+                    <i data-lucide="search"></i>
+
+                    <input type="text"
+                           name="search"
+                           placeholder="Rechercher une carte..."
+                           value="@Model.SearchQuery"
+                           autocomplete="off" />
+
+                </div>
+
+
+                <div class="inventory-sort">
+
+                    <i data-lucide="arrow-up-down"></i>
+
+                    <select name="sortBy"
+                            id="sortBy"
+                            onchange="this.form.submit()">
+
+                        <option value="name"
+                                selected="@(Model.CurrentSort == "name")">
+                            Nom
+                        </option>
+
+                        <option value="rarity"
+                                selected="@(Model.CurrentSort == "rarity")">
+                            Rareté
+                        </option>
+
+                        <option value="type"
+                                selected="@(Model.CurrentSort == "type")">
+                            Type
+                        </option>
+
+                        <option value="date"
+                                selected="@(Model.CurrentSort == "date")">
+                            Date d'ajout
+                        </option>
+
+                        <option value="quantity"
+                                selected="@(Model.CurrentSort == "quantity")">
+                            Quantité
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <button type="submit"
+                        class="inventory-search-button">
+
+                    <i data-lucide="search"></i>
+
+                    <span>
+                        Rechercher
+                    </span>
+
+                </button>
+
+            </form>
+
+        </div>
+
+
+        @if (!Model.Items.Any())
+        {
+            <!-- =================================================
+                 EMPTY STATE
+                 ================================================= -->
+
+            <div class="inventory-empty">
+
+                <div class="inventory-empty-visual">
+
+                    <div class="inventory-empty-ring"></div>
+
+                    <div class="inventory-empty-icon">
+                        <i data-lucide="library"></i>
+                    </div>
+
+                </div>
+
+                <span class="inventory-empty-label">
+                    COLLECTION VIDE
+                </span>
+
+                <h2>
+                    Votre inventaire est vide
+                </h2>
+
+                <p>
+                    Ouvrez votre premier booster pour commencer
+                    à construire votre collection.
+                </p>
+
+                <a href="@Url.Action("Index", "Booster")"
+                   class="inventory-primary-button">
+
+                    <i data-lucide="package-open"></i>
+
+                    Voir les boosters
+
+                </a>
+
+            </div>
+        }
+        else
+        {
+            <!-- =================================================
+                 COLLECTION HEADER
+                 ================================================= -->
+
+            <div class="inventory-collection-header">
+
+                <div class="inventory-collection-count">
+
+                    <span>
+                        COLLECTION
+                    </span>
+
+                    <strong>
+                        @Model.UniqueCards carte(s) unique(s)
+                    </strong>
+
+                </div>
+
+                <div class="inventory-collection-status">
+
+                    <span class="inventory-status-dot"></span>
+
+                    @Model.TotalCards CARTE(S)
+
+                </div>
+
+            </div>
+
+
+            <!-- =================================================
+                 CARD GRID
+                 ================================================= -->
+
+            <div class="inventory-card-grid">
+                @foreach (var item in Model.Items)
+                {
+                    <article class="inventory-card-item">
+
+                        <a href="@Url.Action("Detail", "Inventory", new { id = item.Id })"
+                           class="inventory-card-clickable"
+                           aria-label="Voir les détails de @item.Card.Name">
+
+                            <div class="inventory-card-quantity">
+                                <span>×</span>
+                                <strong>@item.Quantity</strong>
+                            </div>
+
+                            <div class="inventory-card-render">
+                                @await Component.InvokeAsync(
+                                    "Card",
+                                    new
+                                    {
+                                        model = item.Card
+                                    }
+                                )
+                            </div>
+
+                            <div class="inventory-card-details">
+                                <strong>
+                                    @item.Card.Name
+                                </strong>
+
+                                <span>
+                                    Ajoutée le @item.AcquiredDate.ToString("dd/MM/yyyy")
+                                </span>
+                            </div>
+
+                        </a>
+
+                    </article>
+                }
+            </div>
+        }
+
+    </section>
+
+</div>
+
+
+@section Scripts {
+
+    <script>
+
+        if (typeof lucide !== "undefined") {
+            lucide.createIcons();
+        }
+
+
+        async function deleteCard(id) {
+
+            if (!confirm(
+                "Êtes-vous sûr de vouloir supprimer cette carte de votre inventaire ?"
+            )) {
+                return;
+            }
+
+            try {
+
+                const response = await fetch(
+                    '@Url.Action("RemoveCard", "Inventory")',
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            id
+                        })
+                    }
+                );
+
+                const data =
+                    await response.json();
+
+                if (data.success) {
+
+                    location.reload();
+
+                    return;
+                }
+
+                alert(
+                    data.message ||
+                    "Erreur lors de la suppression."
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Erreur lors de la suppression :",
+                    error
+                );
+
+                alert(
+                    "Une erreur est survenue."
+                );
+            }
+        }
+
+
+        const searchInput =
+            document.querySelector(
+                'input[name="search"]'
+            );
+
+        if (searchInput) {
+
+            searchInput.addEventListener(
+                "keydown",
+                function(event) {
+
+                    if (event.key !== "Enter") {
+                        return;
+                    }
+
+                    event.preventDefault();
+
+                    this.form.submit();
+                }
+            );
+        }
+
+    </script>
+
+}
