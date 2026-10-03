@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Tag existant à publier ou notification à reprendre
+        description: Tag existant à publier ou notification à reprendre (exemple v1.0.0)
         required: true
         type: string
 
