@@ -18,10 +18,15 @@ public static class Preview
     {
         Id = id, Name = id == 1 ? "Président de démonstration" : "Personnage de démonstration",
         Type = id == 1 ? CardType.Leader : CardType.Character,
-        ArtType = id == 3 ? CardArtType.AlternateArt : CardArtType.Normal,
+        ArtType = id == 4 ? CardArtType.FullArt : id == 3 ? CardArtType.AlternateArt : CardArtType.Normal,
         Rarity = CardRarity.Rare, RegionColor = "#18467d", RegionName = "Région test",
         CollectionNumber = id.ToString(), CardSetCode = "TEST", UsageCost = 2, HealthPoints = 1200,
-        Abilities = new() { new() { Name = "Compétence test", Description = "Texte de démonstration pour vérifier le composant.", UsageCost = 1 } }
+        Abilities = new()
+        {
+            new() { Type = AbilityType.Skill, Name = "Frappe", Description = "Inflige 40 dégâts à un personnage.", UsageCost = 10, DisplayOrder = 0 },
+            new() { Type = AbilityType.Trait, Name = "Médiapart", Description = "Tous les deux tours, vous pouvez soigner ce personnage de 40 dégâts.", DisplayOrder = 1 },
+            new() { Type = AbilityType.Effect, Name = "Bouclier", Description = "Protège de la première attaque.", DisplayOrder = 2 }
+        }
     };
     public static async Task RunAsync()
     {

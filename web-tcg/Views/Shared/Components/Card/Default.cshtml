@@ -1,4 +1,4 @@
-﻿@using web_tcg.Data.Enums
+@using web_tcg.Data.Enums
 @model web_tcg.Models.Card.CardViewModel
 
 @{
@@ -87,10 +87,13 @@
         : nameLength > 22 ? "tcg-card-name tcg-card-name-long"
         : "tcg-card-name";
 
-    int abilityCount = Model.Abilities?.Count() ?? 0;
+    var abilities = (Model.Abilities ?? new()).OrderBy(x => x.DisplayOrder).ToList();
+    int abilityCount = abilities.Count;
+    if (abilityCount > 0) cardClasses += " tcg-card-with-abilities";
 }
 
 <link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
+<script src="~/js/card-layout.js" asp-append-version="true" defer></script>
 
 <div class="@cardClasses" style="--region-color:@Model.RegionColor;">
     <div class="tcg-card-background"></div>
@@ -143,25 +146,13 @@
         @if (abilityCount > 0)
         {
             <div class="tcg-card-abilities" data-count="@abilityCount">
-                @foreach (var ability in Model.Abilities.OrderBy(x => x.DisplayOrder))
+                @foreach (var ability in abilities)
                 {
-                    <div class="tcg-card-ability">
+                    var designation = ability.Type switch { AbilityType.Skill => "Compétence", AbilityType.Trait => "Talent", AbilityType.Effect => "Effet", _ => "Capacité" };
+                    <div class="tcg-card-ability" data-kind="@ability.Type">
                         <div class="tcg-card-ability-header">
                             <div class="tcg-card-ability-title">
-                                <span class="tcg-card-ability-icon">
-                                    @switch (ability.Type)
-                                    {
-                                        case AbilityType.Skill:
-                                            @:S
-                                            break;
-                                        case AbilityType.Trait:
-                                            @:T
-                                            break;
-                                        case AbilityType.Effect:
-                                            @:E
-                                            break;
-                                    }
-                                </span>
+                                <span class="tcg-card-ability-badge">@designation</span>
                                 <span>@ability.Name</span>
                             </div>
 

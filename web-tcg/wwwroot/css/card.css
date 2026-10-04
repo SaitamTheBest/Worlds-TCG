@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&display=swap');
 
 @property --tcg-holo-angle {
     syntax: '<angle>';
@@ -285,7 +285,7 @@
     top: 12%;
     left: 7%;
     right: 7%;
-    height: 43%;
+    height: 35%;
     z-index: 8;
     overflow: hidden;
     border: .6cqw solid rgba(240,244,247,.88);
@@ -333,7 +333,7 @@
     top: 11.2%;
     left: 5%;
     right: 5%;
-    height: 48.6%;
+    height: 35%;
     border-width: .9cqw;
     border-color: #f1dc85;
 }
@@ -352,7 +352,7 @@
         top: 11.2%;
         left: 5.2%;
         right: 5.2%;
-        height: 48%;
+        height: 35%;
         border: .9cqw solid #e8c453;
         border-radius: 2.4cqw;
         outline: .35cqw solid rgba(255,244,190,.75);
@@ -1363,3 +1363,44 @@
 
 /* Sans coût de pose, les PV du Leader restent alignés à droite. */
 .tcg-card-leader .tcg-card-top-stats { justify-content: flex-end; }
+
+
+/* Libellés de capacités inspirés des cartes à jouer, sans modifier l’illustration. */
+.tcg-card.tcg-card-with-abilities .tcg-card-info {
+    top: 49%; bottom: 20.6%; padding: 1.3cqw;
+    overflow: hidden; border-radius: 1.8cqw;
+    background: #101820ed;
+}
+.tcg-card.tcg-card-with-abilities .tcg-card-abilities { flex: 0 0 auto; justify-content: flex-start; gap: calc(1cqw * var(--ability-scale,1)); overflow: visible; }
+.tcg-card.tcg-card-with-abilities .tcg-card-ability {
+    --ability-color: #71bfff; --ability-dark: #153a67;
+    padding: calc(1.1cqw * var(--ability-scale,1)); flex-shrink: 0;
+    background: #192637ed; border: .25cqw solid #a6b8cc44; border-radius: 1cqw;
+    box-shadow: inset .5cqw 0 var(--ability-color); backdrop-filter: none;
+}
+.tcg-card.tcg-card-with-abilities .tcg-card-ability[data-kind="Trait"] { --ability-color: #ff827b; --ability-dark: #8b181d; }
+.tcg-card.tcg-card-with-abilities .tcg-card-ability[data-kind="Effect"] { --ability-color: #8ce3b1; --ability-dark: #1c6846; }
+.tcg-card.tcg-card-with-abilities .tcg-card-ability-header { gap: 1cqw; margin-bottom: calc(.8cqw * var(--ability-scale,1)); align-items: flex-start; }
+.tcg-card.tcg-card-with-abilities .tcg-card-ability-title {
+    display: flex; align-items: baseline; flex-wrap: wrap; gap: calc(1.4cqw * var(--ability-scale,1)); overflow: visible;
+    font: 750 calc(3.8cqw * var(--ability-scale,1))/1.25 'Segoe UI',system-ui,Arial,sans-serif;
+    color: #fff; letter-spacing: 0; text-transform: none; text-shadow: none;
+}
+.tcg-card.tcg-card-with-abilities .tcg-card-ability-title > span:last-child { white-space: normal; overflow: visible; overflow-wrap: anywhere; text-overflow: clip; }
+.tcg-card-ability-badge {
+    display: inline-flex; justify-content: center; align-items: center; flex-shrink: 0;
+    padding: calc(.45cqw * var(--ability-scale,1)) calc(2cqw * var(--ability-scale,1));
+    border: .25cqw solid #fff8; border-radius: 99px;
+    background: linear-gradient(180deg,var(--ability-color),var(--ability-dark) 60%);
+    box-shadow: inset 0 .3cqw #fffa,0 .3cqw .7cqw #0008;
+    font: italic 800 calc(3.1cqw * var(--ability-scale,1))/1.2 'Segoe UI',system-ui,Arial,sans-serif;
+    color: #fff; text-shadow: 0 1px 1px #0009; white-space: nowrap;
+}
+.tcg-card.tcg-card-with-abilities .tcg-card-ability-description {
+    font: 500 calc(3.45cqw * var(--ability-scale,1))/1.35 'Segoe UI',system-ui,Arial,sans-serif;
+    color: #f1f5fb; overflow-wrap: anywhere; text-shadow: none;
+}
+.tcg-card.tcg-card-with-abilities .tcg-card-ability-cost {
+    min-width: calc(4.8cqw * var(--ability-scale,1)); width: auto; height: calc(4.8cqw * var(--ability-scale,1)); padding: 0 .5cqw;
+    font: 800 calc(3cqw * var(--ability-scale,1))/1 'Segoe UI',system-ui,Arial,sans-serif;
+}
