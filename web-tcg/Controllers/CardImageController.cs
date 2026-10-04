@@ -34,9 +34,17 @@ namespace web_tcg.Controllers
         [HttpPost("Upload")]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(MaxFileSize + 1024 * 1024)]
-        public async Task<IActionResult> Upload(
-            IFormFile? file,
-            CancellationToken cancellationToken)
+        public Task<IActionResult> Upload(IFormFile? file, CancellationToken cancellationToken)
+            => SaveImageAsync(file, cancellationToken, "cards");
+
+        [HttpPost("/Admin/CardSets/UploadImage")]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(MaxFileSize + 1024 * 1024)]
+        public Task<IActionResult> UploadCardSet(IFormFile? file, CancellationToken cancellationToken)
+            => SaveImageAsync(file, cancellationToken, "cardsets");
+
+        private async Task<IActionResult> SaveImageAsync(
+            IFormFile? file, CancellationToken cancellationToken, string folder)
         {
             if (file == null || file.Length == 0)
             {
@@ -88,7 +96,7 @@ namespace web_tcg.Controllers
                 Path.Combine(
                     webRootPath,
                     "uploads",
-                    "cards");
+                    folder);
 
             var fileName =
                 $"{Guid.NewGuid():N}{detectedExtension}";
@@ -116,7 +124,7 @@ namespace web_tcg.Controllers
                     cancellationToken);
 
                 var publicPath =
-                    $"/uploads/cards/{fileName}";
+                    $"/uploads/{folder}/{fileName}";
 
                 _logger.LogInformation(
                     "Illustration de carte enregistrée : {Path}",

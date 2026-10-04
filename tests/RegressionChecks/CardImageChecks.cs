@@ -42,6 +42,25 @@ public static class CardImageChecks
             using var invalidStream = new MemoryStream(new byte[] {1,2,3,4});
             check(await controller.Upload(new FormFile(invalidStream,0,4,"file","fake.png"),CancellationToken.None) is BadRequestObjectResult,
                 "images : un fichier sans signature d'image est refusé");
+            using var boosterStream = new MemoryStream(bytes);
+            var boosterResult = await controller.UploadCardSet(new FormFile(boosterStream,0,bytes.Length,"file","booster.png"),CancellationToken.None) as OkObjectResult;
+            var boosterPath = boosterResult?.Value?.GetType().GetProperty("path")?.GetValue(boosterResult.Value) as string;
+            check(boosterPath?.StartsWith("/uploads/cardsets/") == true, "extensions : image enregistrée dans le dossier dédié");
+            var boosterDiskPath = Path.Combine(environment.WebRootPath,boosterPath!.TrimStart('/').Replace('/',Path.DirectorySeparatorChar));
+            check(File.Exists(boosterDiskPath) && (await File.ReadAllBytesAsync(boosterDiskPath)).SequenceEqual(bytes), "extensions : fichier image copié intégralement");
+            var set = new CreateCardSetViewModel { BoosterImageUrl=boosterPath };
+            bool ValidBoosterPath() => Validator.TryValidateProperty(set.BoosterImageUrl,new ValidationContext(set) { MemberName=nameof(set.BoosterImageUrl) },new List<ValidationResult>());
+            check(ValidBoosterPath(), "extensions : le chemin interne retourné est accepté par le formulaire");
+            foreach (var rejected in new[] { "https://example.com/booster.png", "/uploads/cardsets/../../booster.png", "/uploads/cards/"+new string('a',32)+".png", "" })
+            {
+                set.BoosterImageUrl=rejected;
+                check(!ValidBoosterPath(), "extensions : URL externe, chemin détourné ou image absente refusés");
+            }
+            using var invalidBoosterStream = new MemoryStream(new byte[] {1,2,3,4});
+            check(await controller.UploadCardSet(new FormFile(invalidBoosterStream,0,4,"file","fake.png"),CancellationToken.None) is BadRequestObjectResult, "extensions : faux fichier image refusé");
+            check(await controller.UploadCardSet(null,CancellationToken.None) is BadRequestObjectResult, "extensions : envoi vide refusé");
+            using var largeStream = new MemoryStream();
+            check(await controller.UploadCardSet(new FormFile(largeStream,0,8*1024*1024+1,"file","big.png"),CancellationToken.None) is BadRequestObjectResult, "extensions : limite de 8 Mo appliquée");
         }
         finally
         {

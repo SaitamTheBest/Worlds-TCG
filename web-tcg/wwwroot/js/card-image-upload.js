@@ -139,8 +139,14 @@
     }
 
     function isInternalImagePath(path) {
-        return /^\/uploads\/cards\/[a-f0-9]{32}\.(png|jpg|webp)$/i
+        return /^\/uploads\/(cards|cardsets)\/[a-f0-9]{32}\.(png|jpg|webp)$/i
             .test(path || "");
+    }
+
+    function isExistingCardSetImage(input) {
+        const form = input?.closest("#createCardSetForm");
+        return !!form?.dataset.existingImagePath
+            && input.value === form.dataset.existingImagePath;
     }
 
     /* =========================================================
@@ -604,7 +610,7 @@
             if (
                 !isInternalImagePath(
                     pathInput.value
-                )
+                ) && !isExistingCardSetImage(pathInput)
             ) {
                 pathInput.value = "";
                 clearPreview(uploader);
@@ -1006,7 +1012,7 @@
 
                 if (
                     path &&
-                    isInternalImagePath(path)
+                    (isInternalImagePath(path) || isExistingCardSetImage(pathInput))
                 ) {
                     setPreviewFromPath(
                         uploader,
@@ -1053,7 +1059,7 @@
 
             if (
                 !form.matches?.(
-                    "#createCardForm"
+                    "#createCardForm, #createCardSetForm"
                 )
             ) {
                 return;
@@ -1080,7 +1086,7 @@
                     input =>
                         !isInternalImagePath(
                             input.value
-                        )
+                        ) && !isExistingCardSetImage(input)
                 );
 
             if (!invalid)
@@ -1116,7 +1122,9 @@
             }
 
             window.alert(
-                "Chaque carte doit posséder une illustration enregistrée dans Worlds TCG."
+                form.id === "createCardSetForm"
+                    ? "Importez une image du booster avant d’enregistrer l’extension."
+                    : "Chaque carte doit posséder une illustration enregistrée dans Worlds TCG."
             );
         },
         true

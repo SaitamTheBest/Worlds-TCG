@@ -24,7 +24,7 @@ namespace web_tcg.Models.Admin
 
         [Required(ErrorMessage = "L'image du booster est obligatoire.")]
         [StringLength(500, ErrorMessage = "L'URL de l'image ne peut pas dépasser 500 caractères.")]
-        [Url(ErrorMessage = "Veuillez saisir une URL valide.")]
+        [RegularExpression(@"^/uploads/cardsets/[a-f0-9]{32}\.(png|jpg|webp)$", ErrorMessage = "Importez une image du booster avant de créer l’extension.")]
         [Display(Name = "Image du booster")]
         public string BoosterImageUrl { get; set; } = string.Empty;
 

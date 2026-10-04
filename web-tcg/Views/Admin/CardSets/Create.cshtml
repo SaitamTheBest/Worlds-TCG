@@ -1,13 +1,17 @@
 ﻿@model web_tcg.Models.Admin.CreateCardSetViewModel
 
 @{
-ViewData["Title"] = "Créer une extension";
+var cardSetId = ViewData["CardSetId"] as int?;
+var isEditing = cardSetId.HasValue;
+ViewData["Title"] = isEditing ? "Modifier une extension" : "Créer une extension";
 Layout = "_Layout";
 }
 
 <link rel="stylesheet"
       href="~/css/admin-card-set-create.css"
       asp-append-version="true" />
+
+<link rel="stylesheet" href="~/css/card-image-upload.css" asp-append-version="true" />
 
 <div class="admin-create-set-page">
 
@@ -36,7 +40,7 @@ Layout = "_Layout";
             <div class="admin-create-set-breadcrumb">
                 <span>ADMINISTRATION</span>
                 <i data-lucide="chevron-right"></i>
-                <span>NOUVELLE EXTENSION</span>
+                <span>@(isEditing ? "MODIFIER L’EXTENSION" : "NOUVELLE EXTENSION")</span>
             </div>
 
             <div class="admin-create-set-title">
@@ -47,13 +51,12 @@ Layout = "_Layout";
 
                 <div>
                     <h1>
-                        Créer une
+                        @(isEditing ? "Modifier une" : "Créer une")
                         <span>Extension</span>
                     </h1>
 
                     <p>
-                        Configurez une nouvelle extension et son booster
-                        pour l'intégrer au catalogue du TCG.
+                        @(isEditing ? "Modifiez les informations de l’extension et son booster." : "Configurez une nouvelle extension et son booster pour l’intégrer au catalogue du TCG.")
                     </p>
                 </div>
 
@@ -76,7 +79,7 @@ Layout = "_Layout";
             <div class="admin-create-set-alert-content">
 
                 <strong>
-                    Impossible de créer l'extension
+                    @(isEditing ? "Impossible de modifier l’extension" : "Impossible de créer l’extension")
                 </strong>
 
                 <ul>
@@ -100,7 +103,11 @@ Layout = "_Layout";
 
     <!-- FORM -->
     <form asp-controller="Admin"
-          asp-action="CreateCardSet"
+          asp-action="@(isEditing ? "EditCardSet" : "CreateCardSet")"
+          asp-route-id="@cardSetId"
+          id="createCardSetForm"
+          data-existing-image-path="@ViewData["ExistingBoosterImageUrl"]"
+          data-card-image-upload-url="/Admin/CardSets/UploadImage"
           method="post"
           class="admin-create-set-layout">
 
@@ -132,7 +139,7 @@ Layout = "_Layout";
 
                         <p>
                             Définissez les informations principales
-                            de votre nouvelle extension.
+                            de votre extension.
                         </p>
                     </div>
 
@@ -268,11 +275,11 @@ Layout = "_Layout";
                             Statut
                         </label>
 
-                        <label class="admin-create-set-switch">
+                        <label for="IsActive" class="admin-create-set-switch">
 
                             <input asp-for="IsActive"
                                    id="IsActive"
-                                   type="checkbox" />
+                                   type="checkbox" role="switch" />
 
                             <span class="admin-create-set-switch-track">
                                 <span></span>
@@ -326,32 +333,23 @@ Layout = "_Layout";
 
                     <div class="admin-create-set-field field-full">
 
-                        <label asp-for="BoosterImageUrl">
-                            URL de l'image du booster
-                            <span>*</span>
-                        </label>
-
-                        <div class="admin-create-set-input-wrapper">
-
-                            <i data-lucide="image"></i>
-
-                            <input asp-for="BoosterImageUrl"
-                                   id="BoosterImageUrl"
-                                   type="url"
-                                   placeholder="https://example.com/images/booster.webp"
-                                   maxlength="500"
-                                   autocomplete="off" />
-
+                        <label for="boosterImageFile">Image du booster <span>*</span></label>
+                        <div class="card-image-uploader" data-card-image-uploader>
+                            <input asp-for="BoosterImageUrl" type="hidden" class="card-image-path" />
+                            <input type="file" id="boosterImageFile" class="card-image-file" accept="image/png,image/jpeg,image/webp" tabindex="-1" />
+                            <div class="card-image-preview @(string.IsNullOrWhiteSpace(Model.BoosterImageUrl) ? "is-empty" : "")">
+                                <img src="@Model.BoosterImageUrl" class="card-image-preview-img" alt="Aperçu du booster" hidden="@string.IsNullOrWhiteSpace(Model.BoosterImageUrl)" />
+                                <div class="card-image-preview-empty"><i data-lucide="image"></i><span>Aucune image</span></div>
+                            </div>
+                            <button type="button" class="card-image-dropzone" data-card-image-dropzone>
+                                <span class="card-image-dropzone-icon"><i data-lucide="upload-cloud"></i></span>
+                                <span class="card-image-dropzone-copy"><strong>Déposez l’image du booster</strong><small>Cliquez, glissez-déposez ou collez une image</small></span>
+                                <span class="card-image-dropzone-format">PNG · JPG · WEBP · 8 Mo max.</span>
+                            </button>
+                            <div class="card-image-upload-status" data-card-image-status role="status" aria-live="polite"></div>
                         </div>
-
-                        <span asp-validation-for="BoosterImageUrl"
-                              class="admin-create-set-validation">
-                        </span>
-
-                        <small>
-                            URL complète ou chemin relatif vers l'image.
-                        </small>
-
+                        <span asp-validation-for="BoosterImageUrl" class="admin-create-set-validation"></span>
+                        <small>L’image est enregistrée dans le stockage interne du site.</small>
                     </div>
 
                 </div>
@@ -374,10 +372,10 @@ Layout = "_Layout";
                 <button type="submit"
                         class="admin-create-set-submit">
 
-                    <i data-lucide="plus"></i>
+                    <i data-lucide="@(isEditing ? "save" : "plus")"></i>
 
                     <span>
-                        Créer l'extension
+                        @(isEditing ? "Enregistrer les modifications" : "Créer l’extension")
                     </span>
 
                     <i data-lucide="arrow-up-right"></i>
@@ -558,6 +556,7 @@ Layout = "_Layout";
 
 
 <partial name="_ValidationScriptsPartial" />
+<script src="~/js/card-image-upload.js" asp-append-version="true"></script>
 
 <script>
 
@@ -754,6 +753,11 @@ Layout = "_Layout";
 
         imageInput.addEventListener(
             'input',
+            updatePreview
+        );
+
+        imageInput.addEventListener(
+            'change',
             updatePreview
         );
 

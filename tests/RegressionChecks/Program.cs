@@ -5,6 +5,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using web_tcg.Data;
 using web_tcg.Data.Entities;
 
+if (args.Contains("--cardsets"))
+{
+    await CardSetChecks.RunAsync();
+    return;
+}
+
 if (args.Contains("--preview"))
 {
     await Preview.RunAsync();

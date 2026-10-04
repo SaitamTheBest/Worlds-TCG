@@ -342,9 +342,9 @@
 
                                         <div class="admin-cardsets-actions">
 
-                                            <a href="#"
+                                            <a asp-controller="Admin" asp-action="EditCardSet" asp-route-id="@cardSet.Id"
                                                class="admin-cardsets-action admin-cardsets-action-edit"
-                                               title="Modifier">
+                                               title="Modifier" aria-label="Modifier @cardSet.Name">
 
                                                 <i data-lucide="pencil"></i>
 
@@ -458,7 +458,7 @@
 
                             <div class="admin-cardset-mobile-actions">
 
-                                <a href="#"
+                                <a asp-controller="Admin" asp-action="EditCardSet" asp-route-id="@cardSet.Id"
                                    class="admin-cardsets-action admin-cardsets-action-edit">
 
                                     <i data-lucide="pencil"></i>

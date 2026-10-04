@@ -448,6 +448,7 @@ SWITCH
 ========================================================= */
 
 .admin-create-set-switch {
+    position: relative;
     display: flex !important;
     align-items: center;
      gap: 11px;
@@ -459,8 +460,10 @@ SWITCH
 
     .admin-create-set-switch input {
         position: absolute;
-         opacity: 0;
-        pointer-events: none;
+        width: 1px;
+        height: 1px;
+        margin: 0;
+        opacity: 0;
         
     }
 
@@ -489,26 +492,31 @@ SWITCH
         
     }
 
-.admin-create-set-switch input:checked
-
-* .admin-create-set-switch-track {
+.admin-create-set-switch input:checked ~ .admin-create-set-switch-track {
     border-color: rgba(244, 196, 48, 0.55);
     background: rgba(244, 196, 48, 0.2);
 }
 
-    .admin-create-set-switch input:checked
-
-    * .admin-create-set-switch-track span {
+    .admin-create-set-switch input:checked ~ .admin-create-set-switch-track span {
         background: var(--color-primary-yellow);
         transform: translateX(20px);
         box-shadow: 0 0 12px rgba(244, 196, 48, 0.35);
     }
 
-.admin-create-set-switch-label {
+.admin-create-set-field > .admin-create-set-switch .admin-create-set-switch-label {
     color: #b7bdc5;
      font-size: 0.76rem;
     font-weight: 600;
     
+}
+
+.admin-create-set-switch input:focus-visible ~ .admin-create-set-switch-track {
+    outline: 2px solid var(--color-primary-yellow, #f4c430);
+    outline-offset: 3px;
+}
+
+.admin-create-set-field > .admin-create-set-switch input:checked ~ .admin-create-set-switch-label {
+    color: var(--color-primary-yellow, #f4c430);
 }
 
 /* =========================================================

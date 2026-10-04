@@ -1880,16 +1880,63 @@ namespace web_tcg.Controllers
 
         [HttpPost("CardSets/Create")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateCardSet(CreateCardSetViewModel Input)
+        public Task<IActionResult> CreateCardSet(CreateCardSetViewModel Input)
+            => SaveCardSetAsync(Input, null);
+
+        [HttpGet("CardSets/Edit/{id:int}")]
+        public async Task<IActionResult> EditCardSet(int id)
         {
+            var cardSet = await _context.CardSets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (cardSet == null) return NotFound();
+
+            ViewData["CardSetId"] = id;
+            ViewData["ExistingBoosterImageUrl"] = cardSet.BoosterImageUrl;
+            return View("~/Views/Admin/CardSets/Create.cshtml", new CreateCardSetViewModel
+            {
+                Name = cardSet.Name,
+                Code = cardSet.Code,
+                IsActive = cardSet.IsActive,
+                ReleaseDate = cardSet.ReleaseDate,
+                BoosterImageUrl = cardSet.BoosterImageUrl,
+                BoosterPrice = cardSet.BoosterPrice
+            });
+        }
+
+        [HttpPost("CardSets/Edit/{id:int}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditCardSet(int id, CreateCardSetViewModel Input)
+        {
+            var cardSet = await _context.CardSets.FirstOrDefaultAsync(x => x.Id == id);
+            if (cardSet == null) return NotFound();
+            return await SaveCardSetAsync(Input, cardSet);
+        }
+
+        private async Task<IActionResult> SaveCardSetAsync(CreateCardSetViewModel Input, CardSet? existing)
+        {
+            var isEditing = existing != null;
+            var excludedId = existing?.Id ?? 0;
+            ViewData["CardSetId"] = existing?.Id;
+            ViewData["ExistingBoosterImageUrl"] = existing?.BoosterImageUrl;
             // Nettoyage des valeurs texte
-            Input.Name = Input.Name.Trim();
-            Input.Code = Input.Code.Trim().ToUpperInvariant();
-            Input.BoosterImageUrl = Input.BoosterImageUrl.Trim();
+            Input.Name = Input.Name?.Trim() ?? string.Empty;
+            Input.Code = Input.Code?.Trim().ToUpperInvariant() ?? string.Empty;
+            Input.BoosterImageUrl = Input.BoosterImageUrl?.Trim() ?? string.Empty;
+            // Une ancienne illustration peut être conservée sans imposer un nouvel import.
+            var keepExistingImage = isEditing && !string.IsNullOrWhiteSpace(existing!.BoosterImageUrl)
+                && Input.BoosterImageUrl == existing.BoosterImageUrl;
+            if (keepExistingImage)
+                ModelState.Remove(nameof(Input.BoosterImageUrl));
+            else if (System.Text.RegularExpressions.Regex.IsMatch(Input.BoosterImageUrl, @"^/uploads/cardsets/[a-f0-9]{32}\.(png|jpg|webp)$"))
+            {
+                var environment = HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>();
+                var imagePath = Path.Combine(environment.WebRootPath, "uploads", "cardsets", Path.GetFileName(Input.BoosterImageUrl));
+                if (!System.IO.File.Exists(imagePath))
+                    ModelState.AddModelError(nameof(Input.BoosterImageUrl), "L’image du booster est introuvable. Importez-la à nouveau.");
+            }
 
             // Vérification du code
             var codeExists = await _context.CardSets
-                .AnyAsync(x => x.Code == Input.Code);
+                .AnyAsync(x => x.Code == Input.Code && x.Id != excludedId);
 
             if (codeExists)
             {
@@ -1898,7 +1945,7 @@ namespace web_tcg.Controllers
 
             // Vérification du nom
             var nameExists = await _context.CardSets
-                .AnyAsync(x => x.Name.ToLower() == Input.Name.ToLower());
+                .AnyAsync(x => x.Name.ToLower() == Input.Name.ToLower() && x.Id != excludedId);
 
             if (nameExists)
             {
@@ -1916,29 +1963,29 @@ namespace web_tcg.Controllers
 
             try
             {
-                var cardSet = new CardSet
-                {
-                    Name = Input.Name,
-                    Code = Input.Code,
-                    IsActive = Input.IsActive,
-                    ReleaseDate = DateTime.SpecifyKind(Input.ReleaseDate, DateTimeKind.Utc),
-                    BoosterImageUrl = Input.BoosterImageUrl,
-                    BoosterPrice = Input.BoosterPrice
-                };
+                var cardSet = existing ?? new CardSet();
+                cardSet.Name = Input.Name;
+                cardSet.Code = Input.Code;
+                cardSet.IsActive = Input.IsActive;
+                cardSet.ReleaseDate = DateTime.SpecifyKind(Input.ReleaseDate, DateTimeKind.Utc);
+                cardSet.BoosterImageUrl = Input.BoosterImageUrl;
+                cardSet.BoosterPrice = Input.BoosterPrice;
 
-                _context.CardSets.Add(cardSet);
+                if (!isEditing) _context.CardSets.Add(cardSet);
 
                 await _context.SaveChangesAsync();
 
-                TempData["SuccessMessage"] = $"L'extension « {cardSet.Name} » a été créée avec succès.";
+                TempData["SuccessMessage"] = isEditing
+                    ? $"L'extension « {cardSet.Name} » a été modifiée avec succès."
+                    : $"L'extension « {cardSet.Name} » a été créée avec succès.";
 
                 return RedirectToAction(nameof(CardSets));
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "Erreur lors de la création de l'extension {CardSetName}.", Input.Name);
+                _logger.LogError(ex, "Erreur lors de l'enregistrement de l'extension {CardSetName}.", Input.Name);
 
-                ModelState.AddModelError(string.Empty, "Une erreur est survenue lors de la création de l'extension.");
+                ModelState.AddModelError(string.Empty, "Une erreur est survenue lors de l'enregistrement de l'extension. Rechargez la page et réessayez.");
 
                 return View( "~/Views/Admin/CardSets/Create.cshtml", Input);
             }
