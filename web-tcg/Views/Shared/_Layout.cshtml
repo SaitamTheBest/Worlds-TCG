@@ -172,6 +172,13 @@
 
             </a>
 
+            <a asp-controller="Market" asp-action="Index"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Market" ? "active" : "")"
+               title="Marché">
+                <i data-lucide="gavel"></i>
+                <span class="sidebar-label">Marché</span>
+            </a>
+
             @if (User.IsInRole("Admin"))
             {
                 <div class="sidebar-divider"></div>

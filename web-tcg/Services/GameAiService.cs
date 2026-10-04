@@ -27,12 +27,14 @@ namespace web_tcg.Services
         public async Task<List<string>> PlayTurnAsync(
             GameState state,
             string botUserId,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            Func<IReadOnlyList<string>, Task>? onAction = null)
         {
             var logs =
                 new List<string>();
 
             var safety = 0;
+            var publishedLogs = 0;
 
             while (state.Status == GameMatchStatus.InProgress &&
                    state.ActivePlayerId == botUserId &&
@@ -60,6 +62,11 @@ namespace web_tcg.Services
                 if (!actionTaken)
                     break;
 
+                if (onAction != null)
+                {
+                    await onAction(logs.Skip(publishedLogs).ToList());
+                    publishedLogs = logs.Count;
+                }
                 if (state.Status != GameMatchStatus.InProgress)
                     break;
             }
@@ -75,6 +82,7 @@ namespace web_tcg.Services
 
                 logs.AddRange(
                     endLogs);
+                if (onAction != null) await onAction(logs.Skip(publishedLogs).ToList());
             }
 
             return logs;

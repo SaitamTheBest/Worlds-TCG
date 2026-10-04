@@ -12,6 +12,8 @@ namespace web_tcg.Data
         {
         }
         public DbSet<CardSet> CardSets { get; set; }
+        public DbSet<MarketAuction> MarketAuctions { get; set; }
+        public DbSet<MarketBid> MarketBids { get; set; }
         public DbSet<Card> Cards { get; set; }
 
         public DbSet<Region> Regions { get; set; }
@@ -42,6 +44,25 @@ namespace web_tcg.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<MarketAuction>(entity =>
+            {
+                entity.HasOne(x => x.Card).WithMany().HasForeignKey(x => x.CardId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.Seller).WithMany().HasForeignKey(x => x.SellerId).OnDelete(DeleteBehavior.Restrict);
+                entity.HasOne(x => x.HighestBidder).WithMany().HasForeignKey(x => x.HighestBidderId).OnDelete(DeleteBehavior.Restrict);
+                entity.Property(x => x.StartingPrice).HasPrecision(18, 2);
+                entity.Property(x => x.CurrentPrice).HasPrecision(18, 2);
+                entity.HasIndex(x => new { x.Status, x.EndsAt });
+                entity.HasIndex(x => new { x.SellerId, x.Status });
+                entity.ToTable(t => t.HasCheckConstraint("CK_MarketAuction_Prices", "\"StartingPrice\" >= 1 AND \"CurrentPrice\" >= \"StartingPrice\""));
+            });
+            modelBuilder.Entity<MarketBid>(entity =>
+            {
+                entity.HasOne(x => x.Auction).WithMany(x => x.Bids).HasForeignKey(x => x.AuctionId).OnDelete(DeleteBehavior.Cascade);
+                entity.HasOne(x => x.Bidder).WithMany().HasForeignKey(x => x.BidderId).OnDelete(DeleteBehavior.Restrict);
+                entity.Property(x => x.Amount).HasPrecision(18, 2);
+                entity.HasIndex(x => new { x.AuctionId, x.CreatedAt });
+            });
 
             modelBuilder.Entity<Card>()
                 .HasIndex(x => new

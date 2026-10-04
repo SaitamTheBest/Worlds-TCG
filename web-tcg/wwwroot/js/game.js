@@ -52,6 +52,8 @@
         panels: document.querySelectorAll(".game-sidebar-panel")
     };
 
+    let resultShown = false;
+    let announcementTimer;
     let latestState = null;
     let selectedHandCardId = null;
     let selectedHandTargetId = null;
@@ -61,6 +63,8 @@
     let inspectedCardId = null;
     let dialogSignature = null;
     let targeting = null;
+    let handDrag = null;
+    let ignoreHandClickUntil = 0;
     let clockReceivedAt = Date.now();
     const clockTicker = window.setInterval(updateClocks, 250);
     window.addEventListener("pagehide", () => window.clearInterval(clockTicker));
@@ -290,7 +294,9 @@
 
             if (card.instanceId === selectedHandCardId)
                 cardEl.classList.add("is-selected");
+            cardEl.classList.toggle("is-playable", state.isMyTurn && !gameFinished && card.usageCost <= player.money && (card.type !== 2 || player.characters.some(c => !c)) && (card.type !== 4 || !player.location));
 
+            attachHandDrag(cardEl, card);
             el.selfHand.appendChild(cardEl);
         });
         updateHandSpacing();
@@ -332,6 +338,9 @@
             });
         }
         latestState = state;
+        if (handDrag && (!state.isMyTurn || state.status === 3 || !state.me.hand.some(c => c.instanceId === handDrag.cardId))) endHandDrag();
+        gameFinished = gameFinished || state.status === 3;
+        renderGameplayGuide(state, previous);
         if (!state.isMyTurn || !state.me.hand.some(card => card.instanceId === selectedHandCardId))
             selectedHandCardId = null;
 
@@ -347,11 +356,64 @@
         if (previous && previous !== state) notifyStatChanges(previous, state);
         if (el.dialog.open) renderCardDialog();
         if (previous !== state && positions.size) animateCards(positions);
+        if (state.status === 3) showResult(state);
     }
+
+    function renderGameplayGuide(state, previous) {
+        const phase = document.getElementById("gamePhase");
+        const advice = document.getElementById("gameTurnAdvice");
+        const ready = document.getElementById("gameReadyCount");
+        const hand = document.getElementById("gameOpponentHand");
+        if (!phase) return;
+        page.classList.toggle("is-my-turn", state.isMyTurn && !gameFinished);
+        phase.textContent = gameFinished ? "Partie terminée" : `Tour ${state.turnNumber} · ${state.isMyTurn ? "À vous de jouer" : "Tour adverse"}`;
+        el.turnLabel.textContent = `TOUR ${state.turnNumber}`;
+        const units = [state.me.leader, ...state.me.characters].filter(Boolean);
+        const count = units.filter(card => !card.isExhausted && (card.abilities || []).some(a => a.type !== 3 && !a.cooldown && !a.unavailableReason && a.usageCost <= state.me.money && (a.type !== 1 || state.me.turnsPlayed > 1))).length;
+        ready.textContent = `${count} carte(s) avec une capacité disponible`;
+        hand.textContent = `Main adverse : ${state.opponent.handCount} carte(s)`;
+        advice.textContent = gameFinished ? "Consultez le résultat ou revoyez les dernières actions." : !state.isMyTurn
+            ? "L’adversaire prépare ses actions. Vous pouvez consulter vos cartes et leurs capacités."
+            : state.me.turnsPlayed <= 1 ? "Posez vos premières cartes. Les personnages arrivent épuisés ; les compétences sont disponibles dès votre deuxième tour."
+            : "Jouez une carte, utilisez une capacité ou préparez un blocage. Les cibles possibles s’illuminent avant confirmation.";
+        const announcement = document.getElementById("gameTurnAnnouncement");
+        if (!gameFinished && announcement && (!previous || previous.turnNumber !== state.turnNumber)) {
+            window.clearTimeout(announcementTimer);
+            announcement.textContent = state.isMyTurn ? `Tour ${state.turnNumber} · À vous de jouer` : `Tour ${state.turnNumber} · ${state.opponent.displayName}`;
+            announcement.hidden = false;
+            announcement.classList.remove("is-visible"); void announcement.offsetWidth; announcement.classList.add("is-visible");
+            announcementTimer = window.setTimeout(() => { announcement.hidden = true; }, 2200);
+            if (previous) showStatus(state.isMyTurn ? "Votre tour commence : cartes piochées, énergie et capacités actualisées." : "Tour adverse. Consultez les actions dans l’historique.");
+        }
+    }
+
+    function showResult(state) {
+        const dialog = document.getElementById("gameResultDialog");
+        if (!dialog || !state.winnerUserId) return;
+        gameFinished = true;
+        const won = state.winnerUserId === state.me.userId;
+        dialog.classList.toggle("is-victory", won);
+        document.getElementById("gameResultTitle").textContent = won ? "Victoire !" : "Défaite";
+        document.getElementById("gameResultEmblem").textContent = won ? "♛" : "◇";
+        const reasons = { 1: "LeaderDefeated", 2: "Surrender", 3: "Inactivity", 4: "TimeExpired" };
+        const reason = reasons[state.endReason] || state.endReason;
+        document.getElementById("gameResultReason").textContent = reason === "LeaderDefeated" ? (won ? "Le leader adverse a été vaincu." : "Votre leader a été vaincu.")
+            : reason === "Surrender" ? (won ? "Votre adversaire a abandonné." : "Vous avez abandonné la partie.")
+            : reason === "TimeExpired" ? "La partie s’est terminée au temps." : reason === "Inactivity" ? "La partie s’est terminée pour inactivité." : "La partie est terminée.";
+        const known = state.xpEarned != null && state.cardBalanceEarned != null;
+        document.getElementById("gameResultXp").textContent = known ? `+${state.xpEarned} XP` : "—";
+        document.getElementById("gameResultMoney").textContent = known ? `+${Number(state.cardBalanceEarned).toLocaleString("fr-FR", { maximumFractionDigits: 2 })}` : "—";
+        document.getElementById("gameResultRewardNote").textContent = known ? (won ? "Ces récompenses ont été ajoutées à votre compte." : "Aucune récompense attribuée pour cette partie.") : "Les montants enregistrés ne sont pas disponibles pour cette partie.";
+        selectedHandCardId = null; targeting = null;
+        el.dialog.close(); refreshTargeting(); updateControls();
+        el.surrenderButton.disabled = true;
+        if (!resultShown) { resultShown = true; dialog.showModal(); }
+    }
+    document.getElementById("gameResultClose")?.addEventListener("click", () => document.getElementById("gameResultDialog").close());
 
     function updateControls() {
         el.endTurnButton.disabled = !latestState?.isMyTurn || actionPending || gameFinished || !!targeting;
-        el.playCardButton.hidden = !selectedHandCardId;
+        el.playCardButton.hidden = !latestState?.me.hand.some(card => card.instanceId === selectedHandCardId && card.type === 2);
         el.playCardButton.disabled = actionPending || !latestState?.isMyTurn || gameFinished;
     }
 
@@ -425,7 +487,7 @@
             node.animate([
                 { transformOrigin: "top left", transform: `translate(${dx}px, ${dy}px) scale(${source.width / target.width}, ${source.height / target.height})`, opacity: previous ? 1 : 0.35 },
                 { transformOrigin: "top left", transform: "translate(0, 0) scale(1)", opacity: 1 }
-            ], { duration: 420, easing: "cubic-bezier(.2,.8,.2,1)" });
+            ], { duration: 620, easing: "cubic-bezier(.2,.8,.2,1)" });
         });
         positions.forEach((previous, id) => {
             if (currentIds.has(id) || !previous.node.animate) return;
@@ -435,7 +497,7 @@
             Object.assign(ghost.style, { position: "fixed", left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, margin: "0" });
             document.body.appendChild(ghost);
             const target = (previous.self ? el.selfGraveyard : el.opponentGraveyard).getBoundingClientRect();
-            const animation = ghost.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${target.left - rect.left}px, ${target.top - rect.top}px) scale(.35)`, opacity: 0 }], { duration: 360, easing: "ease-in" });
+            const animation = ghost.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${target.left - rect.left}px, ${target.top - rect.top}px) scale(.35)`, opacity: 0 }], { duration: 520, easing: "ease-in" });
             animation.finished.then(() => ghost.remove(), () => ghost.remove());
         });
     }
@@ -453,6 +515,8 @@
             : message;
 
         el.history.appendChild(line);
+        const recent = document.getElementById("gameRecentAction");
+        if (recent) { recent.textContent = message; recent.classList.remove("is-new"); void recent.offsetWidth; recent.classList.add("is-new"); }
         el.history.scrollTop = el.history.scrollHeight;
     }
 
@@ -481,17 +545,92 @@
     // ACTIONS JOUEUR
     // =========================================================
 
+    function handPlayRefusal(card) {
+        if (gameFinished) return "La partie est terminée.";
+        if (!latestState?.isMyTurn) return "Attendez votre tour pour jouer une carte.";
+        if (actionPending) return "Une action est déjà en cours…";
+        if (card.usageCost > latestState.me.money) return `Énergie insuffisante : ${card.usageCost} nécessaire, ${latestState.me.money} disponible.`;
+        if (card.type === 2 && latestState.me.characters.every(Boolean)) return "Les quatre emplacements sont occupés.";
+        if (card.type === 4 && latestState.me.location) return "Un lieu est déjà posé.";
+        return "";
+    }
+
     function onHandCardClick(card) {
-        if (targeting) return;
-        if (!latestState || actionPending) return;
-        selectedHandCardId = latestState.isMyTurn && !gameFinished ? card.instanceId : null;
-        renderState(latestState);
-        openCardDialog(card.instanceId);
+        if (targeting || Date.now() < ignoreHandClickUntil) return;
+        const refusal = handPlayRefusal(card);
+        if (refusal) { showStatus(refusal, true); return; }
+        selectedHandCardId = card.instanceId;
+        selectedHandTargetId = null;
+        if (card.type === 2) {
+            renderState(latestState);
+            showStatus("Glissez ce personnage sur un emplacement libre. Au clavier, choisissez l’emplacement puis appuyez sur Entrée.");
+        } else playSelectedCard(null);
+    }
+
+    // Déplacement à la souris, au stylet et au doigt ; aucune pose avant le dépôt.
+    function attachHandDrag(node, card) {
+        if (card.type !== 2) return;
+        node.classList.add("is-draggable");
+        node.addEventListener("pointerdown", event => {
+            if (targeting || event.button > 0 || handDrag) return;
+            const refusal = handPlayRefusal(card);
+            if (refusal) { showStatus(refusal, true); return; }
+            handDrag = { cardId: card.instanceId, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, node, ghost: null, slot: null };
+            node.setPointerCapture?.(event.pointerId);
+        });
+        node.addEventListener("pointermove", event => {
+            const drag = handDrag;
+            if (!drag || drag.pointerId !== event.pointerId) return;
+            if (!drag.ghost && Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 7) return;
+            event.preventDefault();
+            if (!drag.ghost) {
+                const rect = node.getBoundingClientRect();
+                drag.ghost = node.cloneNode(true);
+                drag.ghost.classList.add("game-drag-ghost");
+                drag.ghost.setAttribute("aria-hidden", "true");
+                Object.assign(drag.ghost.style, { position: "fixed", width: `${rect.width}px`, height: `${rect.height}px`, pointerEvents: "none", margin: "0" });
+                document.body.appendChild(drag.ghost);
+                node.classList.add("is-dragging");
+                page.classList.add("is-dragging-hand");
+                showStatus("Déposez le personnage sur un emplacement libre de votre terrain.");
+            }
+            drag.ghost.style.left = `${event.clientX - drag.ghost.getBoundingClientRect().width / 2}px`;
+            drag.ghost.style.top = `${event.clientY - drag.ghost.getBoundingClientRect().height / 2}px`;
+            const hit = document.elementFromPoint(event.clientX, event.clientY)?.closest(".game-character-slot");
+            const slot = hit?.parentElement === el.selfCharacters ? Number(hit.dataset.slot) : null;
+            drag.slot = slot !== null && Number.isInteger(slot) && !latestState.me.characters[slot] ? slot : null;
+            [...el.selfCharacters.children].forEach((element, index) => element.classList.toggle("is-drop-target", index === drag.slot));
+        });
+        node.addEventListener("pointerup", event => {
+            if (!handDrag || handDrag.pointerId !== event.pointerId) return;
+            const drag = handDrag, dropped = !!drag.ghost;
+            endHandDrag();
+            if (!dropped) return;
+            ignoreHandClickUntil = Date.now() + 400;
+            if (drag.slot === null) { showStatus("Déplacement annulé. Déposez la carte sur un emplacement libre de votre terrain."); return; }
+            const current = latestState.me.hand.find(c => c.instanceId === drag.cardId);
+            const refusal = current ? handPlayRefusal(current) : "Cette carte n’est plus dans votre main.";
+            if (refusal) { showStatus(refusal, true); return; }
+            selectedHandCardId = drag.cardId; selectedHandTargetId = null;
+            playSelectedCard(drag.slot);
+        });
+        node.addEventListener("pointercancel", endHandDrag);
+        node.addEventListener("lostpointercapture", () => { if (handDrag?.node === node) endHandDrag(); });
+        node.addEventListener("dragstart", event => event.preventDefault());
+    }
+
+    function endHandDrag() {
+        if (!handDrag) return;
+        const drag = handDrag; handDrag = null;
+        drag.ghost?.remove(); drag.node.classList.remove("is-dragging");
+        if (drag.node.hasPointerCapture?.(drag.pointerId)) drag.node.releasePointerCapture(drag.pointerId);
+        page.classList.remove("is-dragging-hand");
+        [...el.selfCharacters.children].forEach(node => node.classList.remove("is-drop-target"));
     }
 
     function onEmptySlotClick(slotIndex) {
         if (targeting) return;
-        if (!selectedHandCardId)
+        if (!latestState?.me.hand.some(card => card.instanceId === selectedHandCardId && card.type === 2))
             return;
 
         playSelectedCard(slotIndex);
@@ -503,6 +642,9 @@
 
         const cardInstanceId = selectedHandCardId;
         const selectedCard = latestState.me.hand.find(c => c.instanceId === cardInstanceId);
+        if (!selectedCard) return;
+        const refusal = handPlayRefusal(selectedCard);
+        if (refusal) { showStatus(refusal, true); return; }
         const needsTarget = (selectedCard?.playTargetTypes || []).some(type => [10,12,20,21,22].includes(type));
         if (needsTarget && !selectedHandTargetId) { beginTargeting(selectedCard, null, slot); return; }
         actionPending = true;
@@ -516,8 +658,7 @@
             showStatus("Carte jouée. Sélectionnez une autre carte ou terminez le tour.");
         } catch (error) {
             showError(error);
-            openCardDialog(cardInstanceId);
-            el.dialogStatus.textContent = el.actionStatus.textContent;
+
         } finally {
             actionPending = false;
             updateControls();
@@ -550,7 +691,11 @@
     el.dialog.addEventListener("click", event => { if (event.target === el.dialog) { if (targeting) cancelTargeting(); else el.dialog.close(); } });
     el.dialog.addEventListener("cancel", () => cancelTargeting());
     document.getElementById("gameTargetCancel").addEventListener("click", cancelTargeting);
-    document.addEventListener?.("keydown", event => { if (event.key === "Escape" && targeting) cancelTargeting(); });
+    document.addEventListener?.("keydown", event => {
+        if (event.key !== "Escape") return;
+        if (targeting) cancelTargeting();
+        if (handDrag) { endHandDrag(); ignoreHandClickUntil = Date.now() + 400; showStatus("Déplacement annulé."); }
+    });
 
     function openCardDialog(id) {
         inspectedCardId = id;
@@ -745,10 +890,13 @@
         }
     }
 
-    el.endTurnButton.addEventListener("click", () => {
-        if (targeting || actionPending) return;
-        connection.invoke("EndTurn", matchId)
-            .catch(showError);
+    el.endTurnButton.addEventListener("click", async () => {
+        if (targeting || actionPending || gameFinished || !latestState?.isMyTurn) return;
+        actionPending = true; updateControls();
+        showStatus("Fin de votre tour…");
+        try { await connection.invoke("EndTurn", matchId); }
+        catch (error) { showError(error); }
+        finally { actionPending = false; updateControls(); }
     });
 
     el.surrenderButton.addEventListener("click", () => {
@@ -784,10 +932,13 @@
     connection.on("ChatMessageReceived", data => appendChatMessage(data));
 
     connection.on("GameFinished", data => {
+        if (latestState) showResult({ ...latestState, winnerUserId: data.winnerUserId, endReason: data.reason,
+            xpEarned: data.winnerUserId === latestState.me.userId ? data.xpReward : 0,
+            cardBalanceEarned: data.winnerUserId === latestState.me.userId ? data.cardBalanceReward : 0 });
         gameFinished = true;
         updateClocks();
         appendLog(
-            `Partie terminée. Vainqueur : ${data.winnerUserId} (+${data.xpReward} XP).`);
+            `Partie terminée. ${data.winnerUserId === latestState?.me.userId ? "Victoire !" : "Défaite."}`);
 
         el.endTurnButton.disabled = true;
         selectedHandCardId = null;
@@ -795,10 +946,20 @@
     });
 
     connection.start()
-        .then(() => connection.invoke("JoinGame", matchId))
+        .then(async () => { await connection.invoke("JoinGame", matchId); connectionStatus("En direct"); })
         .catch(showError);
 
-    connection.onreconnected?.(() => connection.invoke("JoinGame", matchId).catch(showError));
+    function connectionStatus(text, offline = false) {
+        const node = document.getElementById("gameConnection");
+        if (node) { node.textContent = text; node.classList.toggle("is-offline", offline); }
+        if (offline) { actionPending = true; updateControls(); }
+    }
+    connection.onreconnecting?.(() => connectionStatus("Reconnexion…", true));
+    connection.onclose?.(() => { connectionStatus("Hors connexion", true); showStatus("Connexion interrompue. Rechargez la page pour reprendre la partie.", true); });
+    connection.onreconnected?.(async () => {
+        try { await connection.invoke("JoinGame", matchId); actionPending = false; updateControls(); connectionStatus("En direct"); }
+        catch (error) { showError(error); }
+    });
 
     if (window.lucide) {
         window.lucide.createIcons();

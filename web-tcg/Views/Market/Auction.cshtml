@@ -1,0 +1,33 @@
+@using web_tcg.Data.Entities
+@model web_tcg.Models.Market.MarketDetailViewModel
+@{ ViewData["Title"]="Enchère · " + Model.Listing.Card.Name; Layout="_Layout"; var auction=Model.Listing.Auction; }
+<link rel="stylesheet" href="~/css/market.css" asp-append-version="true" />
+<div class="market-page" data-market-auction="@auction.Id" data-state-url="@Url.Action("State",new {id=auction.Id})">
+    <a asp-action="Index" class="market-back">← Marché des joueurs</a>
+    <header class="market-header"><div><span class="market-kicker">ENCHÈRE EN DIRECT</span><h1>@Model.Listing.Card.Name</h1><p>Une copie de cette carte sera attribuée au meilleur enchérisseur.</p></div><span class="market-connection" data-market-connection role="status">Connexion…</span></header>
+    <div class="market-detail">
+        <div class="market-detail-card">@await Component.InvokeAsync("Card",new {model=Model.Listing.Card})</div>
+        <div>
+            <div data-market-state>@await Html.PartialAsync("_AuctionState",Model)</div>
+            <p class="market-feedback" data-market-feedback role="status" hidden></p>
+            @if (!Model.Listing.IsSeller)
+            {
+                <form data-market-bid action="@Url.Action("Bid",new {id=auction.Id})" method="post" class="market-bid-form">
+                    @Html.AntiForgeryToken()
+                    <label>Votre enchère — monnaie MARCHÉ (¤)<input name="amount" type="number" min="@Model.Listing.MinimumBid.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)" max="999999999" step="0.01" required /></label>
+                    <p>Le montant est réservé immédiatement. Si vous êtes déjà en tête, seule la différence est réservée.</p>
+                    <button type="submit" class="market-button">Enchérir</button>
+                </form>
+            }
+            else
+            {
+                <form data-market-cancel action="@Url.Action("Cancel",new {id=auction.Id})" method="post" class="market-bid-form">
+                    @Html.AntiForgeryToken()
+                    <p>Votre carte est réservée pendant la vente. Vous ne pouvez pas enchérir sur votre propre carte.</p>
+                    <button class="market-button secondary" type="submit">Annuler la vente sans enchère</button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts { <script src="~/js/market.js" asp-append-version="true"></script> }

@@ -57,7 +57,9 @@ namespace web_tcg.Services
                     state.WinnerUserId,
 
                 EndReason =
-                    state.EndReason
+                    state.EndReason,
+                XpEarned = state.RewardXp.HasValue ? (state.WinnerUserId == viewerUserId ? state.RewardXp.Value : 0) : null,
+                CardBalanceEarned = state.RewardCardBalance.HasValue ? (state.WinnerUserId == viewerUserId ? state.RewardCardBalance.Value : 0m) : null
             };
         }
 

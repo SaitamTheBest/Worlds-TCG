@@ -1,4 +1,4 @@
-﻿using web_tcg.Data.Enums;
+using web_tcg.Data.Enums;
 
 namespace web_tcg.Models.Game
 {
@@ -36,6 +36,8 @@ namespace web_tcg.Models.Game
 
         public string? WinnerUserId { get; init; }
         public GameEndReason? EndReason { get; init; }
+        public int? XpEarned { get; init; }
+        public decimal? CardBalanceEarned { get; init; }
     }
 
     public sealed class GamePlayerDto

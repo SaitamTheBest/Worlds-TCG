@@ -18,7 +18,7 @@
         return numericValue.toLocaleString(
             "fr-FR",
             {
-                maximumFractionDigits: 0
+                maximumFractionDigits: 2
             }
         );
     }

@@ -1,0 +1,24 @@
+@model web_tcg.Models.Market.MarketIndexViewModel
+@{ ViewData["Title"]=Model.Title; Layout="_Layout"; }
+<link rel="stylesheet" href="~/css/market.css" asp-append-version="true" />
+<div class="market-page" data-market-list data-mode="@Model.Mode" data-search="@Model.Search" data-page="@Model.Page" data-list-url="@Url.Action("Listings")">
+    <header class="market-header">
+        <div><span class="market-kicker">ÉCHANGES ENTRE JOUEURS</span><h1>@Model.Title</h1><p>Une carte, une vente. Enchérissez avec votre monnaie MARCHÉ (¤).</p></div>
+        <a class="market-button" asp-action="Create"><i data-lucide="plus"></i> Mettre une carte en vente</a>
+    </header>
+    <nav class="market-tabs" aria-label="Navigation du marché">
+        <a class="@(Model.Mode == "market" ? "active" : "")" asp-action="Index">Marché en cours</a>
+        <a class="@(Model.Mode == "sales" ? "active" : "")" asp-action="MySales">Mes ventes en cours</a>
+        <a class="@(Model.Mode == "history" ? "active" : "")" asp-action="History">Historique de mes ventes</a>
+    </nav>
+    <div class="market-toolbar">
+        @if (Model.Mode == "market")
+        {
+            <form method="get" asp-action="Index" class="market-search"><input name="search" value="@Model.Search" placeholder="Rechercher une carte…" aria-label="Nom de la carte" maxlength="100" /><button class="market-button secondary">Rechercher</button></form>
+        }
+        <span class="market-connection" data-market-connection role="status">Connexion au marché…</span>
+    </div>
+    <p class="market-feedback" data-market-feedback role="status" hidden></p>
+    <div data-market-listings>@await Html.PartialAsync("_Listings",Model)</div>
+</div>
+@section Scripts { <script src="~/js/market.js" asp-append-version="true"></script> }

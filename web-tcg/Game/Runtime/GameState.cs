@@ -1,4 +1,4 @@
-﻿using web_tcg.Data.Enums;
+using web_tcg.Data.Enums;
 
 namespace web_tcg.Game.Runtime
 {
@@ -20,6 +20,10 @@ namespace web_tcg.Game.Runtime
 
         public string? WinnerUserId { get; set; }
         public GameEndReason? EndReason { get; set; }
+
+        // Montants effectivement crédités, conservés avec la partie.
+        public int? RewardXp { get; set; }
+        public decimal? RewardCardBalance { get; set; }
 
         public GamePlayerState PlayerOne { get; set; } = new();
         public GamePlayerState PlayerTwo { get; set; } = new();

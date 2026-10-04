@@ -786,6 +786,89 @@ namespace web_tcg.Migrations
                     b.ToTable("LocationCards");
                 });
 
+            modelBuilder.Entity("web_tcg.Data.Entities.MarketAuction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("CardId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("CurrentPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("HighestBidderId")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SellerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("StartingPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.HasIndex("HighestBidderId");
+
+                    b.HasIndex("SellerId", "Status");
+
+                    b.HasIndex("Status", "EndsAt");
+
+                    b.ToTable("MarketAuctions", t =>
+                        {
+                            t.HasCheckConstraint("CK_MarketAuction_Prices", "\"StartingPrice\" >= 1 AND \"CurrentPrice\" >= \"StartingPrice\"");
+                        });
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.MarketBid", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<Guid>("AuctionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("BidderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BidderId");
+
+                    b.HasIndex("AuctionId", "CreatedAt");
+
+                    b.ToTable("MarketBids");
+                });
+
             modelBuilder.Entity("web_tcg.Data.Entities.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -1220,6 +1303,51 @@ namespace web_tcg.Migrations
                     b.Navigation("Card");
                 });
 
+            modelBuilder.Entity("web_tcg.Data.Entities.MarketAuction", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.Card", "Card")
+                        .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", "HighestBidder")
+                        .WithMany()
+                        .HasForeignKey("HighestBidderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", "Seller")
+                        .WithMany()
+                        .HasForeignKey("SellerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Card");
+
+                    b.Navigation("HighestBidder");
+
+                    b.Navigation("Seller");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.MarketBid", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.MarketAuction", "Auction")
+                        .WithMany("Bids")
+                        .HasForeignKey("AuctionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", "Bidder")
+                        .WithMany()
+                        .HasForeignKey("BidderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Auction");
+
+                    b.Navigation("Bidder");
+                });
+
             modelBuilder.Entity("web_tcg.Data.Entities.Notification", b =>
                 {
                     b.HasOne("web_tcg.Data.Entities.ApplicationUser", "User")
@@ -1324,6 +1452,11 @@ namespace web_tcg.Migrations
                     b.Navigation("ChatMessages");
 
                     b.Navigation("Logs");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.MarketAuction", b =>
+                {
+                    b.Navigation("Bids");
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.Region", b =>

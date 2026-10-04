@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using web_tcg.Data;
@@ -415,7 +415,8 @@ namespace web_tcg.Services
         private async Task RunAiTurnsIfNeededAsync(
             GameState state,
             List<string> logs,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            bool progressive = false)
         {
             var safety = 0;
 
@@ -438,14 +439,29 @@ namespace web_tcg.Services
                 if (!isBot)
                     break;
 
+                if (progressive)
+                {
+                    await BroadcastStateAsync(state, cancellationToken);
+                    await Task.Delay(650, cancellationToken);
+                }
                 var aiLogs =
                     await _ai.PlayTurnAsync(
                         state,
                         activePlayerId,
-                        cancellationToken);
+                        cancellationToken,
+                        progressive ? async actionLogs =>
+                        {
+                            state.Version++;
+                            state.LastActionAtUtc = DateTime.UtcNow;
+                            await _repository.SaveAsync(state, cancellationToken);
+                            await _repository.AddLogsAsync(state.MatchId, actionLogs, cancellationToken);
+                            foreach (var log in actionLogs)
+                                await _hub.Clients.Group($"game:{state.MatchId}").SendAsync("GameLogAdded", new { message = log, createdAt = DateTime.UtcNow }, cancellationToken);
+                            await BroadcastStateAsync(state, cancellationToken);
+                            if (state.Status == GameMatchStatus.InProgress) await Task.Delay(750, cancellationToken);
+                        } : null);
 
-                logs.AddRange(
-                    aiLogs);
+                if (!progressive) logs.AddRange(aiLogs);
             }
         }
 
@@ -508,11 +524,6 @@ namespace web_tcg.Services
                 var logs =
                     await command(state);
 
-                await RunAiTurnsIfNeededAsync(
-                    state,
-                    logs,
-                    cancellationToken);
-
                 if (state.Status ==
                     GameMatchStatus.InProgress)
                 {
@@ -550,6 +561,8 @@ namespace web_tcg.Services
                                 cancellationToken);
                     }
                 }
+
+                await RunAiTurnsIfNeededAsync(state, logs, cancellationToken, progressive: true);
 
                 if (state.Status ==
                     GameMatchStatus.Finished)
@@ -603,6 +616,9 @@ namespace web_tcg.Services
                 return;
             }
 
+            await using var rewardTransaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+            await CollectionTransactionLock.AcquireAsync(_context, cancellationToken);
+
             var match =
                 await _context.Set<GameMatch>()
                     .FirstAsync(
@@ -611,6 +627,7 @@ namespace web_tcg.Services
                             state.MatchId,
                         cancellationToken);
 
+            await _context.Entry(match).ReloadAsync(cancellationToken);
             if (match.RewardsGranted)
                 return;
 
@@ -622,6 +639,7 @@ namespace web_tcg.Services
                             state.WinnerUserId,
                         cancellationToken);
 
+            await _context.Entry(winner).ReloadAsync(cancellationToken);
             winner.XP +=
                 _rewards.WinXp;
 
@@ -633,6 +651,11 @@ namespace web_tcg.Services
 
             await _context.SaveChangesAsync(
                 cancellationToken);
+
+            state.RewardXp = _rewards.WinXp;
+            state.RewardCardBalance = _rewards.WinCardBalance;
+            await _repository.SaveAsync(state, cancellationToken);
+            await rewardTransaction.CommitAsync(cancellationToken);
 
             await _cardBalanceRealtime.PublishAsync(
                 winner.Id,

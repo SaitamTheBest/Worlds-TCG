@@ -211,6 +211,12 @@
     </section>
 
     <aside class="game-sidebar">
+        <section class="game-guide" aria-label="Situation de la partie">
+            <div class="game-guide-heading"><strong id="gamePhase">Préparation du plateau</strong><span id="gameConnection" role="status">Connexion…</span></div>
+            <p id="gameTurnAdvice">Distribution des cartes en cours…</p>
+            <div class="game-guide-counts"><span id="gameReadyCount"></span><span id="gameOpponentHand"></span></div>
+        </section>
+        <div id="gameRecentAction" class="game-recent-action" role="status" aria-live="polite">Les actions jouées apparaîtront ici.</div>
 
         <div class="game-sidebar-tabs">
             <button type="button"
@@ -265,6 +271,25 @@
     </aside>
 
 </div>
+
+<div id="gameTurnAnnouncement" class="game-turn-announcement" role="status" aria-live="polite" hidden></div>
+<dialog id="gameResultDialog" class="game-result-dialog" aria-labelledby="gameResultTitle">
+    <span class="game-result-emblem" id="gameResultEmblem" aria-hidden="true">✦</span>
+    <span class="game-result-kicker">PARTIE TERMINÉE</span>
+    <h2 id="gameResultTitle">Résultat</h2>
+    <p id="gameResultReason"></p>
+    <div class="game-result-rewards">
+        <div><span>EXPÉRIENCE GAGNÉE</span><strong id="gameResultXp">—</strong></div>
+        <div class="tcg-balance-widget tcg-card-balance-widget tcg-market-currency">
+            <div class="tcg-balance-icon tcg-card-balance-icon"><i data-lucide="coins"></i></div>
+            <div class="tcg-balance-content"><span class="tcg-balance-label tcg-card-balance-label">MARCHÉ GAGNÉ</span>
+                <div class="tcg-card-balance-value"><strong id="gameResultMoney">—</strong><span class="tcg-card-balance-unit">¤</span></div>
+            </div>
+        </div>
+    </div>
+    <p id="gameResultRewardNote"></p>
+    <div class="game-result-actions"><a href="/Pvp" class="game-end-turn-button">Rejouer</a><a href="/" class="game-dialog-action">Accueil</a><button type="button" id="gameResultClose" class="game-dialog-action">Revoir le plateau</button></div>
+</dialog>
 
 <div id="gameTargetBar" class="game-target-bar" hidden>
     <span id="gameTargetLabel" role="status" aria-live="polite"></span>

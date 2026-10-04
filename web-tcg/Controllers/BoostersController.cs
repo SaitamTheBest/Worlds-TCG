@@ -103,6 +103,8 @@ namespace web_tcg.Controllers
             await using var transaction =
                 await _context.Database.BeginTransactionAsync();
 
+            await CollectionTransactionLock.AcquireAsync(_context);
+
             try
             {
                 var user = await _context.Users

@@ -1,0 +1,13 @@
+@model web_tcg.Models.Balance.MarketCurrencyViewModel
+<div class="tcg-balance-widget tcg-card-balance-widget tcg-market-currency"
+     id="@(Model.IsLiveBalance ? "cardBalanceWidget" : null)"
+     data-card-balance="@(Model.IsLiveBalance ? Model.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture) : null)">
+    <div class="tcg-balance-icon tcg-card-balance-icon"><i data-lucide="coins" aria-hidden="true"></i></div>
+    <div class="tcg-balance-content">
+        <span class="tcg-balance-label tcg-card-balance-label">MARCHÉ</span>
+        <div class="tcg-card-balance-value">
+            <strong id="@(Model.IsLiveBalance ? "userCardBalance" : null)">@Model.Amount.ToString("#,0.##", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</strong>
+            <span class="tcg-card-balance-unit">¤</span>
+        </div>
+    </div>
+</div>

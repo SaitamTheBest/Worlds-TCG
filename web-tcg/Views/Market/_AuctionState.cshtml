@@ -1,0 +1,27 @@
+@using web_tcg.Data.Entities
+@model web_tcg.Models.Market.MarketDetailViewModel
+@{ var item=Model.Listing; var auction=item.Auction; var active=auction.Status == AuctionStatus.Active && auction.EndsAt > DateTime.UtcNow; }
+<section class="market-auction-state" data-active="@active.ToString().ToLowerInvariant()"
+         data-can-cancel="@((active && auction.HighestBidderId == null).ToString().ToLowerInvariant())"
+         data-minimum="@item.MinimumBid.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)"
+         data-server-utc="@DateTime.UtcNow.ToString("O")">
+    <div class="market-auction-stats">
+        <div><span>Statut</span><strong>@item.Status</strong></div>
+        <div><span>@(auction.HighestBidderId == null ? "Prix de départ" : "Meilleure enchère")</span>@await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount=auction.CurrentPrice })</div>
+        <div><span>Temps restant</span><strong data-market-end="@auction.EndsAt.ToString("O")">@(active ? "—" : "Terminée")</strong></div>
+        <div><span>Votre solde disponible</span>@await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount=Model.AvailableBalance })</div>
+    </div>
+    <p>Vendeur : <strong>@auction.Seller.UserName</strong> · @item.BidCount enchère(s)</p>
+    @if (auction.HighestBidderId != null) { <p>@(auction.Status == AuctionStatus.Sold ? "Gagnant" : "En tête") : <strong>@auction.HighestBidder?.UserName</strong> @(item.IsHighestBidder ? "(vous)" : "")</p> }
+    @if (active) { <div class="market-minimum">Minimum de la prochaine enchère : @await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount=item.MinimumBid })</div> }
+    @if (auction.Status == AuctionStatus.Sold) { <p class="market-feedback success">Vente terminée : la carte a été transférée au gagnant et le vendeur a reçu le paiement.</p> }
+    @if (auction.Status is AuctionStatus.Unsold or AuctionStatus.Cancelled) { <p class="market-feedback">La carte a été rendue au vendeur.</p> }
+    <h2>Dernières enchères</h2>
+    @if (Model.Bids.Count == 0) { <p class="market-muted">Aucune enchère pour le moment.</p> }
+    else
+    {
+        <ol class="market-bids">
+            @foreach (var bid in Model.Bids) { <li><strong>@bid.Bidder.UserName</strong>@await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount=bid.Amount })<time datetime="@bid.CreatedAt.ToString("O")">@bid.CreatedAt.ToLocalTime().ToString("dd/MM HH:mm:ss")</time></li> }
+        </ol>
+    }
+</section>

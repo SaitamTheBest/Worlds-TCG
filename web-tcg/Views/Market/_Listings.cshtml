@@ -1,0 +1,44 @@
+@using web_tcg.Data.Entities
+@model web_tcg.Models.Market.MarketIndexViewModel
+@{
+    var action=Model.Mode == "sales" ? "MySales" : Model.Mode == "history" ? "History" : "Index";
+}
+<div class="market-summary"><span>@Model.Total vente(s)</span><strong>Mes ventes en cours : @Model.ActiveSales / 10</strong></div>
+@if (Model.Listings.Count == 0)
+{
+    <div class="market-empty"><i data-lucide="gavel"></i><h2>Aucune vente ici pour le moment</h2><p>@(Model.Mode == "history" ? "Vos ventes terminées et annulées apparaîtront ici." : "Mettez une carte en vente ou revenez découvrir les prochaines enchères.")</p></div>
+}
+else
+{
+    <div class="market-grid">
+        @foreach (var item in Model.Listings)
+        {
+            <article class="market-listing">
+                <a asp-action="Auction" asp-route-id="@item.Auction.Id" class="market-card-link" aria-label="Consulter la vente de @item.Card.Name">
+                    @await Component.InvokeAsync("Card",new {model=item.Card})
+                </a>
+                <div class="market-listing-meta">
+                    <span class="market-status">@item.Status</span>
+                    <p>Vendeur : <strong>@item.Auction.Seller.UserName</strong></p>
+                    <div class="market-listing-price">@await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount=item.Auction.CurrentPrice })</div>
+                    <p>@item.BidCount enchère(s) @(item.IsHighestBidder ? "· Vous êtes en tête" : "")</p>
+                    @if (item.Auction.Status == AuctionStatus.Active)
+                    {
+                        <p>Fin dans <strong data-market-end="@item.Auction.EndsAt.ToString("O")">—</strong></p>
+                    }
+                    else
+                    {
+                        <p>Clôturée le @item.Auction.ClosedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                        @if (item.Auction.Status == AuctionStatus.Sold) { <p>Acheteur : @item.Auction.HighestBidder?.UserName</p> }
+                    }
+                    <a class="market-button secondary" asp-action="Auction" asp-route-id="@item.Auction.Id">@(item.Auction.Status == AuctionStatus.Active ? "Voir l’enchère" : "Détail de la vente")</a>
+                </div>
+            </article>
+        }
+    </div>
+}
+<nav class="market-pagination" aria-label="Pages des ventes" data-server-utc="@DateTime.UtcNow.ToString("O")">
+    @if (Model.Page>1) { <a asp-action="@action" asp-route-page="@(Model.Page-1)" asp-route-search="@Model.Search">← Précédent</a> }
+    <span>Page @Model.Page</span>
+    @if (Model.Page*20<Model.Total) { <a asp-action="@action" asp-route-page="@(Model.Page+1)" asp-route-search="@Model.Search">Suivant →</a> }
+</nav>

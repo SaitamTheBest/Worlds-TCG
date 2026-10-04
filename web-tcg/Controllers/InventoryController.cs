@@ -403,6 +403,8 @@ namespace web_tcg.Controllers
         /// Une variante possède son propre CardId.
         /// </summary>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddCard(
             int cardId,
             int quantity = 1)
@@ -417,6 +419,8 @@ namespace web_tcg.Controllers
 
             try
             {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                await CollectionTransactionLock.AcquireAsync(_context);
                 var card = await _context.Cards
                     .AsNoTracking()
                     .FirstOrDefaultAsync(x => x.Id == cardId);
@@ -450,6 +454,8 @@ namespace web_tcg.Controllers
                 }
 
                 await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
 
                 _logger.LogInformation(
                     "Carte {CardId} ajoutée à l'inventaire de {UserId} (quantité : {Quantity}).",
@@ -505,6 +511,8 @@ namespace web_tcg.Controllers
             await using var transaction =
                 await _context.Database.BeginTransactionAsync(
                     IsolationLevel.Serializable);
+
+            await CollectionTransactionLock.AcquireAsync(_context);
 
             try
             {
@@ -646,6 +654,8 @@ namespace web_tcg.Controllers
         /// Met à jour la quantité possédée d'une carte.
         /// </summary>
         [HttpPost]
+        [Authorize(Roles = "Admin")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateQuantity(
             int id,
             int quantity)
@@ -660,6 +670,8 @@ namespace web_tcg.Controllers
 
             try
             {
+                await using var transaction = await _context.Database.BeginTransactionAsync();
+                await CollectionTransactionLock.AcquireAsync(_context);
                 var inventoryItem = await _context.UserCardCollections
                     .FirstOrDefaultAsync(x =>
                         x.Id == id &&
@@ -671,6 +683,8 @@ namespace web_tcg.Controllers
                 inventoryItem.Quantity = quantity;
 
                 await _context.SaveChangesAsync();
+
+                await transaction.CommitAsync();
 
                 _logger.LogInformation(
                     "Quantité de la carte {CardId} mise à jour pour {UserId} : {Quantity}.",

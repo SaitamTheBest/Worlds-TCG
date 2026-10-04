@@ -1,0 +1,65 @@
+.market-page { width:100%; max-width: 1380px; margin: auto; padding: 32px; color: #eef2f8; box-sizing:border-box; }
+.market-page * { box-sizing:border-box; }
+.market-header { display:flex; justify-content:space-between; align-items:center; gap:24px; margin:20px 0 28px; }
+.market-kicker { color:#f4c430; font-size:.7rem; letter-spacing:.12em; font-weight:700; }
+.market-header h1 { font-size:clamp(1.6rem,3vw,2.4rem); font-weight:700; margin:8px 0; }
+.market-header p, .market-muted { color:#9caabd; line-height:1.6; }
+.market-button { display:inline-flex; justify-content:center; align-items:center; gap:8px; background:#f4c430; color:#15130a; padding:12px 18px; border:1px solid transparent; border-radius:10px; font-weight:700; font-size:.85rem; cursor:pointer; text-decoration:none; }
+.market-button svg { width:18px; height:18px; }
+.market-button:hover { background:#ffdc66; color:#15130a; }
+.market-button.secondary { background:#1a2029; color:#e7edf7; border-color:#343d4b; }
+.market-button.secondary:hover { background:#29313d; color:#f4c430; }
+.market-button:disabled { opacity:.45; cursor:not-allowed; }
+.market-page a:focus-visible, .market-page button:focus-visible, .market-page input:focus-visible, .market-page select:focus-visible { outline:2px solid #f4c430; outline-offset:4px; }
+.market-tabs { display:flex; flex-wrap:wrap; gap:10px; border-bottom:1px solid #29323d; padding-bottom:16px; margin-bottom:22px; }
+.market-tabs a { padding:10px 14px; border-radius:8px; color:#abb8ca; text-decoration:none; }
+.market-tabs a:hover, .market-tabs a.active { background:#f4c43017; color:#f4c430; }
+.market-toolbar, .market-summary { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin:18px 0; }
+.market-summary { color:#aab6c7; font-size:.85rem; }
+.market-summary strong { color:#f4c430; }
+.market-connection { font-size:.8rem; color:#9badc4; }
+.market-connection.connected { color:#7fe0a2; }
+.market-search { display:flex; gap:10px; max-width:550px; margin-bottom:20px; }
+.market-page input:not([type=radio]), .market-page select { min-width:0; border:1px solid #364052; background:#10161f; border-radius:9px; color:#eef2f8; padding:12px; font:inherit; }
+.market-search input { flex:1; }
+.market-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(210px,1fr)); gap:24px; }
+.market-listing { min-width:0; padding:16px; background:#111720; border:1px solid #293341; border-radius:16px; }
+.market-card-link { display:block; text-decoration:none; }
+.market-grid .tcg-card { --card-width:100%; }
+.market-listing-meta { margin-top:18px; font-size:.8rem; color:#aebcd0; }
+.market-listing-meta p { margin:8px 0; }
+.market-listing-meta .market-button { display:flex; margin-top:16px; }
+.market-status { font-size:.7rem; color:#f4c430; background:#f4c43018; padding:5px 9px; border-radius:6px; }
+.market-listing-price { margin:12px 0; }
+.market-minimum { display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin:16px 0; font-size:.9rem; color:#b1bfd3; }
+.market-empty { text-align:center; background:#111720; border-radius:16px; padding:50px 24px; color:#a9b8cc; }
+.market-empty svg { margin:auto; width:36px; height:36px; color:#f4c430; }
+.market-empty h2 { font-size:1.15rem; color:#edf2f8; margin:18px 0 10px; }
+.market-pagination { display:flex; justify-content:center; gap:24px; padding:28px 0; font-size:.85rem; color:#a9b8cc; }
+.market-pagination a, .market-back { color:#f4c430; text-decoration:none; }
+.market-feedback { padding:14px 18px; border-radius:10px; background:#1a2536; color:#c5d7ef; margin:16px 0; line-height:1.5; }
+.market-feedback.error { background:#3b1f27; color:#ffabb6; }
+.market-feedback.success { background:#15352b; color:#9ce5bd; }
+.market-feedback.validation-summary-valid { display:none; }
+.market-create-form fieldset { border:0; margin-top:26px; min-width:0; }
+.market-create-form legend { font-size:1.2rem; font-weight:700; margin-bottom:24px; }
+.market-choice { position:relative; cursor:pointer; display:flex; flex-direction:column; gap:14px; color:#acbad0; font-size:.8rem; padding:12px; border:1px solid #293341; border-radius:14px; background:#111720; }
+.market-choice input { position:absolute; top:18px; right:18px; z-index:2; width:20px; height:20px; accent-color:#f4c430; }
+.market-choice-card { display:block; }
+.market-choice:has(input:checked) { border-color:#f4c430; box-shadow:0 0 0 2px #f4c43055; }
+.market-choice:has(input:focus-visible) { outline:2px solid #f4c430; outline-offset:4px; }
+.market-sale-settings { max-width:650px; padding:24px; background:#111720; border-radius:16px; }
+.market-sale-settings label, .market-bid-form label { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; font-size:.9rem; }
+.market-sale-settings p, .market-bid-form p { color:#a8b7cb; font-size:.85rem; line-height:1.6; margin:18px 0; }
+.market-detail { display:grid; grid-template-columns:minmax(240px,360px) minmax(0,1fr); gap:48px; align-items:start; }
+.market-detail-card .tcg-card { --card-width:100%; }
+.market-auction-stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.market-auction-stats > div { background:#141c28; padding:18px; border-radius:12px; display:flex; flex-direction:column; gap:10px; }
+.market-auction-stats span { color:#9aacc4; font-size:.75rem; }
+.market-auction-state > p { margin:16px 0; color:#b1bfd3; font-size:.9rem; }
+.market-auction-state h2 { font-size:1.2rem; font-weight:700; margin:24px 0 14px; }
+.market-bids { max-height:300px; overflow:auto; list-style:none; padding:0; }
+.market-bids li { display:flex; flex-wrap:wrap; gap:12px; justify-content:space-between; padding:12px 0; border-bottom:1px solid #293341; font-size:.85rem; }
+.market-bids time { color:#8fa2bc; font-size:.75rem; }
+.market-bid-form { margin-top:24px; padding:20px; border-radius:12px; background:#111720; }
+@media(max-width:750px) { .market-page{padding:20px 16px;} .market-header{align-items:flex-start;flex-direction:column;} .market-detail{grid-template-columns:1fr;gap:24px;} .market-detail-card{max-width:300px;margin:auto;width:100%;} .market-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;} .market-listing{padding:10px;} .market-price{font-size:1.2rem;} }

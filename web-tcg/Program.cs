@@ -93,6 +93,8 @@ builder.Services.AddRateLimiter(o =>
         _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(15), QueueLimit = 0 }));
 });
 builder.Services.AddSignalR();
+builder.Services.AddScoped<MarketService>();
+builder.Services.AddHostedService<MarketSettlementWorker>();
 
 builder.Services.AddScoped<BoosterRarityGenerator>();
 builder.Services.AddScoped<BoosterGenerator>();
@@ -291,6 +293,7 @@ app.MapRazorPages()
 app.MapHub<web_tcg.Hubs.BalanceHub>("/hubs/balance");
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.MapHub<CardBalanceHub>("/hubs/card-balance");
+app.MapHub<MarketHub>("/hubs/market");
 app.MapHub<GameHub>("/hubs/game");
 app.MapHub<LobbyHub>("/hubs/lobby");
 

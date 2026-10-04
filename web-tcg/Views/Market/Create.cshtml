@@ -1,0 +1,37 @@
+@model web_tcg.Models.Market.CreateAuctionViewModel
+@{ ViewData["Title"]="Mettre une carte en vente"; Layout="_Layout"; }
+<link rel="stylesheet" href="~/css/market.css" asp-append-version="true" />
+<div class="market-page">
+    <a asp-action="MySales" class="market-back">← Mes ventes</a>
+    <header class="market-header"><div><span class="market-kicker">NOUVELLE ENCHÈRE</span><h1>Mettre une carte en vente</h1><p>@Model.ActiveSales / 10 ventes en cours. Une copie sera réservée pendant toute la vente.</p></div></header>
+    <div asp-validation-summary="All" class="market-feedback error"></div>
+    @if (Model.ActiveSales >= 10) { <p class="market-feedback error">La limite de 10 ventes en cours est atteinte.</p> }
+    <form method="get" asp-action="Create" class="market-search"><input name="search" value="@Model.Search" maxlength="100" placeholder="Rechercher dans mes cartes…" aria-label="Rechercher dans mes cartes" /><button class="market-button secondary">Rechercher</button></form>
+    <form method="post" asp-action="Create" class="market-create-form">
+        @Html.AntiForgeryToken()
+        <fieldset><legend>1. Choisir la carte à vendre</legend>
+            @if (Model.Cards.Count == 0) { <p class="market-empty">Aucune carte disponible pour cette recherche.</p> }
+            <div class="market-grid market-selection">
+                @foreach (var owned in Model.Cards)
+                {
+                    <label class="market-choice">
+                        <input type="radio" name="Input.CardId" value="@owned.Card.Id" checked="@(Model.Input.CardId == owned.Card.Id)" required />
+                        <span class="market-choice-card">@await Component.InvokeAsync("Card",new {model=owned.Card})</span>
+                        <span>@owned.Quantity exemplaire(s) disponible(s)</span>
+                    </label>
+                }
+            </div>
+        </fieldset>
+        <nav class="market-pagination" aria-label="Pages de mon inventaire">
+            @if (Model.Page>1) { <a asp-action="Create" asp-route-page="@(Model.Page-1)" asp-route-search="@Model.Search">← Précédent</a> }
+            <span>Page @Model.Page</span>
+            @if (Model.HasNext) { <a asp-action="Create" asp-route-page="@(Model.Page+1)" asp-route-search="@Model.Search">Suivant →</a> }
+        </nav>
+        <fieldset class="market-sale-settings"><legend>2. Paramétrer la vente</legend>
+            <label>Prix de départ — monnaie MARCHÉ (¤)<input asp-for="Input.StartingPrice" type="number" min="1" max="999999999" step="0.01" required /></label>
+            <label>Durée<select asp-for="Input.DurationHours"><option value="1">1 heure</option><option value="6">6 heures</option><option value="24">24 heures</option><option value="48">48 heures</option></select></label>
+            <p>Chaque surenchère doit ajouter au moins 1 ¤. Vous pouvez annuler la vente tant qu’aucune enchère n’a été déposée. Sans enchère, la carte vous est rendue automatiquement. Vendre votre dernier exemplaire peut rendre un deck incomplet.</p>
+            <button class="market-button" type="submit" disabled="@(Model.ActiveSales>=10 || Model.Cards.Count==0)">Publier la vente</button>
+        </fieldset>
+    </form>
+</div>

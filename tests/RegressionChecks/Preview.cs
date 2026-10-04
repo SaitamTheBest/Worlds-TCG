@@ -146,5 +146,21 @@ public sealed class PreviewGameHub : Hub
         States[Context.ConnectionId] = new() { MatchId = matchId, IsMyTurn = true, Status = GameMatchStatus.InProgress, ClockAnchorUtc = DateTime.UtcNow, ServerTimeUtc = DateTime.UtcNow, Me = me, Opponent = state.Opponent };
         return Clients.Caller.SendAsync("GameStateUpdated", States[Context.ConnectionId]);
     }
+    // Fins de partie fictives pour contrôler les deux écrans sans base de données.
+    public Task EndTurn(Guid matchId) => FinishPreview(matchId, true);
+    public Task Surrender(Guid matchId) => FinishPreview(matchId, false);
+    private Task FinishPreview(Guid matchId, bool won)
+    {
+        var state = States[Context.ConnectionId];
+        States[Context.ConnectionId] = new GameStateDto
+        {
+            MatchId = matchId, Status = GameMatchStatus.Finished, Me = state.Me, Opponent = state.Opponent,
+            TurnNumber = state.TurnNumber, WinnerUserId = won ? state.Me.UserId : state.Opponent.UserId,
+            EndReason = won ? GameEndReason.LeaderDefeated : GameEndReason.Surrender,
+            XpEarned = won ? 100 : 0, CardBalanceEarned = won ? 10.5m : 0m,
+            ClockAnchorUtc = DateTime.UtcNow, ServerTimeUtc = DateTime.UtcNow
+        };
+        return Clients.Caller.SendAsync("GameStateUpdated", States[Context.ConnectionId]);
+    }
     public override Task OnDisconnectedAsync(Exception? exception) { States.TryRemove(Context.ConnectionId, out _); return base.OnDisconnectedAsync(exception); }
 }

@@ -5,6 +5,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using web_tcg.Data;
 using web_tcg.Data.Entities;
 
+if (args.Contains("--market"))
+{
+    await MarketChecks.RunAsync();
+    return;
+}
+
 if (args.Contains("--cardsets"))
 {
     await CardSetChecks.RunAsync();
@@ -143,6 +149,38 @@ Check(projected.Opponent.Hand.Count == 0, "popup : aucune carte de la main adver
 gameState.ClockAnchorUtc = DateTime.UtcNow.AddSeconds(-25);
 Check(new GameStateProjector().Project(gameState, "alice").ClockAnchorUtc == gameState.ClockAnchorUtc,
     "chrono : référence serveur transmise même après 25 secondes sans action");
+// Les récompenses restent personnelles et conservent leurs montants après sérialisation.
+gameState.Status = web_tcg.Data.Enums.GameMatchStatus.Finished;
+gameState.WinnerUserId = "alice";
+gameState.RewardXp = 123;
+gameState.RewardCardBalance = 10.5m;
+var restoredResult = System.Text.Json.JsonSerializer.Deserialize<web_tcg.Game.Runtime.GameState>(System.Text.Json.JsonSerializer.Serialize(gameState))!;
+var winnerResult = new GameStateProjector().Project(restoredResult, "alice");
+var loserResult = new GameStateProjector().Project(restoredResult, "bob");
+Check(winnerResult.XpEarned == 123 && winnerResult.CardBalanceEarned == 10.5m, "fin : récompenses effectivement créditées conservées après rechargement");
+Check(loserResult.XpEarned == 0 && loserResult.CardBalanceEarned == 0, "fin : aucune récompense du vainqueur affichée au perdant");
+restoredResult.RewardXp = null; restoredResult.RewardCardBalance = null;
+Check(new GameStateProjector().Project(restoredResult, "alice").XpEarned == null, "fin : montants historiques inconnus jamais inventés");
+
+var aiState = new web_tcg.Game.Runtime.GameState
+{
+    Status = web_tcg.Data.Enums.GameMatchStatus.InProgress, ActivePlayerId = "bot", FirstPlayerId = "bot", TurnNumber = 2,
+    ClockAnchorUtc = DateTime.UtcNow, TurnStartedAtUtc = DateTime.UtcNow,
+    PlayerOne = new() { UserId = "bot", Money = 100, TurnsPlayed = 2, Leader = new() { Type = web_tcg.Data.Enums.CardType.Leader, CurrentHealth = 1000, MaxHealth = 1000 } },
+    PlayerTwo = new() { UserId = "human", Leader = new() { Type = web_tcg.Data.Enums.CardType.Leader, CurrentHealth = 1000, MaxHealth = 1000 } }
+};
+for (var i = 0; i < 2; i++) aiState.PlayerOne.Hand.Add(new() { Name = "Carte IA", Type = web_tcg.Data.Enums.CardType.Character, UsageCost = 20, CurrentHealth = 100, MaxHealth = 100 });
+var aiFrames = new List<(int Cards, string Active)>();
+var streamedLogs = new List<string>();
+var aiLogs = await new GameAiService(engine).PlayTurnAsync(aiState, "bot", onAction: messages =>
+{
+    aiFrames.Add((aiState.PlayerOne.Characters.Count(c => c != null), aiState.ActivePlayerId));
+    streamedLogs.AddRange(messages);
+    return Task.CompletedTask;
+});
+Check(aiFrames.Count == 3 && aiFrames[0] == (1, "bot") && aiFrames[1] == (2, "bot") && aiFrames[2].Active == "human", "IA : chaque pose et fin de tour transmise dans l’ordre");
+Check(streamedLogs.SequenceEqual(aiLogs), "IA : historique progressif complet sans doublon");
+
 await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
