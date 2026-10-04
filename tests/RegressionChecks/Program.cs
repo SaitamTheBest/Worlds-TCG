@@ -146,6 +146,7 @@ Check(new GameStateProjector().Project(gameState, "alice").ClockAnchorUtc == gam
 await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
+BoosterDropChecks.Run(Check);
 TargetingChecks.Run(Check);
 await PasswordRecoveryChecks.RunAsync(Check);
 var geographyMigration = context.Database.GetMigrations().Last();

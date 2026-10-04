@@ -56,6 +56,31 @@ namespace web_tcg.Controllers
             return View(viewModel);
         }
 
+        [HttpGet]
+        public async Task<IActionResult> DropRates(int id)
+        {
+            var cardSet = await _context.CardSets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (cardSet == null) return NotFound();
+
+            var cards = await _context.Cards.AsNoTracking()
+                .Where(x => x.CardSetId == id && x.IsActive).ToListAsync();
+            var presentation = (await new CardPresentationService(_context).GetAsync(cards.Select(x => x.Id)))
+                .ToDictionary(x => x.Id);
+            var rates = _boosterGenerator.GetDropRates(5);
+            var model = new BoosterDropRatesViewModel
+            {
+                CardSetName = cardSet.Name,
+                Groups = rates.OrderByDescending(x => x.Key).Select(rate => new BoosterDropGroup
+                {
+                    Rarity = rate.Key,
+                    Rate = rate.Value,
+                    Cards = BoosterCardSelectionService.FilterCards(cards.AsQueryable(), rate.Key)
+                        .OrderBy(x => x.Name).ThenBy(x => x.Id).Select(x => presentation[x.Id]).ToList()
+                }).ToList()
+            };
+            return PartialView("~/Views/Booster/_DropRates.cshtml", model);
+        }
+
         /// <summary>
         /// Achète et génère un nouveau booster.
         /// L'identifiant de l'ouverture n'est jamais envoyé dans l'URL.

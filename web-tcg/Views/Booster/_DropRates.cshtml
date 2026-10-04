@@ -1,0 +1,37 @@
+@model web_tcg.Models.BoosterShop.BoosterDropRatesViewModel
+@{
+    string Percent(double value) => value > 0 && value < 0.0001 ? "< 0,0001 %" : $"{value:0.####} %";
+}
+
+<p class="booster-drop-extension">@Model.CardSetName</p>
+<p class="booster-drop-explanation">Probabilités par carte tirée, en moyenne sur les 5 cartes du booster. La dernière carte est Rare ou supérieure. Dans chaque catégorie, toutes les cartes actives ont la même chance d’être tirées.</p>
+@if (!Model.CanOpen)
+{
+    <p class="booster-drop-warning" role="status">Certaines catégories n’ont aucune carte active. Cette extension ne peut pas encore générer un booster complet ; les taux ci-dessous correspondent au tirage configuré.</p>
+}
+@foreach (var group in Model.Groups)
+{
+    <section class="booster-drop-group" data-rarity="@group.Rarity">
+        <header class="booster-drop-group-heading">
+            <h3>@group.Name</h3>
+            <strong>@Percent(group.Rate)</strong>
+            <span>@group.Cards.Count carte(s)</span>
+        </header>
+        @if (group.Cards.Count == 0)
+        {
+            <p class="booster-drop-empty">Aucune carte active dans cette catégorie.</p>
+        }
+        else
+        {
+            <div class="booster-drop-grid">
+                @foreach (var card in group.Cards)
+                {
+                    <article class="booster-drop-card">
+                        @await Component.InvokeAsync("Card", new { model = card })
+                        <p class="booster-drop-card-rate"><span>Taux de drop</span><strong>@Percent(group.CardRate)</strong></p>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+}

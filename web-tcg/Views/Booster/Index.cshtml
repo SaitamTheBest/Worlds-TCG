@@ -8,6 +8,8 @@
 }
 
 <link rel="stylesheet" href="~/css/booster.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/booster-drop-rates.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
 
 <div class="booster-page">
 
@@ -225,6 +227,13 @@
 
                             </form>
 
+                            <button type="button" class="booster-drop-button"
+                                    data-booster-drop-url="@Url.Action("DropRates", "Booster", new { id = cardSet.Id })"
+                                    aria-haspopup="dialog" aria-controls="boosterDropDialog">
+                                <i data-lucide="chart-no-axes-column-increasing"></i>
+                                Voir les taux de drop
+                            </button>
+
                         </div>
 
                     </article>
@@ -237,6 +246,14 @@
 
 </div>
 
+<dialog id="boosterDropDialog" class="booster-drop-dialog" aria-labelledby="boosterDropTitle">
+    <header class="booster-drop-dialog-heading">
+        <div><span>PROBABILITÉS DU BOOSTER</span><h2 id="boosterDropTitle">Taux de drop</h2></div>
+        <button type="button" class="booster-drop-close" aria-label="Fermer les taux de drop" autofocus>×</button>
+    </header>
+    <div id="boosterDropContent" class="booster-drop-content" aria-busy="false"></div>
+</dialog>
+
 @section Scripts {
 
     <script>
@@ -246,4 +263,5 @@
     </script>
 
     <script src="~/js/booster.js" asp-append-version="true"></script>
+    <script src="~/js/booster-drop-rates.js" asp-append-version="true"></script>
 }

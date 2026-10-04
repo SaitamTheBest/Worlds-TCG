@@ -83,7 +83,7 @@ namespace web_tcg.Game
             return Rarities.Last();
         }
 
-        private Dictionary<BoosterRarity, double> GetRatesForPosition(
+        public Dictionary<BoosterRarity, double> GetRatesForPosition(
             int position,
             BoosterRarity? minimumRarity)
         {

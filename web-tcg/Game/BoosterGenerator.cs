@@ -11,6 +11,20 @@ namespace web_tcg.Game
             _rarityGenerator = rarityGenerator;
         }
 
+        /// <summary>Probabilité moyenne par carte, avec la garantie du dernier emplacement.</summary>
+        public IReadOnlyDictionary<BoosterRarity, double> GetDropRates(int cardCount = 5)
+        {
+            if (cardCount <= 0) throw new ArgumentOutOfRangeException(nameof(cardCount));
+            var rates = Enum.GetValues<BoosterRarity>().ToDictionary(r => r, _ => 0d);
+            for (var position = 1; position <= cardCount; position++)
+            {
+                var positionRates = _rarityGenerator.GetRatesForPosition(position,
+                    position == cardCount ? BoosterRarity.Rare : null);
+                foreach (var entry in positionRates) rates[entry.Key] += entry.Value / cardCount;
+            }
+            return rates;
+        }
+
         /// <summary>
         /// Génère un booster.
         ///

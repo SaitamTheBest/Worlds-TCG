@@ -25,7 +25,19 @@ namespace web_tcg.Services
                     x.CardSetId == cardSetId &&
                     x.IsActive);
 
-            query = rarity switch
+            query = FilterCards(query, rarity);
+
+            var count = await query.CountAsync();
+            if (count == 0)
+                throw new InvalidOperationException($"Aucune carte disponible pour le drop {rarity} dans l'extension {cardSetId}.");
+
+            return await query.OrderBy(x => x.Id).Skip(Random.Shared.Next(count)).FirstAsync();
+        }
+
+        // Partagé par le tirage et l'affichage des taux : mêmes cartes éligibles.
+        public static IQueryable<Card> FilterCards(IQueryable<Card> query, BoosterRarity rarity)
+        {
+            return rarity switch
             {
                 BoosterRarity.Common =>
                     query.Where(x =>
@@ -77,20 +89,6 @@ namespace web_tcg.Services
                     "Rareté de booster inconnue.")
             };
 
-            var count = await query.CountAsync();
-
-            if (count == 0)
-            {
-                throw new InvalidOperationException(
-                    $"Aucune carte disponible pour le drop {rarity} dans l'extension {cardSetId}.");
-            }
-
-            var index = Random.Shared.Next(count);
-
-            return await query
-                .OrderBy(x => x.Id)
-                .Skip(index)
-                .FirstAsync();
         }
     }
 }
