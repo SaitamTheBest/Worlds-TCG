@@ -221,6 +221,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseForwardedHeaders();
+app.UseExceptionHandler("/Error/500");
+app.UseStatusCodePagesWithReExecute("/Error/{0}");
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseRateLimiter();
@@ -254,7 +256,7 @@ app.Use(async (context, next) =>
     );
 
     // Si c'est une route publique, laisser passer directement
-    if (isPublicRoute)
+    if (isPublicRoute || context.GetEndpoint() == null)
     {
         await next();
         return;

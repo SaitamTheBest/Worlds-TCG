@@ -275,6 +275,7 @@ namespace web_tcg.Controllers
             NoStore = true)]
         public IActionResult Error()
         {
+            Response.StatusCode = StatusCodes.Status500InternalServerError;
             return View(
                 new ErrorViewModel
                 {

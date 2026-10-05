@@ -39,6 +39,8 @@ public static class Preview
             .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(new PreviewControllersOnly()));
         builder.Services.AddSignalR();
         var app = builder.Build();
+        app.UseExceptionHandler("/Error/500");
+        app.UseStatusCodePagesWithReExecute("/Error/{0}");
         app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(webRoot) });
         app.MapControllers();
         app.MapHub<PreviewLobbyHub>("/hubs/lobby");
@@ -51,13 +53,15 @@ public sealed class PreviewControllersOnly : IApplicationFeatureProvider<Control
 {
     public void PopulateFeature(IEnumerable<ApplicationPart> parts, ControllerFeature feature)
     {
-        foreach (var controller in feature.Controllers.Where(c => c.AsType() != typeof(PreviewController)).ToArray())
+        foreach (var controller in feature.Controllers.Where(c => c.AsType() != typeof(PreviewController)
+            && c.AsType() != typeof(web_tcg.Controllers.ErrorController)).ToArray())
             feature.Controllers.Remove(controller);
     }
 }
 
 public sealed class PreviewController : Controller
 {
+    [HttpGet("/__preview/error")] public IActionResult ServerError() => throw new InvalidOperationException("Erreur de contrôle interne, à ne pas afficher.");
     private static HomeViewModel Home => new()
     {
         AvailableCards = 120, BaseCards = 90, Variants = 30, RegisteredPlayers = 12, BoosterOpenings = 45,

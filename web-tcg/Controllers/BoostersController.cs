@@ -45,6 +45,7 @@ namespace web_tcg.Controllers
         {
             var cardSets = await _context.CardSets
                 .AsNoTracking()
+                .AvailableForBoosters(DateTime.UtcNow)
                 .OrderByDescending(x => x.ReleaseDate)
                 .ToListAsync();
 
@@ -59,7 +60,8 @@ namespace web_tcg.Controllers
         [HttpGet]
         public async Task<IActionResult> DropRates(int id)
         {
-            var cardSet = await _context.CardSets.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            var cardSet = await _context.CardSets.AsNoTracking().AvailableForBoosters(DateTime.UtcNow)
+                .FirstOrDefaultAsync(x => x.Id == id);
             if (cardSet == null) return NotFound();
 
             var cards = await _context.Cards.AsNoTracking()
@@ -95,6 +97,7 @@ namespace web_tcg.Controllers
                 return Unauthorized();
 
             var cardSet = await _context.CardSets
+                .AvailableForBoosters(DateTime.UtcNow)
                 .FirstOrDefaultAsync(x => x.Id == id);
 
             if (cardSet == null)

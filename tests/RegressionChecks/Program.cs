@@ -185,6 +185,19 @@ await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
 BoosterDropChecks.Run(Check);
+var releaseNow = new DateTime(2026, 10, 5, 12, 0, 0, DateTimeKind.Utc);
+var releaseSets = new[]
+{
+    new CardSet { Id = 1, IsActive = true, ReleaseDate = releaseNow.AddDays(-1) },
+    new CardSet { Id = 2, IsActive = false, ReleaseDate = releaseNow.AddDays(-1) },
+    new CardSet { Id = 3, IsActive = true, ReleaseDate = releaseNow.AddDays(1) },
+    new CardSet { Id = 4, IsActive = false, ReleaseDate = releaseNow.AddDays(1) },
+    new CardSet { Id = 5, IsActive = true, ReleaseDate = releaseNow }
+};
+Check(releaseSets.AsQueryable().AvailableForBoosters(releaseNow).Select(x => x.Id).SequenceEqual(new[] { 1, 5 }),
+    "boosters : seules les extensions actives déjà publiées sont accessibles, date exacte incluse");
+Check(context.CardSets.AvailableForBoosters(releaseNow).ToQueryString().Contains("ReleaseDate"),
+    "boosters : filtre de disponibilité traduit en SQL PostgreSQL");
 TargetingChecks.Run(Check);
 await PasswordRecoveryChecks.RunAsync(Check);
 var geographyMigration = context.Database.GetMigrations().Last();

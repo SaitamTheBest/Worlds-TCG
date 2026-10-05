@@ -1,0 +1,27 @@
+:root{color-scheme:dark;font-family:'Segoe UI',system-ui,sans-serif;color:#f5f6f8;background:#080a0d}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 35%,#d9af2320,transparent 55%),#080a0d}
+.error-page{width:min(100%,720px);padding:40px 24px;text-align:center}
+.brand{display:inline-block;color:#f7f7f7;text-decoration:none;font-weight:800;letter-spacing:.18em;font-size:18px}
+.brand span{color:#f4c430}
+.error-cards{position:relative;width:150px;height:142px;margin:46px auto 0}
+.error-cards span{position:absolute;width:85px;height:120px;left:32px;top:8px;border:1px solid #f4c43088;border-radius:10px;background:repeating-linear-gradient(135deg,#172131,#172131 8px,#1b273a 8px,#1b273a 9px);box-shadow:0 8px 24px #0008}
+.error-cards span:first-child{transform:rotate(-22deg) translateX(-30px)}
+.error-cards span:last-child{transform:rotate(22deg) translateX(30px)}
+.error-cards span:nth-child(2){z-index:1;background:radial-gradient(circle,#f4c43025,transparent 70%),#111820;border-color:#f4c430}
+.error-cards span:nth-child(2)::after{content:'?';display:grid;place-items:center;height:100%;color:#f4c430;font-size:48px;font-weight:800}
+.error-code{margin:18px 0 8px;color:#f4c430;font-size:clamp(64px,12vw,96px);font-weight:900;line-height:1;letter-spacing:.04em}
+h1{font-size:clamp(24px,5vw,34px);line-height:1.2;margin:16px 0}
+.description{max-width:510px;margin:0 auto;color:#a9b3c1;line-height:1.7}
+.actions{display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin:28px 0}
+.button{display:inline-flex;align-items:center;justify-content:center;gap:20px;min-height:48px;padding:12px 20px;border-radius:9px;font:700 14px 'Segoe UI',system-ui,sans-serif;text-decoration:none;cursor:pointer;transition:background .15s,transform .15s}
+.primary{background:#f4c430;color:#181400;border:1px solid #f4c430}
+.primary:hover{background:#ffdc63;transform:translateY(-2px)}
+.secondary{background:#151a21;border:1px solid #35404f;color:#eef1f6}
+.secondary:hover{background:#222b37}
+.button:focus-visible,.brand:focus-visible{outline:2px solid #f4c430;outline-offset:5px}
+.reference{color:#8692a3;font-size:12px;overflow-wrap:anywhere}
+.reference code{font-family:monospace}
+.footer{margin-top:36px;color:#6f7b8b;font-size:12px}
+@media(max-width:480px){.error-page{padding:28px 18px}.error-cards{margin-top:28px}.actions{flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.button{transition:none}}
