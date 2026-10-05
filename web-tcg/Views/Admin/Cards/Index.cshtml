@@ -1,15 +1,14 @@
 ﻿@using web_tcg.Data.Enums
 @using web_tcg.Models.Admin
-@model List<AdminCardListItemViewModel>
+@model AdminCardIndexViewModel
 
 @{
     ViewData["Title"] = "Gestion des Cartes";
 
-    var cardSetId = ViewBag.CardSetId as int?;
     var successMessage = TempData["SuccessMessage"] as string;
 
-    var baseCardCount = Model.Count(x => !x.IsVariant);
-    var variantCount = Model.Count(x => x.IsVariant);
+    var baseCardCount = Model.BaseCardCount;
+    var variantCount = Model.VariantCount;
 }
 
 <link rel="stylesheet"
@@ -120,7 +119,7 @@
                     </span>
 
                     <strong class="admin-stat-value">
-                        @Model.Count
+                        @Model.Total
                     </strong>
                 </div>
 
@@ -168,6 +167,28 @@
              CATALOGUE
              ===================================================== -->
 
+        <form asp-controller="Admin" asp-action="Cards" method="get" class="admin-card-filters">
+            <div>
+                <label asp-for="CardSetId">Extension</label>
+                <select asp-for="CardSetId" asp-items="Model.CardSets" name="cardSetId">
+                    <option value="">Toutes les extensions</option>
+                </select>
+            </div>
+            <div>
+                <label asp-for="Rarity">Rareté</label>
+                <select asp-for="Rarity" name="rarity">
+                    <option value="">Toutes les raretés</option>
+                    <option value="1">Commune (C)</option>
+                    <option value="2">Rare (R)</option>
+                    <option value="3">Super Rare (SR)</option>
+                    <option value="4">Ultra Rare (UR)</option>
+                    <option value="none">Sans rareté — Leaders</option>
+                </select>
+            </div>
+            <button type="submit" class="admin-primary-button">Filtrer</button>
+            <a asp-controller="Admin" asp-action="Cards" class="admin-filter-reset">Réinitialiser</a>
+        </form>
+
         <section class="admin-cards-panel">
 
             <div class="admin-panel-header">
@@ -192,18 +213,18 @@
                 <div class="admin-panel-count">
 
                     <span>
-                        @Model.Count
+                        @Model.Total
                     </span>
 
                     <small>
-                        CARTE@(Model.Count > 1 ? "S" : "")
+                        CARTE@(Model.Total > 1 ? "S" : "")
                     </small>
 
                 </div>
 
             </div>
 
-            @if (!Model.Any())
+            @if (!Model.Items.Any())
             {
                 <!-- =================================================
                      EMPTY
@@ -220,7 +241,7 @@
                     </h3>
 
                     <p>
-                        Aucune carte n'est actuellement enregistrée
+                        Aucune carte ne correspond aux filtres sélectionnés
                         dans votre catalogue.
                     </p>
 
@@ -292,7 +313,7 @@
 
                         <tbody>
 
-                            @foreach (var item in Model)
+                            @foreach (var item in Model.Items)
                             {
                                 var rarityClass = item.Rarity switch
                                 {
@@ -601,6 +622,45 @@
             }
 
         </section>
+
+        @if (Model.Total > 0)
+        {
+            <nav class="admin-card-pagination" aria-label="Pagination des cartes">
+                <p>@((Model.Page - 1) * Model.PageSize + 1)–@(Math.Min(Model.Page * Model.PageSize, Model.Total)) sur @Model.Total cartes</p>
+                <div class="admin-page-links">
+                    @if (Model.Page > 1)
+                    {
+                        <a asp-controller="Admin" asp-action="Cards" asp-route-cardSetId="@Model.CardSetId" asp-route-rarity="@Model.Rarity" asp-route-page="@(Model.Page - 1)" rel="prev">← Précédente</a>
+                    }
+                    @if (Model.Page > 3)
+                    {
+                        <a asp-controller="Admin" asp-action="Cards" asp-route-cardSetId="@Model.CardSetId" asp-route-rarity="@Model.Rarity" asp-route-page="1" aria-label="Première page">1</a>
+                        @if (Model.Page > 4) { <span aria-hidden="true">…</span> }
+                    }
+                    @for (var number = Math.Max(1, Model.Page - 2); number <= Math.Min(Model.TotalPages, Model.Page + 2); number++)
+                    {
+                        if (number == Model.Page)
+                        {
+                            <span class="current" aria-current="page">@number</span>
+                        }
+                        else
+                        {
+                            <a asp-controller="Admin" asp-action="Cards" asp-route-cardSetId="@Model.CardSetId" asp-route-rarity="@Model.Rarity" asp-route-page="@number" aria-label="Page @number">@number</a>
+                        }
+                    }
+                    @if (Model.Page < Model.TotalPages - 2)
+                    {
+                        @if (Model.Page < Model.TotalPages - 3) { <span aria-hidden="true">…</span> }
+                        <a asp-controller="Admin" asp-action="Cards" asp-route-cardSetId="@Model.CardSetId" asp-route-rarity="@Model.Rarity" asp-route-page="@Model.TotalPages" aria-label="Dernière page">@Model.TotalPages</a>
+                    }
+                    @if (Model.Page < Model.TotalPages)
+                    {
+                        <a asp-controller="Admin" asp-action="Cards" asp-route-cardSetId="@Model.CardSetId" asp-route-rarity="@Model.Rarity" asp-route-page="@(Model.Page + 1)" rel="next">Suivante →</a>
+                    }
+                </div>
+            </nav>
+        }
+
 
     </div>
 

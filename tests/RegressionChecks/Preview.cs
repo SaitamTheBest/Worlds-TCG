@@ -43,6 +43,7 @@ public static class Preview
         app.UseStatusCodePagesWithReExecute("/Error/{0}");
         app.UseStaticFiles(new StaticFileOptions { FileProvider = new PhysicalFileProvider(webRoot) });
         app.MapControllers();
+        app.MapControllerRoute("preview-links", "{controller}/{action}/{id?}");
         app.MapHub<PreviewLobbyHub>("/hubs/lobby");
         app.MapHub<PreviewGameHub>("/hubs/game");
         await app.RunAsync();
@@ -61,6 +62,26 @@ public sealed class PreviewControllersOnly : IApplicationFeatureProvider<Control
 
 public sealed class PreviewController : Controller
 {
+    [HttpGet("/Admin/Cards")]
+    public IActionResult AdminCards(int? cardSetId, string? rarity, int page = 1)
+    {
+        var items = Enumerable.Range(1, 30).Select(id => new web_tcg.Models.Admin.AdminCardListItemViewModel
+        {
+            CardId = id, Name = "Carte de démonstration " + id, CollectionNumber = id,
+            CardSetId = id <= 18 ? 1 : 2, CardSetCode = id <= 18 ? "P01" : "P02", CardSetName = "Extension de démonstration",
+            Rarity = id % 2 == 0 ? CardRarity.Rare : CardRarity.UltraRare, Type = CardType.Character,
+            VariantId = id % 3 == 0 ? id : null, VariantNumber = id % 3 == 0 ? 1 : null,
+            Card = Preview.Card(id)
+        }).Where(x => !cardSetId.HasValue || x.CardSetId == cardSetId)
+          .Where(x => string.IsNullOrEmpty(rarity) || rarity == ((int?)x.Rarity)?.ToString()).ToList();
+        page = Math.Clamp(page, 1, Math.Max(1, (int)Math.Ceiling(items.Count / 12d)));
+        return View("~/Views/Admin/Cards/Index.cshtml", new web_tcg.Models.Admin.AdminCardIndexViewModel
+        {
+            Items = items.Skip((page - 1) * 12).Take(12).ToList(), Total = items.Count,
+            BaseCardCount = items.Count(x => !x.IsVariant), Page = page, CardSetId = cardSetId, Rarity = rarity ?? "",
+            CardSets = new() { new("P01 — Démonstration", "1"), new("P02 — Démonstration", "2") }
+        });
+    }
     [HttpGet("/__preview/error")] public IActionResult ServerError() => throw new InvalidOperationException("Erreur de contrôle interne, à ne pas afficher.");
     private static HomeViewModel Home => new()
     {

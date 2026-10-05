@@ -40,7 +40,7 @@ namespace web_tcg.Controllers
         /// tout en partageant les données gameplay de la carte principale.
         /// </summary>
         [HttpGet("Cards")]
-        public async Task<IActionResult> Cards(int? cardSetId)
+        public async Task<IActionResult> Cards(int? cardSetId, string? rarity = null, int page = 1)
         {
             var query = _context.Cards
                 .AsNoTracking()
@@ -60,10 +60,28 @@ namespace web_tcg.Controllers
                     x.CardSetId == cardSetId.Value);
             }
 
+            if (rarity == "none")
+                query = query.Where(x => x.Rarity == null);
+            else if (Enum.TryParse<CardRarity>(rarity, out var selectedRarity) && Enum.IsDefined(selectedRarity))
+            {
+                rarity = ((int)selectedRarity).ToString();
+                query = query.Where(x => x.Rarity == selectedRarity);
+            }
+            else rarity = string.Empty;
+
+            const int pageSize = 12;
+            var total = await query.CountAsync();
+            var baseCardCount = await query.CountAsync(x => x.BaseCardId == null);
+            var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)pageSize));
+            page = Math.Clamp(page, 1, totalPages);
+
             var cards = await query
                 .OrderBy(x => x.CardSet.Code)
                 .ThenBy(x => x.CollectionNumber)
                 .ThenBy(x => x.VariantNumber ?? 0)
+                .ThenBy(x => x.Id)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .ToListAsync();
 
             var gameplayCardIds = cards
@@ -204,11 +222,15 @@ namespace web_tcg.Controllers
                 };
             }).ToList();
 
-            ViewBag.CardSetId = cardSetId;
-
             return View(
                 "~/Views/Admin/Cards/Index.cshtml",
-                items);
+                new AdminCardIndexViewModel
+                {
+                    Items = items, CardSetId = cardSetId, Rarity = rarity,
+                    Page = page, PageSize = pageSize, Total = total, BaseCardCount = baseCardCount,
+                    CardSets = await _context.CardSets.AsNoTracking().OrderBy(x => x.Code).ThenBy(x => x.Id)
+                        .Select(x => new SelectListItem { Value = x.Id.ToString(), Text = x.Code + " — " + x.Name }).ToListAsync()
+                });
         }
 
         /// <summary>

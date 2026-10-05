@@ -31,7 +31,7 @@ namespace web_tcg.Models.Admin
         [Range(1, 999)]
         public int CollectionNumber { get; set; }
 
-        [Range(0, 99)]
+        [Range(0, 500, ErrorMessage = "Le coût de pose doit être compris entre 0 et 500.")]
         public int UsageCost { get; set; }
 
         public int? HealthPoints { get; set; }
