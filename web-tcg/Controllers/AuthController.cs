@@ -312,7 +312,8 @@ namespace web_tcg.Controllers
                 {
                     UserName = request.Username,
                     Email = request.Email,
-                    EmailConfirmed = false
+                    EmailConfirmed = false,
+                    Balance = 5000
                 };
 
                 var result = await _userManager.CreateAsync(

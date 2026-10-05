@@ -172,7 +172,7 @@
 
             </a>
 
-            <a asp-controller="Market" asp-action="Index"
+            <a href="@Url.Action("Index", "Market")"
                class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Market" ? "active" : "")"
                title="Marché">
                 <i data-lucide="gavel"></i>
