@@ -134,6 +134,7 @@ builder.Services.AddScoped<IGameEffectHandler, GainMoneyEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, LoseMoneyEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, StealMoneyEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, BlockEffectHandler>();
+builder.Services.AddScoped<IGameEffectHandler, PrisonEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, ShieldEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, StealthEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, ExtraAttackEffectHandler>();

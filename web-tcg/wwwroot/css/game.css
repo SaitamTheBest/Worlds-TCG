@@ -49,6 +49,9 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-card-states { position: absolute; z-index: 65; bottom: 3px; left: 3px; right: 3px; display: flex; flex-wrap: wrap; gap: 2px; pointer-events: none; }
 .game-card-states span { padding: 2px 4px; border: 1px solid #f4c43044; border-radius: 4px; background: #101723ee; color: #ffdc75; font-size: .52rem; line-height: 1.2; }
 .game-card.is-exhausted .game-card-visual { opacity: .65; }
+.game-card.is-imprisoned { box-shadow: 0 0 0 3px #c084fc, 0 0 18px #9333ea55; }
+.game-card.is-imprisoned .game-card-visual { opacity: .65; }
+.game-card.is-imprisoned .game-card-states span:first-child { background: #3b1559; color: #f3e8ff; border: 2px solid #c084fc; }
 .game-card.is-selected { outline: 2px solid #f4c430; }
 .game-card.is-blocking { box-shadow: 0 0 0 2px #60a5fa; }
 .game-card.has-shield { outline: 2px solid #a5f3fc; }

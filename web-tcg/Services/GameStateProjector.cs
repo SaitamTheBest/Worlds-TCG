@@ -154,6 +154,7 @@ namespace web_tcg.Services
 
                 IsExhausted =
                     card.IsExhausted,
+                IsImprisoned = card.IsImprisoned,
 
                 IsBlocking =
                     card.IsBlocking,

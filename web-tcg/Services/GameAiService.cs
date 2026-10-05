@@ -206,13 +206,13 @@ namespace web_tcg.Services
         private static IEnumerable<GameCardState> GetReadyUnits(
             GamePlayerState player)
         {
-            if (!player.Leader.IsExhausted)
+            if (!player.Leader.IsExhausted && !player.Leader.IsImprisoned)
                 yield return player.Leader;
 
             foreach (var character in player.Characters)
             {
                 if (character != null &&
-                    !character.IsExhausted)
+                    !character.IsExhausted && !character.IsImprisoned)
                 {
                     yield return character;
                 }

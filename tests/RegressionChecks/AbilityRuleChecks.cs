@@ -29,7 +29,7 @@ public static class AbilityRuleChecks
         check(CardAbilityEditor.Validate(CardType.Leader,forbidden).Any() && CardAbilityEditor.Validate(CardType.Location,forbidden).Any(),
             "éditeur : refus du blocage du Leader et des états donnés par un lieu");
         var effects = new GameEffectEngine(new IGameEffectHandler[] { new DamageEffectHandler(), new HealEffectHandler(), new ShieldEffectHandler(), new StealthEffectHandler(),
-            new DamageMultiplierEffectHandler(), new ExtraAttackEffectHandler(), new BlockEffectHandler(), new ReviveEffectHandler(), new GainMoneyEffectHandler(), new DestroyLocationEffectHandler() }, new GameTargetResolver());
+            new DamageMultiplierEffectHandler(), new ExtraAttackEffectHandler(), new BlockEffectHandler(), new PrisonEffectHandler(), new ReviveEffectHandler(), new GainMoneyEffectHandler(), new DestroyLocationEffectHandler() }, new GameTargetResolver());
         var engine = new GameEngine(effects,new GameConditionEvaluator());
         GameCardState Unit(CardType type,string owner) => new() { Type = type, OwnerUserId = owner, ControllerUserId = owner, CurrentHealth = 100, MaxHealth = 100,
             Zone = type == CardType.Leader ? GameCardZone.Leader : GameCardZone.CharacterBoard };
@@ -102,5 +102,54 @@ public static class AbilityRuleChecks
             "moteur : décision refusée si ses conditions de pose ne sont pas remplies");
         state.PlayerOne.Money = 10; await engine.PlayCardAsync(state,"a",conditional.InstanceId,null);
         check(state.PlayerOne.Money == 5, "moteur : conditions de pose évaluées avant le paiement, action exécutée ensuite");
+
+        var prisonInput = new CardAbilityInputModel { Type = AbilityType.Skill, Effects = new() {
+            new() { Type = GameEffectType.Prison, Trigger = GameEffectTrigger.OnSkill, Target = GameTargetType.EnemyCharacter, DurationTurns = 1 } } };
+        check(!CardAbilityEditor.Validate(CardType.Character, prisonInput).Any(), "éditeur : action Prison ciblée valide pour un tour");
+        prisonInput.Effects[0].DurationTurns = 2;
+        check(CardAbilityEditor.Validate(CardType.Character, prisonInput).Any(), "éditeur : Prison ne peut pas durer plusieurs tours");
+        prisonInput.Type = AbilityType.Effect; prisonInput.Effects[0].Trigger = GameEffectTrigger.Passive; prisonInput.Effects[0].DurationTurns = 0;
+        check(CardAbilityEditor.Validate(CardType.Character, prisonInput).Any() && CardAbilityEditor.Validate(CardType.Location, prisonInput).Any(),
+            "éditeur : Prison passive et état donné par un lieu interdits");
+
+        var prisonState = new GameState { Status = GameMatchStatus.InProgress, ActivePlayerId = "a", TurnNumber = 6,
+            PlayerOne = new() { UserId = "a", TurnsPlayed = 3, Money = 50, Leader = Unit(CardType.Leader,"a") },
+            PlayerTwo = new() { UserId = "b", TurnsPlayed = 3, Money = 50, Leader = Unit(CardType.Leader,"b") } };
+        var prisoner = Unit(CardType.Character,"b"); prisoner.Name = "Prisonnier"; prisonState.PlayerTwo.Characters[0] = prisoner;
+        prisoner.Abilities.Add(new() { Id = 10, Type = AbilityType.Skill, UsageCost = 5, Effects = new() {
+            new() { Type = GameEffectType.Damage, Trigger = GameEffectTrigger.OnSkill, Target = GameTargetType.EnemyLeader, Value = 10 } } });
+        prisoner.Abilities.Add(new() { Id = 11, Type = AbilityType.Trait, UsageCost = 5, Effects = new() {
+            new() { Type = GameEffectType.Heal, Trigger = GameEffectTrigger.OnTalent, Target = GameTargetType.Self, Value = 10 } } });
+        prisonState.PlayerOne.Leader.Abilities.Add(new() { Id = 12, Type = AbilityType.Skill, UsageCost = 5, Effects = new() {
+            new() { Type = GameEffectType.Prison, Trigger = GameEffectTrigger.OnSkill, Target = GameTargetType.EnemyCharacter, DurationTurns = 99 } } });
+        await engine.UseAbilityAsync(prisonState,"a",prisonState.PlayerOne.Leader.InstanceId,12,prisoner.InstanceId);
+        var restored = System.Text.Json.JsonSerializer.Deserialize<GameState>(System.Text.Json.JsonSerializer.Serialize(prisonState))!;
+        check(prisoner.IsImprisoned && restored.PlayerTwo.Characters[0]!.IsImprisoned && prisonState.PlayerOne.Money == 45,
+            "moteur : compétence Prison applique et sauvegarde l'état, durée runtime limitée à un tour");
+        await engine.EndTurnAsync(prisonState,"a");
+        var prisonMoney = prisonState.PlayerTwo.Money;
+        check(prisoner.IsImprisoned && !prisoner.IsExhausted &&
+            await Rejected(()=>engine.UseAbilityAsync(prisonState,"b",prisoner.InstanceId,10,prisonState.PlayerOne.Leader.InstanceId)) &&
+            await Rejected(()=>engine.UseAbilityAsync(prisonState,"b",prisoner.InstanceId,11,null)) &&
+            await Rejected(()=>engine.BlockAsync(prisonState,"b",prisoner.InstanceId)) && prisonState.PlayerTwo.Money == prisonMoney,
+            "moteur : Prison bloque compétence, talent et blocage au prochain tour sans dépenser d'énergie");
+        check(new GameStateProjector().Project(prisonState,"b").Me.Characters[0]!.IsImprisoned,
+            "Play : l'état Prison est transmis au propriétaire");
+        var releaseLogs = await engine.EndTurnAsync(prisonState,"b");
+        check(!prisoner.IsImprisoned && releaseLogs.Any(l=>l.Contains("sort de prison")), "moteur : libération dès la fin du prochain tour du propriétaire");
+        await engine.EndTurnAsync(prisonState,"a");
+        await engine.UseAbilityAsync(prisonState,"b",prisoner.InstanceId,10,prisonState.PlayerOne.Leader.InstanceId);
+        check(prisonState.PlayerOne.Leader.CurrentHealth == 90, "moteur : personnage libéré peut attaquer au tour suivant");
+
+        var jail = new PrisonEffectHandler();
+        var jailContext = new GameEffectContext { State = prisonState, Player = prisonState.PlayerTwo, Source = prisoner, Target = prisonState.PlayerTwo.Leader };
+        var jailDefinition = new GameEffectDefinition { Type = GameEffectType.Prison, Trigger = GameEffectTrigger.OnTalent, DurationTurns = 1 };
+        await jail.ExecuteAsync(jailContext, jailDefinition); await jail.ExecuteAsync(jailContext, jailDefinition);
+        check(prisonState.PlayerTwo.Leader.IsImprisoned && prisonState.PlayerTwo.Leader.AppliedEffects.Count(e=>e.Type == GameEffectType.Prison) == 1,
+            "moteur : Leader ciblable et répétition de Prison sans cumul de durée");
+        await engine.EndTurnAsync(prisonState,"b");
+        check(prisonState.PlayerTwo.Leader.IsImprisoned, "moteur : Prison appliquée pendant son propre tour ne disparaît pas à la fin de ce tour");
+        await engine.EndTurnAsync(prisonState,"a"); await engine.EndTurnAsync(prisonState,"b");
+        check(!prisonState.PlayerTwo.Leader.IsImprisoned, "moteur : Prison sur son propre tour dure jusqu'à la fin du prochain tour");
     }
 }

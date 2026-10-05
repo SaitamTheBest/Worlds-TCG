@@ -4,7 +4,7 @@
     if (!container) return;
     const initial = JSON.parse(document.getElementById("abilityRulesData").textContent);
     const geography = JSON.parse(document.getElementById("abilityGeographyData").textContent);
-    const types = [[1,"Dégâts"],[2,"Soins"],[3,"Piocher"],[10,"Gagner de l'énergie"],[11,"Perdre de l'énergie"],[12,"Voler de l'énergie"],[20,"Provocation / Blocage"],[21,"Bouclier"],[22,"Camouflage"],[30,"Coup d'état : attaques supplémentaires"],[31,"Multiplier les dégâts"],[32,"Bonus de PV maximum (+PV)"],[33,"Bonus de dégâts des compétences (+attaque)"],[40,"Second souffle : revivre à 50 %"],[50,"Défausser"],[60,"Détruire le lieu adverse"]];
+    const types = [[1,"Dégâts"],[2,"Soins"],[3,"Piocher"],[10,"Gagner de l'énergie"],[11,"Perdre de l'énergie"],[12,"Voler de l'énergie"],[20,"Provocation / Blocage"],[21,"Bouclier"],[22,"Camouflage"],[23,"Prison : aucune action pendant le prochain tour"],[30,"Coup d'état : attaques supplémentaires"],[31,"Multiplier les dégâts"],[32,"Bonus de PV maximum (+PV)"],[33,"Bonus de dégâts des compétences (+attaque)"],[40,"Second souffle : revivre à 50 %"],[50,"Défausser"],[60,"Détruire le lieu adverse"]];
     const triggers = [[1,"Quand la carte est jouée"],[2,"À l'utilisation de la compétence"],[3,"À l'utilisation du talent"],[4,"Passif (états et bonus liés à la présence sur le terrain)"],[5,"À la mort — Dernier souffle"],[6,"Au début de votre tour"],[7,"À la fin de votre tour"],[8,"Quand la carte subit des dégâts"]];
     const targets = [[1,"Cette carte"],[10,"Un personnage allié"],[11,"Votre Leader"],[12,"Un personnage allié ou votre Leader"],[20,"Un personnage adverse"],[21,"Le Leader adverse"],[22,"Un personnage adverse ou son Leader"],[31,"Le lieu adverse"],[40,"Votre joueur"],[41,"Le joueur adverse"],[50,"Tous vos personnages"],[51,"Tous les personnages adverses"],[52,"Tous les personnages des deux joueurs"]];
     const conditions = [[1,"PV de cette carte inférieurs à"],[2,"PV de cette carte supérieurs à"],[10,"PV de la cible inférieurs à"],[11,"PV de la cible supérieurs à"],[20,"Votre énergie au moins égale à"],[30,"L'adversaire possède un personnage"],[31,"L'adversaire possède un lieu"],[40,"Nombre de personnages alliés au moins égal à"],[41,"Nombre de personnages adverses au moins égal à"],[50,"Cette carte provient des régions choisies"],[51,"Cette carte provient des pays choisis"],[52,"La cible provient des régions choisies"],[53,"La cible provient des pays choisis"],[60,"Personnages alliés des régions/pays choisis : au moins"],[61,"Personnages adverses des régions/pays choisis : au moins"],[62,"Personnages des deux joueurs des régions/pays choisis : au moins"]];
@@ -62,23 +62,26 @@
         row.appendChild(count);
         row.appendChild(button("Retirer l'action",()=>row.remove())); list.appendChild(row);
         const update = () => {
-            const t = Number(effect.value), player = [3,10,11,12,50].includes(t), durable = [20,21,22,30,31,32,33].includes(t);
+            const t = Number(effect.value), player = [3,10,11,12,50].includes(t), durable = [20,21,22,23,30,31,32,33].includes(t);
             filters.hidden = player || t === 60;
             scaleField.hidden = ![32,33].includes(t);
             count.hidden = ![32,33].includes(t) || !scale.checked;
             amount.step = t === 31 ? "0.1" : "1";
             valueField.querySelector("span").textContent = ({1:"Dégâts infligés",2:"PV restaurés",3:"Cartes piochées",10:"Énergie gagnée",11:"Énergie perdue",12:"Énergie volée",30:"Attaques supplémentaires",31:"Multiplicateur (2 = dégâts doublés)",32:"PV maximum ajoutés",33:"Dégâts ajoutés à chaque compétence",50:"Cartes défaussées"})[t] || "Valeur (1 pour cet état)";
-            duration.readOnly = !durable; duration.parentElement.hidden = !durable;
+            duration.readOnly = !durable || t === 23; duration.parentElement.hidden = !durable;
+            duration.parentElement.querySelector("span").textContent = t === 23 ? "Prison : un seul prochain tour" : "Prochains tours du propriétaire (0 = permanent)";
+            if (t === 23) { duration.value = 1; amount.value = 1; }
+            valueField.hidden = t === 23;
             for (const option of target.options) {
                 const v = Number(option.value);
                 option.disabled = player ? (t === 12 ? v !== 41 : ![40,41].includes(v)) : t === 60 ? v !== 31 : t === 40 ? v !== 1 : [31,40,41].includes(v) || t === 20 && ([11,12,21,22].includes(v) || cardType() === 1 && v === 1);
             }
             for (const option of trigger.options) {
                 const v = Number(option.value), a = abilityType(item);
-                option.disabled = cardType() === 3 ? v !== 1 : a === 1 ? v !== 2 : a === 2 ? v !== 3 : [2,3].includes(v);
+                option.disabled = (t === 23 && v === 4) || (cardType() === 3 ? v !== 1 : a === 1 ? v !== 2 : a === 2 ? v !== 3 : [2,3].includes(v));
             }
         };
-        effect.addEventListener("change",()=> { update(); duration.value = 0; if (target.selectedOptions[0]?.disabled) target.value = Array.from(target.options).find(o=>!o.disabled)?.value; });
+        effect.addEventListener("change",()=> { duration.value = 0; update(); if (target.selectedOptions[0]?.disabled) target.value = Array.from(target.options).find(o=>!o.disabled)?.value; });
         scale.addEventListener("change",update);
         item.addEventListener("ability-type-change",()=>{ trigger.value = defaultTrigger(item); update(); });
         update();

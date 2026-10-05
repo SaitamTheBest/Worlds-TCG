@@ -3,6 +3,32 @@ using web_tcg.Game.Runtime;
 
 namespace web_tcg.Game.Effects
 {
+    public sealed class PrisonEffectHandler : IGameEffectHandler
+    {
+        public GameEffectType EffectType => GameEffectType.Prison;
+
+        public Task ExecuteAsync(GameEffectContext context, GameEffectDefinition effect,
+            CancellationToken cancellationToken = default)
+        {
+            var target = context.Target ?? throw new InvalidOperationException("Une cible est nécessaire.");
+            if (target.Type is not (CardType.Character or CardType.Leader))
+                throw new web_tcg.Game.Engine.GameRuleException("Prison cible un personnage ou un Leader.");
+            if (effect.Trigger == GameEffectTrigger.Passive || context.Source?.Type == CardType.Location)
+                throw new web_tcg.Game.Engine.GameRuleException("Prison ne peut pas être un effet passif ou un effet de lieu.");
+
+            // Fixed duration, independent of submitted values. Reapplying refreshes, never stacks turns.
+            target.AppliedEffects.RemoveAll(e => e.Type == GameEffectType.Prison);
+            target.AppliedEffects.Add(new GameAppliedEffect
+            {
+                Type = GameEffectType.Prison,
+                Value = 1,
+                ExpiresOnOwnerTurn = context.State.GetPlayer(target.OwnerUserId).TurnsPlayed + 2
+            });
+            context.Logs.Add($"{target.Name} est en prison : aucune action jusqu'à la fin de son prochain tour.");
+            return Task.CompletedTask;
+        }
+    }
+
     public sealed class ShieldEffectHandler :
         IGameEffectHandler
     {

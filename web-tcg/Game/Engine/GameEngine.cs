@@ -487,6 +487,13 @@ namespace web_tcg.Game.Engine
             ClearExpiredBlocks(
                 state);
 
+            foreach (var card in GetUnits(player))
+            {
+                if (card.AppliedEffects.RemoveAll(e => e.Type == GameEffectType.Prison &&
+                    e.ExpiresOnOwnerTurn <= player.TurnsPlayed + 1) > 0)
+                    logs.Add($"{card.Name} sort de prison.");
+            }
+
             var opponent =
                 state.GetOpponent(userId);
 
@@ -976,6 +983,8 @@ namespace web_tcg.Game.Engine
         private static void EnsureReady(
             GameCardState source)
         {
+            if (source.IsImprisoned)
+                throw new GameRuleException($"{source.Name} est en prison : aucune action possible jusqu'à la fin de son prochain tour.");
             if (source.IsExhausted)
             {
                 throw new GameRuleException(

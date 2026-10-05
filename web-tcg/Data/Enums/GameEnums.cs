@@ -38,6 +38,7 @@
         Block = 20,
         Shield = 21,
         Stealth = 22,
+        Prison = 23,
 
         ExtraAttack = 30,
         DamageMultiplier = 31,

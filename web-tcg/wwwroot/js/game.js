@@ -82,6 +82,7 @@
 
     function cardStates(card) {
         const states = [];
+        if (card.isImprisoned) states.push("Prison · 1 tour");
         if (card.isExhausted) states.push("Épuisé");
         if (card.isBlocking) states.push("En blocage");
         if (card.hasShield) states.push("Bouclier");
@@ -369,7 +370,7 @@
         phase.textContent = gameFinished ? "Partie terminée" : `Tour ${state.turnNumber} · ${state.isMyTurn ? "À vous de jouer" : "Tour adverse"}`;
         el.turnLabel.textContent = `TOUR ${state.turnNumber}`;
         const units = [state.me.leader, ...state.me.characters].filter(Boolean);
-        const count = units.filter(card => !card.isExhausted && (card.abilities || []).some(a => a.type !== 3 && !a.cooldown && !a.unavailableReason && a.usageCost <= state.me.money && (a.type !== 1 || state.me.turnsPlayed > 1))).length;
+        const count = units.filter(card => !card.isExhausted && !card.isImprisoned && (card.abilities || []).some(a => a.type !== 3 && !a.cooldown && !a.unavailableReason && a.usageCost <= state.me.money && (a.type !== 1 || state.me.turnsPlayed > 1))).length;
         ready.textContent = `${count} carte(s) avec une capacité disponible`;
         hand.textContent = `Main adverse : ${state.opponent.handCount} carte(s)`;
         advice.textContent = gameFinished ? "Consultez le résultat ou revoyez les dernières actions." : !state.isMyTurn
@@ -712,7 +713,7 @@
         if (!card) { el.dialog.close(); return; }
         const signature = JSON.stringify({ card, own: !!own, turn: latestState.isMyTurn, money: latestState.me.money,
             turnsPlayed: latestState.me.turnsPlayed, actionPending, gameFinished,
-            targets: [latestState.me.leader, ...latestState.me.characters, latestState.opponent.leader, ...latestState.opponent.characters].filter(Boolean).map(c => [c.instanceId, c.isBlocking, c.isStealthed]) });
+            targets: [latestState.me.leader, ...latestState.me.characters, latestState.opponent.leader, ...latestState.opponent.characters].filter(Boolean).map(c => [c.instanceId, c.isBlocking, c.isStealthed, c.isImprisoned]) });
         if (signature === dialogSignature) return;
         dialogSignature = signature;
         el.dialogTitle.textContent = card.name;
@@ -745,7 +746,7 @@
         }
         if (own && unit) {
             const phase = latestState.me.turnsPlayed <= 1 ? "Disponible à partir de votre deuxième tour." : "";
-            if (card.type !== 1) button("Passer en blocage", () => executeCardAction("Block", card.instanceId), turnReason || phase || (card.isExhausted ? "Cette carte est épuisée." : ""));
+            if (card.type !== 1) button("Passer en blocage", () => executeCardAction("Block", card.instanceId), turnReason || phase || (card.isImprisoned ? "Cette carte est en prison jusqu’à la fin de son prochain tour." : card.isExhausted ? "Cette carte est épuisée." : ""));
         }
         for (const ability of card.abilities || []) {
             const detail = document.createElement("div"); detail.className = "game-dialog-ability";
@@ -755,7 +756,7 @@
             if (!own || !unit || ability.type === 3) continue;
             const reason = turnReason || (ability.usageCost > latestState.me.money ? "Énergie insuffisante." : "") ||
                 (ability.type === 1 && latestState.me.turnsPlayed <= 1 ? "Disponible à partir de votre deuxième tour." : "") ||
-                (card.isExhausted ? "Cette carte est épuisée." : "") ||
+                (card.isImprisoned ? "Cette carte est en prison jusqu’à la fin de son prochain tour." : card.isExhausted ? "Cette carte est épuisée." : "") ||
                 (ability.cooldown > 0 ? `Disponible dans ${ability.cooldown} tour(s).` : "") || ability.unavailableReason || "";
             const types = (ability.targetTypes || []).filter(type => [10, 12, 20, 21, 22].includes(type));
             if (!types.length) button(`Utiliser ${ability.name}`, () => executeCardAction("UseAbility", card.instanceId, ability.id, null), reason);
@@ -802,7 +803,7 @@
         if (targeting) {
             const source = visibleCard(targeting.sourceId);
             const ability = source?.abilities?.find(a => a.id === targeting.abilityId);
-            if (!source || !latestState.isMyTurn || gameFinished || (targeting.abilityId != null && (!ability || source.isExhausted || ability.cooldown > 0 || ability.unavailableReason))) {
+            if (!source || !latestState.isMyTurn || gameFinished || (targeting.abilityId != null && (!ability || source.isImprisoned || source.isExhausted || ability.cooldown > 0 || ability.unavailableReason))) {
                 cancelTargeting(); return;
             }
             targeting.ids = targetsFor(source,ability).map(t => t.card.instanceId);

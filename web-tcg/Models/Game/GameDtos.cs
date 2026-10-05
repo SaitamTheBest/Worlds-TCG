@@ -89,6 +89,7 @@ namespace web_tcg.Models.Game
         public int DamageBonus { get; init; }
 
         public bool IsExhausted { get; init; }
+        public bool IsImprisoned { get; init; }
         public bool IsBlocking { get; init; }
         public bool HasShield { get; init; }
         public bool IsStealthed { get; init; }

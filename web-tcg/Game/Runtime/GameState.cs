@@ -133,6 +133,7 @@ namespace web_tcg.Game.Runtime
         public int? BoardSlot { get; set; }
 
         public bool IsExhausted { get; set; }
+        public bool IsImprisoned => AppliedEffects.Any(e => e.Type == GameEffectType.Prison);
         public int ReadyOnOwnerTurn { get; set; }
 
         public bool IsBlocking { get; set; }

@@ -25,7 +25,7 @@ public static class CardAbilityEditor
             ability.Effects.Add(new CardAbilityEffect
             {
                 Type = effect.Type, Trigger = effect.Trigger, Target = effect.Target, Value = effect.Value,
-                DurationTurns = effect.DurationTurns, ParametersJson = EffectParameters(effect), DisplayOrder = index
+                DurationTurns = effect.Type == GameEffectType.Prison ? 1 : effect.DurationTurns, ParametersJson = EffectParameters(effect), DisplayOrder = index
             });
         ability.Conditions.Clear();
         foreach (var (condition, index) in input.Conditions.Select((c, i) => (c, i)))
@@ -72,7 +72,7 @@ public static class CardAbilityEditor
                 yield return "Le déclenchement doit correspondre au type de capacité.";
             if (cardType == CardType.PoliticalDecision && e.Trigger != GameEffectTrigger.OnPlay)
                 yield return "Une décision déclenche ses actions quand elle est jouée.";
-            if (cardType == CardType.Location && e.Type is GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.Revive)
+            if (cardType == CardType.Location && e.Type is GameEffectType.Prison or GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.Revive)
                 yield return "Un lieu ne peut pas donner d'état aux personnages.";
             if (cardType == CardType.Location && e.Type == GameEffectType.Damage)
                 yield return "Un lieu produit des bonus et malus, pas d'attaque directe.";
@@ -103,8 +103,10 @@ public static class CardAbilityEditor
                 yield return "Une action automatique doit cibler cette carte, un Leader, un joueur ou un groupe ; personne ne choisit de cible au déclenchement.";
             if (cardType == CardType.Leader && e.Trigger is GameEffectTrigger.Passive or GameEffectTrigger.OnPlay && e.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyCharacterOrLeader)
                 yield return "Un effet initial du Leader doit utiliser une cible automatique (cette carte, Leader, joueur ou groupe).";
-            if (e.DurationTurns > 0 && e.Type is not (GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.DamageMultiplier or GameEffectType.HealthBonus or GameEffectType.DamageBonus))
+            if (e.DurationTurns > 0 && e.Type is not (GameEffectType.Prison or GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.DamageMultiplier or GameEffectType.HealthBonus or GameEffectType.DamageBonus))
                 yield return "La durée concerne les états et bonus d'attaque ; les dégâts, soins et ressources sont instantanés.";
+            if (e.Type == GameEffectType.Prison && (e.Trigger == GameEffectTrigger.Passive || e.DurationTurns != 1))
+                yield return "Prison dure exactement un prochain tour et ne peut pas être un effet passif.";
             if (e.Trigger == GameEffectTrigger.Passive && e.DurationTurns != 0)
                 yield return "Un effet passif reste actif tant que sa source est sur le terrain : mettez sa durée à 0.";
             bool validJson;
