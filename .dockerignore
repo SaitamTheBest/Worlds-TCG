@@ -8,7 +8,8 @@
 **/.aspnet
 **/.codex
 **/.agents
-**/data
+# Ne pas exclure le code source web-tcg/Data.
+/data
 **/backups
 tests
 .github

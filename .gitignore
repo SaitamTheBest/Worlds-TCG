@@ -13,7 +13,8 @@
 **/wwwroot/uploads/
 node_modules/
 tests/artifacts/
-data/
+# Uniquement les données persistantes à la racine, pas web-tcg/Data.
+/data/
 backups/
 .aspnet/
 .codex/
