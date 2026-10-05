@@ -68,11 +68,11 @@ namespace web_tcg.Controllers
                 .Where(x => x.CardSetId == id && x.IsActive).ToListAsync();
             var presentation = (await new CardPresentationService(_context).GetAsync(cards.Select(x => x.Id)))
                 .ToDictionary(x => x.Id);
-            var rates = _boosterGenerator.GetDropRates(5);
+            var rates = _boosterGenerator.GetDropRates(5, cards.Any(x => x.Type == CardType.Secret && x.CollectionNumber == 0));
             var model = new BoosterDropRatesViewModel
             {
                 CardSetName = cardSet.Name,
-                Groups = rates.OrderByDescending(x => x.Key).Select(rate => new BoosterDropGroup
+                Groups = rates.Where(x => x.Key != BoosterRarity.Secret || x.Value > 0).OrderByDescending(x => x.Key).Select(rate => new BoosterDropGroup
                 {
                     Rarity = rate.Key,
                     Rate = rate.Value,
@@ -134,7 +134,8 @@ namespace web_tcg.Controllers
                 user.Balance -= boosterPrice;
 
                 var boosterResult =
-                    _boosterGenerator.Generate(5);
+                    _boosterGenerator.Generate(5, await _context.Cards.AnyAsync(x => x.CardSetId == id
+                        && x.IsActive && x.Type == CardType.Secret && x.CollectionNumber == 0));
 
                 var opening = new BoosterOpening
                 {

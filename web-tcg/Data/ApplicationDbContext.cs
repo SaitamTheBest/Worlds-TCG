@@ -78,6 +78,12 @@ namespace web_tcg.Data
                 .HasForeignKey(c => c.BaseCardId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<Card>().HasIndex(c => c.CardSetId)
+                .IsUnique().HasFilter("\"CollectionNumber\" = 0")
+                .HasDatabaseName("IX_Cards_SecretPerSet");
+            modelBuilder.Entity<Card>().ToTable(table => table.HasCheckConstraint("CK_Cards_Secret",
+                "(\"Type\" = 5 AND \"CollectionNumber\" = 0 AND \"Rarity\" = 5 AND \"Rarity\" IS NOT NULL AND \"UsageCost\" = 0 AND \"BaseCardId\" IS NULL AND \"VariantNumber\" IS NULL) OR (\"Type\" <> 5 AND \"CollectionNumber\" > 0 AND (\"Rarity\" IS NULL OR \"Rarity\" <> 5))"));
+
             modelBuilder.Entity<Card>()
                 .HasIndex(c => new
                 {

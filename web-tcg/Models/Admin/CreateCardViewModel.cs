@@ -28,7 +28,7 @@ namespace web_tcg.Models.Admin
         [Required]
         public int CardSetId { get; set; }
 
-        [Range(1, 999)]
+        [Range(0, 999)]
         public int CollectionNumber { get; set; }
 
         [Range(0, 500, ErrorMessage = "Le coût de pose doit être compris entre 0 et 500.")]

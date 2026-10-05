@@ -6,5 +6,6 @@
     SuperRare = 4,
     UltraRare = 5,
     AlternateArt = 6,
-    FullArt = 7
+    FullArt = 7,
+    Secret = 8
 }

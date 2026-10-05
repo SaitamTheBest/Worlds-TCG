@@ -351,6 +351,11 @@ namespace web_tcg.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CardSetId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Cards_SecretPerSet")
+                        .HasFilter("\"CollectionNumber\" = 0");
+
                     b.HasIndex("CountryId");
 
                     b.HasIndex("RegionId");
@@ -362,7 +367,10 @@ namespace web_tcg.Migrations
                         .IsUnique()
                         .HasFilter("\"BaseCardId\" IS NULL");
 
-                    b.ToTable("Cards");
+                    b.ToTable("Cards", t =>
+                        {
+                            t.HasCheckConstraint("CK_Cards_Secret", "(\"Type\" = 5 AND \"CollectionNumber\" = 0 AND \"Rarity\" = 5 AND \"Rarity\" IS NOT NULL AND \"UsageCost\" = 0 AND \"BaseCardId\" IS NULL AND \"VariantNumber\" IS NULL) OR (\"Type\" <> 5 AND \"CollectionNumber\" > 0 AND (\"Rarity\" IS NULL OR \"Rarity\" <> 5))");
+                        });
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.CardAbility", b =>

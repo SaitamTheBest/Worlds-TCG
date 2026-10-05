@@ -70,6 +70,8 @@ namespace web_tcg.Services
 
             foreach (var deckCard in deck.Cards)
             {
+                if (SecretCardRules.IsNonPlayable(deckCard.Card))
+                    throw new GameRuleException("Une carte SECRET (numéro 0) ne peut pas faire partie d'un deck.");
                 var gameplayId =
                     deckCard.Card.BaseCardId ??
                     deckCard.Card.Id;
@@ -89,6 +91,8 @@ namespace web_tcg.Services
                     throw new GameRuleException(
                         "Le deck principal ne peut pas contenir de Leader.");
                 }
+                if (SecretCardRules.IsNonPlayable(gameplayCard))
+                    throw new GameRuleException("Une carte SECRET (numéro 0) ne peut pas faire partie d'un deck.");
             }
 
             /*

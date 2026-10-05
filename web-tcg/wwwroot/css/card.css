@@ -1421,3 +1421,51 @@
 .tcg-card.tcg-card-with-abilities:is(.tcg-card-altart,.tcg-card-fullart) .tcg-card-ability-description {
     text-shadow: 0 1px 2px #000,0 0 4px #000b;
 }
+
+/* SECRET Gold : illustration gravée et feuille holographique. */
+.tcg-card.tcg-card-secret {
+    border: 3px solid #ddb13d; background: #b88721;
+    box-shadow: 0 0 0 1px #fff0a5,0 18px 40px #0007,0 0 24px #e6b63744;
+}
+.tcg-secret-filter { position: absolute; width: 0; height: 0; pointer-events: none; }
+.tcg-card-secret .tcg-card-art { inset: 0; z-index: 1; }
+.tcg-card-secret .tcg-card-art img { transform: none; }
+.tcg-secret-gold-overlay {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background: linear-gradient(180deg,#ffdb7133,transparent 28%,transparent 68%,#201300c9 100%);
+    box-shadow: inset 0 0 0 .6cqw #ffe9a080,inset 0 0 5cqw #ffd04c44;
+}
+.tcg-secret-foil {
+    position: absolute; inset: 0; z-index: 3; pointer-events: none;
+    background-image:
+        repeating-linear-gradient(112deg,transparent 0 13%,#ffdb6238 17%,#79e8bd40 23%,#91a7ff38 28%,#f5a2d136 34%,transparent 40% 53%),
+        repeating-linear-gradient(22deg,#fff6cf40 0 .45px,transparent .45px 2px),
+        radial-gradient(ellipse at 22% 38%,#fff5b850,transparent 55%),
+        radial-gradient(#fff7c978 .6px,transparent 1px);
+    background-size: 240% 240%,5px 5px,100% 100%,3px 3px;
+    background-position: 25% 50%,0 0,center,0 0;
+    mix-blend-mode: screen; opacity: .65;
+    transition: background-position 1.1s ease,opacity .4s ease;
+}
+.tcg-card-secret:hover .tcg-secret-foil { background-position: 85% 25%,0 0,center,0 0; opacity: .8; }
+.tcg-secret-foil::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(125deg,transparent 8%,#f7ce44 24%,#8ae6ab 36%,#97b5ff 45%,#de9be6 52%,#ffc27c 63%,transparent 80%);
+    mix-blend-mode: color; opacity: .48;
+}
+.tcg-secret-label {
+    position: absolute; top: 5%; left: 50%; transform: translateX(-50%); z-index: 20;
+    padding: 1cqw 4cqw; border: 1px solid #ffe7a4; border-radius: 99px;
+    background: linear-gradient(180deg,#fff0aa,#d1a02b); color: #332002;
+    font: 900 4cqw/1.1 'Segoe UI',sans-serif; letter-spacing: .15em;
+    box-shadow: inset 0 1px 1px #fff9,0 1px 2px #4b2e16aa;
+}
+.tcg-card-secret .tcg-card-identity { z-index: 20; bottom: 10%; color: #fff1b5; }
+.tcg-card-secret .tcg-card-name { color: #ffe7a1; text-shadow: 0 1px 1px #fff4,-1px -1px 1px #291600,0 2px 4px #000; }
+.tcg-card-secret .tcg-card-bottom-meta { z-index: 20; color: #ffe8a1; }
+.tcg-secret-rarity {
+    padding: .7cqw 1.8cqw; border: 1px solid #ffebaa; border-radius: 1cqw;
+    background: linear-gradient(180deg,#fff0ac,#c79828); color: #322000;
+    font: 900 3.3cqw/1.1 'Segoe UI',sans-serif; letter-spacing: .06em;
+}
+@media(prefers-reduced-motion:reduce) { .tcg-secret-foil { transition: none; } }

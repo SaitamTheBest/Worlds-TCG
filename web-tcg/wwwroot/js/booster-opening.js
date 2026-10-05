@@ -115,6 +115,8 @@
             power: 1.35
         },
 
+        SECRET: { label: "SECRET · GOLD", colors: ["#fff2b0", "#f4c430", "#dba629", "#ffffff"], particles: 80, power: 1.7 },
+
         FULL_ART: {
             label: "FULL ART",
             colors: ["#ff4f91", "#ffdf4f", "#55eaff", "#a55cff", "#ffffff"],
@@ -156,6 +158,8 @@
             .replaceAll("-", "")
             .replaceAll(" ", "")
             .trim();
+
+        if (rarity === "SECRET" || rarity === "GOLD") return "SECRET";
 
         if (rarity === "UR" || rarity === "ULTRARARE") {
             return "UR";
@@ -1849,6 +1853,7 @@
                     );
                     break;
 
+                case "SECRET":
                 case "FULL_ART":
                     playFullArtAnimation(
                         visual,

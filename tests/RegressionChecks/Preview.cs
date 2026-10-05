@@ -17,7 +17,7 @@ public static class Preview
     public static CardViewModel Card(int id) => new()
     {
         Id = id, Name = id == 1 ? "Président de démonstration" : "Personnage de démonstration",
-        Type = id == 1 ? CardType.Leader : CardType.Character,
+        Type = id == 6 ? CardType.Secret : id == 1 ? CardType.Leader : CardType.Character,
         ArtType = id == 4 ? CardArtType.FullArt : id == 3 ? CardArtType.AlternateArt : CardArtType.Normal,
         Rarity = CardRarity.Rare, RegionColor = "#18467d", RegionName = "Région test",
         CollectionNumber = id.ToString(), CardSetCode = "TEST", UsageCost = 2, HealthPoints = 1200,
@@ -109,7 +109,13 @@ public sealed class PreviewController : Controller
                 Conditions = new() { new() { Type = GameConditionType.SourceRegion, RegionIds = new() {1,2} } } } } });
     }
     [HttpGet("/Game/{id:guid}")] public IActionResult Game(Guid id) => View("~/Views/Game/Play.cshtml", new GameViewModel { MatchId = id, VisibleCards = new[] { Preview.Card(1), Preview.Card(2), Preview.Card(3) } });
-    [HttpGet("/Card/Render/{id:int}")] public IActionResult Render(int id) => ViewComponent("Card", new { model = Preview.Card(id) });
+    [HttpGet("/Card/Render/{id:int}")]
+    public IActionResult Render(int id, string? image = null)
+    {
+        var model = Preview.Card(id);
+        if (image?.StartsWith('/') == true && !image.StartsWith("//")) model.ImageUrl = image;
+        return ViewComponent("Card", new { model });
+    }
     [HttpGet("/Deck/MyDecks")] public IActionResult DeckList() => Json(new[] { Summary });
     [HttpGet("/Deck/{id:guid}")] public IActionResult Deck(Guid id) => Json(new DeckDetailDto { Id = id, Name = Summary.Name, LeaderCardId = 1, Cards = new() { new() { CardId = 2, Quantity = 1 }, new() { CardId = 3, Quantity = 2 } } });
     [HttpGet("/Deck/BuilderData")] public IActionResult Builder() => Json(new DeckBuilderDataDto

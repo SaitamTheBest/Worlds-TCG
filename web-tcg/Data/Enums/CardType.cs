@@ -5,6 +5,7 @@
         Leader = 1,
         Character = 2,
         PoliticalDecision = 3,
-        Location = 4
+        Location = 4,
+        Secret = 5
     }
 }

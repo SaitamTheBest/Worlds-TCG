@@ -37,6 +37,9 @@ namespace web_tcg.Services
         // Partagé par le tirage et l'affichage des taux : mêmes cartes éligibles.
         public static IQueryable<Card> FilterCards(IQueryable<Card> query, BoosterRarity rarity)
         {
+            if (rarity == BoosterRarity.Secret)
+                return query.Where(x => x.Type == CardType.Secret && x.CollectionNumber == 0 && x.BaseCardId == null);
+            query = query.Where(x => x.Type != CardType.Secret);
             return rarity switch
             {
                 BoosterRarity.Common =>

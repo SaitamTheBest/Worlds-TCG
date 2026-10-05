@@ -5,6 +5,7 @@
         Common = 1,
         Rare = 2,
         SuperRare = 3,
-        UltraRare = 4
+        UltraRare = 4,
+        Gold = 5
     }
 }

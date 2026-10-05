@@ -101,7 +101,7 @@ namespace web_tcg.Controllers
                     .AsNoTracking()
                     .Where(x =>
                         x.UserId == UserId &&
-                        x.Quantity > 0)
+                        x.Quantity > 0 && x.Card.Type != CardType.Secret && x.Card.CollectionNumber != 0)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.BaseCard)
                     .ToListAsync();
@@ -223,6 +223,9 @@ namespace web_tcg.Controllers
 
             if (cardEntities.Count != cardIds.Count)
                 return BadRequest("Une carte sélectionnée est introuvable.");
+
+            if (cardEntities.Any(x => SecretCardRules.IsNonPlayable(x) || SecretCardRules.IsNonPlayable(x.BaseCard ?? x)))
+                return BadRequest("Les cartes SECRET (numéro 0) sont des objets de collection et ne peuvent pas être jouées.");
 
             if (cardEntities.Any(x => (x.BaseCard ?? x).Type == CardType.Leader))
             {

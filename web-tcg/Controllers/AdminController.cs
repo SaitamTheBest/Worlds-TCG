@@ -459,6 +459,27 @@ namespace web_tcg.Controllers
             var isEdit =
                 baseCardId.HasValue;
 
+            if (Input.Type == CardType.Secret)
+            {
+                SecretCardRules.Normalize(Input);
+                foreach (var key in ModelState.Keys.Where(key => key == nameof(Input.CollectionNumber)
+                    || key == nameof(Input.Rarity) || key == nameof(Input.UsageCost) || key == nameof(Input.HealthPoints)
+                    || key.StartsWith("Abilities") || key.StartsWith("Variants")).ToList()) ModelState.Remove(key);
+                if (await _context.Cards.AnyAsync(x => x.CardSetId == Input.CardSetId
+                    && (x.Type == CardType.Secret || x.CollectionNumber == 0)
+                    && (!baseCardId.HasValue || x.Id != baseCardId.Value)))
+                    ModelState.AddModelError(nameof(Input.CardSetId), "Cette extension possède déjà une carte SECRET (numéro 0).");
+                if (baseCardId.HasValue && await _context.Cards.AnyAsync(x => x.BaseCardId == baseCardId.Value))
+                    ModelState.AddModelError(nameof(Input.Type), "Une carte possédant des variantes ne peut pas devenir une SECRET.");
+            }
+            else
+            {
+                if (Input.CollectionNumber < 1)
+                    ModelState.AddModelError(nameof(Input.CollectionNumber), "Le numéro 0 est réservé à la carte SECRET.");
+                if (Input.Rarity == CardRarity.Gold)
+                    ModelState.AddModelError(nameof(Input.Rarity), "La rareté Gold est réservée à la carte SECRET.");
+            }
+
             // ============================================================
             // NETTOYAGE
             // ============================================================
@@ -1711,7 +1732,8 @@ namespace web_tcg.Controllers
                 {
                     Value = ((int)CardType.Location).ToString(),
                     Text = "Lieu"
-                }
+                },
+                new() { Value = ((int)CardType.Secret).ToString(), Text = "SECRET · Gold (non jouable)" }
             };
         }
 
@@ -1743,7 +1765,8 @@ namespace web_tcg.Controllers
                 {
                     Value = ((int)CardRarity.UltraRare).ToString(),
                     Text = "Ultra Rare (UR)"
-                }
+                },
+                new() { Value = ((int)CardRarity.Gold).ToString(), Text = "Gold · SECRET" }
             };
         }
 

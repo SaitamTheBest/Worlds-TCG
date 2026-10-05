@@ -12,6 +12,30 @@ public static class BoosterDropChecks
         var generator = new BoosterGenerator(new BoosterRarityGenerator(new Random(1234)));
         var rates = generator.GetDropRates();
         check(Math.Abs(rates.Values.Sum() - 100) < 1e-10, "boosters : les taux moyens totalisent 100 %");
+        var secretRates = generator.GetDropRates(5, includeSecret: true);
+        check(Math.Abs(secretRates[BoosterRarity.Secret] - .01) < 1e-10 && Math.Abs(secretRates.Values.Sum() - 100) < 1e-10,
+            "SECRET : taux exact de 0,01 % par carte et total de 100 %");
+        var rarityGenerator = new BoosterRarityGenerator(new Random(1234));
+        check(Enumerable.Range(1,5).All(position => Math.Abs(rarityGenerator.GetRatesForPosition(position,
+            position == 5 ? BoosterRarity.Rare : null, true)[BoosterRarity.Secret] - .01) < 1e-10),
+            "SECRET : la garantie Rare ne multiplie pas la probabilité de la Gold");
+        check(rates[BoosterRarity.Secret] == 0, "SECRET : absence de carte configurée conserve les anciens tirages");
+        var secret = new Card { Id = 99, Type = CardType.Secret, CollectionNumber = 0, Rarity = CardRarity.Gold };
+        var secrets = new[] { secret }.AsQueryable();
+        check(BoosterCardSelectionService.FilterCards(secrets, BoosterRarity.Secret).Single().Id == 99
+            && rates.Keys.Where(x => x != BoosterRarity.Secret).All(x => !BoosterCardSelectionService.FilterCards(secrets,x).Any()),
+            "SECRET : la carte 0 appartient uniquement au tirage SECRET");
+        check(SecretCardRules.IsNonPlayable(secret) && SecretCardRules.IsNonPlayable(new Card { CollectionNumber = 0 })
+            && !SecretCardRules.IsNonPlayable(new Card { Type = CardType.Character, CollectionNumber = 1 }),
+            "SECRET : refus du type SECRET et du numéro 0 dans les decks");
+        var input = new web_tcg.Models.Admin.CreateCardViewModel { Type = CardType.Secret, CollectionNumber = 37,
+            UsageCost = 50, HealthPoints = 100, Rarity = CardRarity.Common,
+            Abilities = new() { new() { Name = "Interdite" } }, Variants = new() { new() } };
+        SecretCardRules.Normalize(input);
+        check(input.CollectionNumber == 0 && input.Rarity == CardRarity.Gold && input.UsageCost == 0
+            && input.HealthPoints == null && input.Abilities.Count == 0 && input.Variants.Count == 0,
+            "SECRET : création impose numéro 0, Gold, aucun coût, PV, capacité ou variante");
+        check(CardAbilityEditor.Validate(CardType.Secret,new()).Any(), "SECRET : l'éditeur refuse les capacités");
         check(Math.Abs(rates[BoosterRarity.Common] - 64.52) < 1e-10 && Math.Abs(rates[BoosterRarity.FullArt] - .074) < 1e-10,
             "boosters : taux des cinq emplacements, garantie Rare incluse");
         var group = new BoosterDropGroup { Rarity = BoosterRarity.FullArt, Rate = rates[BoosterRarity.FullArt], Cards = new() { new CardViewModel(), new CardViewModel() } };

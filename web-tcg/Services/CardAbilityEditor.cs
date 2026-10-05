@@ -53,6 +53,11 @@ public static class CardAbilityEditor
 
     public static IEnumerable<string> Validate(CardType cardType, CardAbilityInputModel ability)
     {
+        if (cardType == CardType.Secret)
+        {
+            yield return "Une carte SECRET ne peut pas avoir de capacité.";
+            yield break;
+        }
         if (!Enum.IsDefined(ability.Type)) yield return "Type de capacité invalide.";
         if (ability.Effects.Count == 0) yield return "Ajoutez au moins une action à la capacité ; la description seule ne produit aucun effet en jeu.";
         if (cardType is CardType.Location or CardType.PoliticalDecision && ability.Type != AbilityType.Effect)

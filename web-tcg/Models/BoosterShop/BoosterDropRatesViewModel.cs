@@ -14,6 +14,7 @@ public sealed class BoosterDropGroup
     public BoosterRarity Rarity { get; init; }
     public string Name => Rarity switch
     {
+        BoosterRarity.Secret => "SECRET · Gold",
         BoosterRarity.FullArt => "Full Art",
         BoosterRarity.AlternateArt => "Alternate Art",
         BoosterRarity.UltraRare => "Ultra rare",

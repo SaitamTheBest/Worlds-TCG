@@ -341,13 +341,13 @@
                                        name="CollectionNumber"
                                        value="@Model.CollectionNumber"
                                        required
-                                       min="1"
+                                       min="0"
                                        max="999"
                                        placeholder="42" />
                             </div>
 
                             <small>
-                                Entre 1 et 999.
+                                Entre 1 et 999 ; 0 est réservé à la SECRET.
                             </small>
                         </div>
 
@@ -626,6 +626,7 @@
                     </div>
 
                     <!-- Variants -->
+                    <div id="secretVariantsSection">
 
                     <div class="create-variants-heading">
                         <div>
@@ -809,13 +810,14 @@
                         <i data-lucide="plus"></i>
                         <span>Ajouter une variante</span>
                     </button>
+                    </div>
                 </section>
 
                 <!-- =============================================
                      04 - ABILITIES
                      ============================================= -->
 
-                <section class="create-section">
+                <section class="create-section" id="secretAbilitiesSection">
                     <div class="create-section-header">
                         <div class="create-section-number">04</div>
 
@@ -1134,6 +1136,33 @@
 
             const leader = "@((int)CardType.Leader)";
             const character = "@((int)CardType.Character)";
+            const isSecret = type === "@((int)CardType.Secret)" || type === "Secret";
+            const numberInput = document.getElementById("CollectionNumber");
+            if (numberInput) {
+                numberInput.readOnly = isSecret;
+                numberInput.min = isSecret ? "0" : "1";
+                if (isSecret) numberInput.value = "0";
+                else if (numberInput.value === "0") numberInput.value = "1";
+            }
+            for (const id of ["secretAbilitiesSection", "secretVariantsSection"]) {
+                const section = document.getElementById(id);
+                if (!section) continue;
+                section.hidden = isSecret;
+                section.querySelectorAll("input,select,textarea,button").forEach(input => input.disabled = isSecret);
+            }
+            const goldOption = rarityInput?.querySelector('option[value="@((int)CardRarity.Gold)"]');
+            if (goldOption) { goldOption.hidden = !isSecret; goldOption.disabled = !isSecret; }
+            if (isSecret) {
+                rarityField?.classList.remove("hidden");
+                if (rarityInput) { rarityInput.value = "@((int)CardRarity.Gold)"; rarityInput.disabled = true; }
+                if (costField) costField.hidden = true;
+                if (costInput) { costInput.disabled = true; costInput.value = "0"; }
+                healthField?.classList.add("hidden");
+                if (healthInput) { healthInput.disabled = true; healthInput.value = ""; }
+                return;
+            }
+            if (rarityInput) { rarityInput.disabled = false; if (rarityInput.value === "@((int)CardRarity.Gold)") rarityInput.value = ""; }
+            if (healthInput) healthInput.disabled = false;
             const isLeader = type === leader || type === "Leader";
             if (costField) costField.hidden = isLeader;
             if (costInput) {

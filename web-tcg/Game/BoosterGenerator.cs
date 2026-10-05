@@ -12,14 +12,14 @@ namespace web_tcg.Game
         }
 
         /// <summary>Probabilité moyenne par carte, avec la garantie du dernier emplacement.</summary>
-        public IReadOnlyDictionary<BoosterRarity, double> GetDropRates(int cardCount = 5)
+        public IReadOnlyDictionary<BoosterRarity, double> GetDropRates(int cardCount = 5, bool includeSecret = false)
         {
             if (cardCount <= 0) throw new ArgumentOutOfRangeException(nameof(cardCount));
             var rates = Enum.GetValues<BoosterRarity>().ToDictionary(r => r, _ => 0d);
             for (var position = 1; position <= cardCount; position++)
             {
                 var positionRates = _rarityGenerator.GetRatesForPosition(position,
-                    position == cardCount ? BoosterRarity.Rare : null);
+                    position == cardCount ? BoosterRarity.Rare : null, includeSecret);
                 foreach (var entry in positionRates) rates[entry.Key] += entry.Value / cardCount;
             }
             return rates;
@@ -35,7 +35,7 @@ namespace web_tcg.Game
         /// de la rareté la plus faible à la plus élevée afin que
         /// le meilleur hit soit révélé en dernier.
         /// </summary>
-        public BoosterResult Generate(int cardCount = 5)
+        public BoosterResult Generate(int cardCount = 5, bool includeSecret = false)
         {
             if (cardCount <= 0)
                 throw new ArgumentOutOfRangeException(nameof(cardCount));
@@ -52,7 +52,7 @@ namespace web_tcg.Game
 
                 var rarity = _rarityGenerator.Generate(
                     position,
-                    minimumRarity);
+                    minimumRarity, includeSecret);
 
                 generatedRarities.Add(rarity);
             }

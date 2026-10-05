@@ -43,7 +43,8 @@ namespace web_tcg.Game
             BoosterRarity.SuperRare,
             BoosterRarity.UltraRare,
             BoosterRarity.AlternateArt,
-            BoosterRarity.FullArt
+            BoosterRarity.FullArt,
+            BoosterRarity.Secret
         };
 
         public BoosterRarityGenerator(Random? random = null)
@@ -53,11 +54,11 @@ namespace web_tcg.Game
 
         public BoosterRarity Generate(
             int cardPosition,
-            BoosterRarity? minimumRarity = null)
+            BoosterRarity? minimumRarity = null, bool includeSecret = false)
         {
             var rates = GetRatesForPosition(
                 cardPosition,
-                minimumRarity);
+                minimumRarity, includeSecret);
 
             var roll =
                 _random.NextDouble() *
@@ -80,12 +81,12 @@ namespace web_tcg.Game
                     return rarity;
             }
 
-            return Rarities.Last();
+            return Rarities.Last(rarity => rates.TryGetValue(rarity, out var rate) && rate > 0);
         }
 
         public Dictionary<BoosterRarity, double> GetRatesForPosition(
             int position,
-            BoosterRarity? minimumRarity)
+            BoosterRarity? minimumRarity, bool includeSecret = false)
         {
             var rates =
                 GetPositionRates(position);
@@ -100,7 +101,14 @@ namespace web_tcg.Game
                         x => x.Value);
             }
 
-            return Normalize(rates);
+            rates = Normalize(rates);
+            // Pourcentage fixe après la garantie Rare : 0,01 %, jamais amplifié par la normalisation.
+            if (includeSecret)
+            {
+                foreach (var rarity in rates.Keys.ToList()) rates[rarity] *= .9999;
+                rates[BoosterRarity.Secret] = .01;
+            }
+            return rates;
         }
 
         private Dictionary<BoosterRarity, double> GetPositionRates(

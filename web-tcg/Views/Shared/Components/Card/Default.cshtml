@@ -95,6 +95,12 @@
 <link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
 <script src="~/js/card-layout.js" asp-append-version="true" defer></script>
 
+@if (Model.Type == CardType.Secret)
+{
+    @await Html.PartialAsync("~/Views/Shared/Components/Card/Secret.cshtml", Model)
+    return;
+}
+
 <div class="@cardClasses" style="--region-color:@Model.RegionColor;">
     <div class="tcg-card-background"></div>
     <div class="tcg-card-metal"></div>

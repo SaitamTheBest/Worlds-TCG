@@ -11,6 +11,12 @@ if (args.Contains("--market"))
     return;
 }
 
+if (args.Contains("--secret"))
+{
+    await SecretChecks.RunAsync();
+    return;
+}
+
 if (args.Contains("--cardsets"))
 {
     await CardSetChecks.RunAsync();

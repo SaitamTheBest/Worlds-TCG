@@ -13,7 +13,7 @@ public sealed class BotDeckSetupService(ApplicationDbContext context, ILogger<Bo
         if (deck == null || deck.Cards.Sum(c => c.Quantity) != 40)
         {
             var leader = await context.Cards.FirstOrDefaultAsync(c => c.Type == CardType.Leader && c.BaseCardId == null && c.IsActive);
-            var cards = await context.Cards.Where(c => c.Type != CardType.Leader && c.BaseCardId == null && c.IsActive)
+            var cards = await context.Cards.Where(c => c.Type != CardType.Leader && c.Type != CardType.Secret && c.CollectionNumber != 0 && c.BaseCardId == null && c.IsActive)
                 .OrderBy(c => c.Id).Take(20).ToListAsync();
             if (leader == null || cards.Count < 10)
             {

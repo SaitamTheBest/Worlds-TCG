@@ -182,6 +182,7 @@
                     <option value="2">Rare (R)</option>
                     <option value="3">Super Rare (SR)</option>
                     <option value="4">Ultra Rare (UR)</option>
+                    <option value="5">Gold · SECRET</option>
                     <option value="none">Sans rareté — Leaders</option>
                 </select>
             </div>
@@ -321,6 +322,7 @@
                                     CardRarity.Rare => "rarity-rare",
                                     CardRarity.SuperRare => "rarity-super",
                                     CardRarity.UltraRare => "rarity-ultra",
+                                    CardRarity.Gold => "rarity-ultra",
                                     _ => "rarity-default"
                                 };
 
@@ -330,6 +332,7 @@
                                     CardRarity.Rare => "R",
                                     CardRarity.SuperRare => "SR",
                                     CardRarity.UltraRare => "UR",
+                                    CardRarity.Gold => "GOLD",
                                     _ => "—"
                                 };
 
@@ -339,6 +342,7 @@
                                     CardType.Character => "Personnage",
                                     CardType.PoliticalDecision => "Décision",
                                     CardType.Location => "Lieu",
+                                    CardType.Secret => "SECRET",
                                     _ => item.Type.ToString()
                                 };
 
