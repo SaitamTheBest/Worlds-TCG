@@ -123,7 +123,7 @@ namespace web_tcg.Controllers
                     ArtType = card.ArtType,
 
                     CollectionNumber =
-                        card.CollectionNumber.ToString(),
+                        card.CollectionNumber + (card.VariantNumber.HasValue ? $"-{card.VariantNumber.Value}" : ""),
 
                     RegionName =
                         card.Region?.Name ?? "Région",

@@ -46,7 +46,7 @@ public class CardController : Controller
             HealthPoints = GetHealthPoints(card),
             ImageUrl = mainVariant?.ImageUrl ?? card.ImageUrl,
             ArtType = mainVariant?.ArtType ?? Data.Enums.CardArtType.Normal,
-            CollectionNumber = card.CollectionNumber.ToString(),
+            CollectionNumber = card.CollectionNumber + ((mainVariant?.VariantNumber ?? card.VariantNumber) is int variantNumber ? $"-{variantNumber}" : ""),
             CardSetCode = card.CardSet?.Code ?? string.Empty,
             RegionName = card.Region?.Name ?? string.Empty,
             CountryName = card.Country?.Name ?? string.Empty,

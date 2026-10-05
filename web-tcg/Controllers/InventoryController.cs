@@ -204,7 +204,7 @@ namespace web_tcg.Controllers
                             HealthPoints = healthPoints,
                             ImageUrl = card.ImageUrl,
                             ArtType = card.ArtType,
-                            CollectionNumber = card.CollectionNumber.ToString(),
+                            CollectionNumber = card.CollectionNumber + (card.VariantNumber.HasValue ? $"-{card.VariantNumber.Value}" : ""),
                             RegionName = card.Region?.Name ?? "Région",
                             CountryName = card.Country?.Name ?? string.Empty,
                             RegionColor = !string.IsNullOrWhiteSpace(card.Region?.Color)
@@ -340,7 +340,7 @@ namespace web_tcg.Controllers
                     HealthPoints = healthPoints,
                     ImageUrl = card.ImageUrl,
                     ArtType = card.ArtType,
-                    CollectionNumber = card.CollectionNumber.ToString(),
+                    CollectionNumber = card.CollectionNumber + (card.VariantNumber.HasValue ? $"-{card.VariantNumber.Value}" : ""),
                     RegionName = card.Region?.Name ?? "Région",
                     RegionColor = !string.IsNullOrWhiteSpace(card.Region?.Color)
                         ? card.Region.Color

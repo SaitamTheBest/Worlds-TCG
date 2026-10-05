@@ -426,8 +426,8 @@ namespace web_tcg.Controllers
                                 physicalCard.ArtType,
 
                             CollectionNumber =
-                                physicalCard.CollectionNumber
-                                    .ToString(),
+                                physicalCard.CollectionNumber + (physicalCard.VariantNumber.HasValue
+                                    ? $"-{physicalCard.VariantNumber.Value}" : ""),
 
                             CardSetCode =
                                 physicalCard.CardSet?.Code ??
