@@ -1404,3 +1404,20 @@
     min-width: calc(4.8cqw * var(--ability-scale,1)); width: auto; height: calc(4.8cqw * var(--ability-scale,1)); padding: 0 .5cqw;
     font: 800 calc(3cqw * var(--ability-scale,1))/1 'Segoe UI',system-ui,Arial,sans-serif;
 }
+
+/* Alt et Full Art : capacités posées sur l'illustration, empilées depuis le bas. */
+.tcg-card:is(.tcg-card-altart,.tcg-card-fullart) .tcg-card-info {
+    top: 49%; bottom: 20.6%; padding: 0;
+    justify-content: flex-end;
+    background: transparent; border: 0; border-radius: 0;
+    box-shadow: none; backdrop-filter: none;
+}
+.tcg-card.tcg-card-with-abilities:is(.tcg-card-altart,.tcg-card-fullart) .tcg-card-ability {
+    background: linear-gradient(90deg,rgba(5,9,14,.72),rgba(5,9,14,.4) 65%,rgba(5,9,14,.08));
+    border: 0; border-radius: .8cqw;
+    box-shadow: inset .5cqw 0 var(--ability-color);
+}
+.tcg-card.tcg-card-with-abilities:is(.tcg-card-altart,.tcg-card-fullart) .tcg-card-ability-title,
+.tcg-card.tcg-card-with-abilities:is(.tcg-card-altart,.tcg-card-fullart) .tcg-card-ability-description {
+    text-shadow: 0 1px 2px #000,0 0 4px #000b;
+}

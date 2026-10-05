@@ -1,6 +1,6 @@
 {
-  "name": "MyWebSite",
-  "short_name": "MySite",
+  "name": "Worlds TCG",
+  "short_name": "Worlds TCG",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
