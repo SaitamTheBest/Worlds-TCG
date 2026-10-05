@@ -94,12 +94,24 @@ public sealed class PreviewController : Controller
     [HttpGet("/Deck/Manage")] public IActionResult Decks() => View("~/Views/Deck/Manage.cshtml", new List<DeckSummaryDto> { Summary });
     [HttpGet("/Pvp/Play")] public IActionResult Pvp() => View("~/Views/Pvp/Play.cshtml", Home);
     [HttpGet("/Pvp/Activity")] public IActionResult Activity() => Json(new { playersInGame = 8, playersInQueue = 3 });
+    [HttpGet("/__preview/parties/create")]
+    public IActionResult PartyForm()
+    {
+        ViewBag.Countries = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(new[] { new { Id = 10, Name = "France" },new { Id = 20, Name = "Belgique" } },"Id","Name");
+        return View("~/Views/Admin/PoliticalParties/Create.cshtml",new web_tcg.Models.Admin.PoliticalPartyViewModel { Name = "Parti de démonstration", CountryId = 10, ImageUrl = "/worlds-tcg-logo.png" });
+    }
+    [HttpGet("/__preview/parties")]
+    public IActionResult PartyList() => View("~/Views/Admin/PoliticalParties/Index.cshtml",new List<web_tcg.Data.Entities.PoliticalParty> {
+        new() { Id = 1, Name = "Parti de démonstration", CountryId = 10, Country = new() { Name = "France" }, Orientation = PoliticalOrientation.Left, ImageUrl = "/worlds-tcg-logo.png" } });
     [HttpGet("/Admin/CreateCard")] public IActionResult CreateCard()
     {
         Microsoft.AspNetCore.Mvc.Rendering.SelectList Options<T>() where T : Enum => new(Enum.GetValues(typeof(T)).Cast<T>().Select(value => new { Value = Convert.ToInt32(value), Text = value.ToString() }), "Value", "Text");
         ViewBag.CardTypes = Options<CardType>(); ViewBag.CardRarities = Options<CardRarity>();
         ViewBag.CardArtTypes = Options<CardArtType>(); ViewBag.AbilityTypes = Options<AbilityType>();
         var choices = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(new[] { new { Id = 1, Name = "Démonstration" } }, "Id", "Name");
+        ViewBag.PoliticalParties = new List<web_tcg.Data.Entities.PoliticalParty> {
+            new() { Id = 1, Name = "Parti français", CountryId = 10, Country = new() { Name = "France" } },
+            new() { Id = 2, Name = "Parti belge", CountryId = 20, Country = new() { Name = "Belgique" } } };
         ViewBag.CardSets = choices; ViewBag.Regions = choices; ViewBag.Countries = choices;
         ViewBag.Regions = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(new[] { new { Id = 1, Name = "Bretagne" },new { Id = 2, Name = "Normandie" },new { Id = 3, Name = "Île-de-France" } },"Id","Name");
         ViewBag.Countries = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(new[] { new { Id = 10, Name = "France" },new { Id = 20, Name = "Belgique" } },"Id","Name");
@@ -110,9 +122,10 @@ public sealed class PreviewController : Controller
     }
     [HttpGet("/Game/{id:guid}")] public IActionResult Game(Guid id) => View("~/Views/Game/Play.cshtml", new GameViewModel { MatchId = id, VisibleCards = new[] { Preview.Card(1), Preview.Card(2), Preview.Card(3) } });
     [HttpGet("/Card/Render/{id:int}")]
-    public IActionResult Render(int id, string? image = null)
+    public IActionResult Render(int id, string? image = null, bool party = false)
     {
         var model = Preview.Card(id);
+        if (party) { model.PoliticalPartyName = "Parti de démonstration"; model.PoliticalPartyImageUrl = "/worlds-tcg-logo.png"; }
         if (image?.StartsWith('/') == true && !image.StartsWith("//")) model.ImageUrl = image;
         return ViewComponent("Card", new { model });
     }

@@ -36,6 +36,8 @@ namespace web_tcg.Models.Admin
         public string RegionName { get; set; } = "Région";
 
         [JsonPropertyName("countryName")]
+        public int? PoliticalPartyId { get; set; }
+
         public string CountryName { get; set; } = string.Empty;
 
         [JsonPropertyName("regionColor")]

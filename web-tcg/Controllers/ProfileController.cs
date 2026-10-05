@@ -323,6 +323,7 @@ namespace web_tcg.Controllers
                     .ThenInclude(x => x.Region)
                 .Include(x => x.Card)
                     .ThenInclude(x => x.Country)
+            .Include(x => x.Card.PoliticalParty)
                 .Include(x => x.Card)
                     .ThenInclude(x => x.CardSet)
                 .Include(x => x.Card)
@@ -436,6 +437,9 @@ namespace web_tcg.Controllers
                 CollectionNumber = collectionNumber,
 
                 RegionName = physicalCard.Region?.Name ?? "Région",
+                PoliticalPartyName = physicalCard.PoliticalParty?.Name,
+                PoliticalPartyOrientation = physicalCard.PoliticalParty?.Orientation,
+                PoliticalPartyImageUrl = physicalCard.PoliticalParty?.ImageUrl,
                 CountryName = physicalCard.Country?.Name ?? string.Empty,
 
                 RegionColor = !string.IsNullOrWhiteSpace(physicalCard.Region?.Color)

@@ -24,6 +24,7 @@ namespace web_tcg.Models.Admin
         public int RegionId { get; set; }
 
         public int? CountryId { get; set; }
+        public int? PoliticalPartyId { get; set; }
 
         [Required]
         public int CardSetId { get; set; }
@@ -94,15 +95,17 @@ namespace web_tcg.Models.Admin
         [EnumDataType(typeof(GameEffectType))] public GameEffectType Type { get; set; }
         [EnumDataType(typeof(GameEffectTrigger))] public GameEffectTrigger Trigger { get; set; }
         [EnumDataType(typeof(GameTargetType))] public GameTargetType Target { get; set; }
-        [Range(0, 100000)] public decimal Value { get; set; }
+        [Range(-100000, 100000)] public decimal Value { get; set; }
         [Range(0, 99)] public int DurationTurns { get; set; }
         [MaxLength(4000)] public string ParametersJson { get; set; } = "{}";
         public List<int> RegionIds { get; set; } = new();
         public List<int> CountryIds { get; set; } = new();
+        public List<int> PartyIds { get; set; } = new();
         public bool ScaleByMatchingCharacters { get; set; }
         [Range(1, 3)] public int CountScope { get; set; } = 1;
         public List<int> CountRegionIds { get; set; } = new();
         public List<int> CountCountryIds { get; set; } = new();
+        public List<int> CountPartyIds { get; set; } = new();
     }
 
     public class CardConditionInputModel
@@ -112,5 +115,6 @@ namespace web_tcg.Models.Admin
         public bool Negate { get; set; }
         public List<int> RegionIds { get; set; } = new();
         public List<int> CountryIds { get; set; } = new();
+        public List<int> PartyIds { get; set; } = new();
     }
 }

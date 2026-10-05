@@ -4,10 +4,11 @@
     if (!container) return;
     const initial = JSON.parse(document.getElementById("abilityRulesData").textContent);
     const geography = JSON.parse(document.getElementById("abilityGeographyData").textContent);
+    geography.parties ||= [];
     const types = [[1,"Dégâts"],[2,"Soins"],[3,"Piocher"],[10,"Gagner de l'énergie"],[11,"Perdre de l'énergie"],[12,"Voler de l'énergie"],[20,"Provocation / Blocage"],[21,"Bouclier"],[22,"Camouflage"],[23,"Prison : aucune action pendant le prochain tour"],[30,"Coup d'état : attaques supplémentaires"],[31,"Multiplier les dégâts"],[32,"Bonus de PV maximum (+PV)"],[33,"Bonus de dégâts des compétences (+attaque)"],[40,"Second souffle : revivre à 50 %"],[50,"Défausser"],[60,"Détruire le lieu adverse"]];
     const triggers = [[1,"Quand la carte est jouée"],[2,"À l'utilisation de la compétence"],[3,"À l'utilisation du talent"],[4,"Passif (états et bonus liés à la présence sur le terrain)"],[5,"À la mort — Dernier souffle"],[6,"Au début de votre tour"],[7,"À la fin de votre tour"],[8,"Quand la carte subit des dégâts"]];
     const targets = [[1,"Cette carte"],[10,"Un personnage allié"],[11,"Votre Leader"],[12,"Un personnage allié ou votre Leader"],[20,"Un personnage adverse"],[21,"Le Leader adverse"],[22,"Un personnage adverse ou son Leader"],[31,"Le lieu adverse"],[40,"Votre joueur"],[41,"Le joueur adverse"],[50,"Tous vos personnages"],[51,"Tous les personnages adverses"],[52,"Tous les personnages des deux joueurs"]];
-    const conditions = [[1,"PV de cette carte inférieurs à"],[2,"PV de cette carte supérieurs à"],[10,"PV de la cible inférieurs à"],[11,"PV de la cible supérieurs à"],[20,"Votre énergie au moins égale à"],[30,"L'adversaire possède un personnage"],[31,"L'adversaire possède un lieu"],[40,"Nombre de personnages alliés au moins égal à"],[41,"Nombre de personnages adverses au moins égal à"],[50,"Cette carte provient des régions choisies"],[51,"Cette carte provient des pays choisis"],[52,"La cible provient des régions choisies"],[53,"La cible provient des pays choisis"],[60,"Personnages alliés des régions/pays choisis : au moins"],[61,"Personnages adverses des régions/pays choisis : au moins"],[62,"Personnages des deux joueurs des régions/pays choisis : au moins"]];
+    const conditions = [[1,"PV de cette carte inférieurs à"],[2,"PV de cette carte supérieurs à"],[10,"PV de la cible inférieurs à"],[11,"PV de la cible supérieurs à"],[20,"Votre énergie au moins égale à"],[30,"L'adversaire possède un personnage"],[31,"L'adversaire possède un lieu"],[40,"Nombre de personnages alliés au moins égal à"],[41,"Nombre de personnages adverses au moins égal à"],[50,"Cette carte provient des régions choisies"],[51,"Cette carte provient des pays choisis"],[52,"La cible provient des régions choisies"],[53,"La cible provient des pays choisis"],[54,"Cette carte appartient aux partis choisis"],[55,"La cible appartient aux partis choisis"],[60,"Personnages alliés des régions/pays/partis choisis : au moins"],[61,"Personnages adverses des régions/pays/partis choisis : au moins"],[62,"Personnages des deux joueurs des régions/pays/partis choisis : au moins"]];
     let sequence = 0;
     function node(tag, text, cls) {
         const e = document.createElement(tag); if (text) e.textContent = text; if (cls) e.className = cls; return e;
@@ -47,9 +48,10 @@
         const valueField = field(row,"Valeur",amount); field(row,"Prochains tours du propriétaire (0 = permanent)",duration);
         row.appendChild(input(`${name}.ParametersJson`,value.parametersJson ?? "{}","hidden"));
         const filters = node("div",null,"ability-geography-panel");
-        filters.appendChild(node("p","Filtrer les bénéficiaires : plusieurs choix possibles. Aucun choix = toutes les origines. Région et pays se combinent avec ET.","ability-rules-help"));
+        filters.appendChild(node("p","Filtrer les bénéficiaires : plusieurs choix possibles. Aucun choix = toutes les origines. Région, pays et parti se combinent avec ET.","ability-rules-help"));
         geographicChoices(filters,"Régions des bénéficiaires",`${name}.RegionIds`,geography.regions,value.regionIds);
         geographicChoices(filters,"Pays des bénéficiaires",`${name}.CountryIds`,geography.countries,value.countryIds);
+        geographicChoices(filters,"Partis des bénéficiaires",`${name}.PartyIds`,geography.parties,value.partyIds);
         row.appendChild(filters);
         const scale = input(`${name}.ScaleByMatchingCharacters`,"true","checkbox"); scale.checked = !!value.scaleByMatchingCharacters;
         const scaleField = field(row,"Multiplier le bonus par le nombre de personnages correspondants",scale);
@@ -59,6 +61,7 @@
         field(count,"Compter sur le terrain",select(`${name}.CountScope`,[[1,"Votre terrain"],[2,"Terrain adverse"],[3,"Les deux terrains"]],value.countScope ?? 1));
         geographicChoices(count,"Régions des personnages comptés",`${name}.CountRegionIds`,geography.regions,value.countRegionIds);
         geographicChoices(count,"Pays des personnages comptés",`${name}.CountCountryIds`,geography.countries,value.countCountryIds);
+        geographicChoices(count,"Partis des personnages comptés",`${name}.CountPartyIds`,geography.parties,value.countPartyIds);
         row.appendChild(count);
         row.appendChild(button("Retirer l'action",()=>row.remove())); list.appendChild(row);
         const update = () => {
@@ -66,8 +69,9 @@
             filters.hidden = player || t === 60;
             scaleField.hidden = ![32,33].includes(t);
             count.hidden = ![32,33].includes(t) || !scale.checked;
+            amount.min = [32,33].includes(t) ? -100000 : 0;
             amount.step = t === 31 ? "0.1" : "1";
-            valueField.querySelector("span").textContent = ({1:"Dégâts infligés",2:"PV restaurés",3:"Cartes piochées",10:"Énergie gagnée",11:"Énergie perdue",12:"Énergie volée",30:"Attaques supplémentaires",31:"Multiplicateur (2 = dégâts doublés)",32:"PV maximum ajoutés",33:"Dégâts ajoutés à chaque compétence",50:"Cartes défaussées"})[t] || "Valeur (1 pour cet état)";
+            valueField.querySelector("span").textContent = ({1:"Dégâts infligés",2:"PV restaurés",3:"Cartes piochées",10:"Énergie gagnée",11:"Énergie perdue",12:"Énergie volée",30:"Attaques supplémentaires",31:"Multiplicateur (2 = dégâts doublés)",32:"PV maximum (+ bonus / − malus)",33:"Dégâts des compétences (+ bonus / − malus)",50:"Cartes défaussées"})[t] || "Valeur (1 pour cet état)";
             duration.readOnly = !durable || t === 23; duration.parentElement.hidden = !durable;
             duration.parentElement.querySelector("span").textContent = t === 23 ? "Prison : un seul prochain tour" : "Prochains tours du propriétaire (0 = permanent)";
             if (t === 23) { duration.value = 1; amount.value = 1; }
@@ -95,7 +99,8 @@
         const threshold = field(row,"Seuil",input(`${name}.Value`,value.value ?? 1));
         const regionGroup = geographicChoices(row,"Régions de la condition",`${name}.RegionIds`,geography.regions,value.regionIds);
         const countryGroup = geographicChoices(row,"Pays de la condition",`${name}.CountryIds`,geography.countries,value.countryIds);
-        const update = () => { const t = Number(type.value); regionGroup.hidden = ![50,52,60,61,62].includes(t); countryGroup.hidden = ![51,53,60,61,62].includes(t); threshold.hidden = [50,51,52,53].includes(t); };
+        const partyGroup = geographicChoices(row,"Partis de la condition",`${name}.PartyIds`,geography.parties,value.partyIds);
+        const update = () => { const t = Number(type.value); partyGroup.hidden = ![54,55,60,61,62].includes(t); regionGroup.hidden = ![50,52,60,61,62].includes(t); countryGroup.hidden = ![51,53,60,61,62].includes(t); threshold.hidden = [50,51,52,53,54,55].includes(t); };
         type.addEventListener("change",update); update();
         const negate = input(`${name}.Negate`,"true","checkbox"); negate.checked = !!value.negate;
         field(row,"Inverser la condition",negate); row.appendChild(input(`${name}.Negate`,"false","hidden"));
@@ -120,6 +125,13 @@
         section.append(presets,node("h3","Conditions (facultatif)"),conditionList,button("Ajouter une condition",()=>addCondition(item,conditionList)));
         (data.conditions || []).forEach(c=>addCondition(item,conditionList,c)); item.appendChild(section);
         const update = () => {
+            const cost = item.querySelector('[name$=".UsageCost"]');
+            if (cost) {
+                const passive = abilityType(item) === 3;
+                cost.closest('.create-field').hidden = passive;
+                cost.readOnly = passive;
+                if (passive) cost.value = 0;
+            }
             cooldown.parentElement.hidden = abilityType(item) !== 2;
             presets.querySelectorAll("button").forEach(b=>{ const t = Number(b.dataset.effectType); b.disabled = t === 40 && (abilityType(item) !== 3 || cardType() !== 2) || t === 20 && cardType() === 1 || cardType() === 4 && t !== 31;
                 b.title = b.disabled ? "Choisissez un effet passif de personnage pour Second souffle ; le Leader ne bloque pas et les lieux ne donnent pas d'états." : ""; });

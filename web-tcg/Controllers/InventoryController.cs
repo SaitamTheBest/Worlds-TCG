@@ -67,6 +67,7 @@ namespace web_tcg.Controllers
                         .ThenInclude(x => x.Region)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.Country)
+            .Include(x => x.Card.PoliticalParty)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.CardSet)
                     .Include(x => x.Card)
@@ -206,7 +207,10 @@ namespace web_tcg.Controllers
                             ArtType = card.ArtType,
                             CollectionNumber = card.CollectionNumber + (card.VariantNumber.HasValue ? $"-{card.VariantNumber.Value}" : ""),
                             RegionName = card.Region?.Name ?? "Région",
-                            CountryName = card.Country?.Name ?? string.Empty,
+                PoliticalPartyName = card.PoliticalParty?.Name,
+                PoliticalPartyOrientation = card.PoliticalParty?.Orientation,
+                PoliticalPartyImageUrl = card.PoliticalParty?.ImageUrl,
+                CountryName = card.Country?.Name ?? string.Empty,
                             RegionColor = !string.IsNullOrWhiteSpace(card.Region?.Color)
                                 ? card.Region.Color
                                 : "#FFD700",
@@ -288,6 +292,7 @@ namespace web_tcg.Controllers
                         .ThenInclude(x => x.Region)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.Country)
+            .Include(x => x.Card.PoliticalParty)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.CardSet)
                     .Include(x => x.Card)
@@ -345,7 +350,10 @@ namespace web_tcg.Controllers
                     RegionColor = !string.IsNullOrWhiteSpace(card.Region?.Color)
                         ? card.Region.Color
                         : "#FFD700",
-                    CountryName = card.Country?.Name ?? string.Empty,
+                PoliticalPartyName = card.PoliticalParty?.Name,
+                PoliticalPartyOrientation = card.PoliticalParty?.Orientation,
+                PoliticalPartyImageUrl = card.PoliticalParty?.ImageUrl,
+                CountryName = card.Country?.Name ?? string.Empty,
                     CardSetCode = card.CardSet?.Code ?? string.Empty,
                     Abilities = gameplayCard.Abilities
                         .OrderBy(x => x.DisplayOrder)

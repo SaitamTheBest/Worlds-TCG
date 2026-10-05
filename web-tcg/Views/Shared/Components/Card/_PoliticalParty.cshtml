@@ -1,0 +1,7 @@
+@model web_tcg.Models.Card.CardViewModel
+@if (!string.IsNullOrWhiteSpace(Model.PoliticalPartyImageUrl))
+{
+    <div class="tcg-card-party" title="@Model.PoliticalPartyName">
+        <img src="@Model.PoliticalPartyImageUrl" alt="@Model.PoliticalPartyName" loading="lazy" />
+    </div>
+}

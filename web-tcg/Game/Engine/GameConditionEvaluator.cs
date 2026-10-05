@@ -32,7 +32,7 @@ namespace web_tcg.Game.Engine
             return true;
         }
 
-        public static bool IsTargetGeography(GameConditionDefinition condition) => condition.Type is GameConditionType.TargetRegion or GameConditionType.TargetCountry;
+        public static bool IsTargetGeography(GameConditionDefinition condition) => condition.Type is GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty;
 
         public string? Failure(GameState state, GamePlayerState player, GameCardState source, GameCardState? target, IEnumerable<GameConditionDefinition> conditions)
         {
@@ -49,13 +49,15 @@ namespace web_tcg.Game.Engine
                 GameConditionType.OpponentHasLocation => "présence d'un lieu adverse",
                 GameConditionType.FriendlyCharacterCountAtLeast => $"au moins {failed.Value} personnages alliés sur le terrain",
                 GameConditionType.EnemyCharacterCountAtLeast => $"au moins {failed.Value} personnages adverses sur le terrain",
+                GameConditionType.SourceParty => "parti de la carte parmi les partis autorisés",
+                GameConditionType.TargetParty => "parti de la cible parmi les partis autorisés",
                 GameConditionType.SourceRegion => "région de la carte parmi les régions autorisées",
                 GameConditionType.SourceCountry => "pays de la carte parmi les pays autorisés",
                 GameConditionType.TargetRegion => "région de la cible parmi les régions autorisées",
                 GameConditionType.TargetCountry => "pays de la cible parmi les pays autorisés",
-                GameConditionType.MatchingFriendlyCharactersAtLeast => $"au moins {failed.Value} personnages alliés des origines choisies (actuellement {GameGeography.Count(state,player,failed.Parameters,scope:1)})",
-                GameConditionType.MatchingEnemyCharactersAtLeast => $"au moins {failed.Value} personnages adverses des origines choisies (actuellement {GameGeography.Count(state,player,failed.Parameters,scope:2)})",
-                GameConditionType.MatchingCharactersAtLeast => $"au moins {failed.Value} personnages des origines choisies (actuellement {GameGeography.Count(state,player,failed.Parameters,scope:3)})",
+                GameConditionType.MatchingFriendlyCharactersAtLeast => $"au moins {failed.Value} personnages alliés des origines / partis choisis (actuellement {GameGeography.Count(state,player,failed.Parameters,scope:1)})",
+                GameConditionType.MatchingEnemyCharactersAtLeast => $"au moins {failed.Value} personnages adverses des origines / partis choisis (actuellement {GameGeography.Count(state,player,failed.Parameters,scope:2)})",
+                GameConditionType.MatchingCharactersAtLeast => $"au moins {failed.Value} personnages des origines / partis choisis (actuellement {GameGeography.Count(state,player,failed.Parameters,scope:3)})",
                 _ => "condition de la capacité"
             };
             return $"Condition non remplie : {(failed.Negate ? "condition inversée — " : "")}{requirement}.";
@@ -73,6 +75,8 @@ namespace web_tcg.Game.Engine
             return condition.Type switch
             {
                 GameConditionType.None => true,
+                GameConditionType.SourceParty => source.PoliticalPartyId.HasValue && GameGeography.Ids(condition.Parameters,"parties").Contains(source.PoliticalPartyId.Value),
+                GameConditionType.TargetParty => target?.PoliticalPartyId.HasValue == true && GameGeography.Ids(condition.Parameters,"parties").Contains(target.PoliticalPartyId.Value),
                 GameConditionType.SourceRegion => GameGeography.Ids(condition.Parameters,"regions").Contains(source.RegionId),
                 GameConditionType.SourceCountry => source.CountryId.HasValue && GameGeography.Ids(condition.Parameters,"countries").Contains(source.CountryId.Value),
                 GameConditionType.TargetRegion => target != null && GameGeography.Ids(condition.Parameters,"regions").Contains(target.RegionId),

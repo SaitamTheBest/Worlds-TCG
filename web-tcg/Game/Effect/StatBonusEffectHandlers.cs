@@ -11,7 +11,7 @@ public static class GameStatBonuses
         card.DamageBonus = (int)card.AppliedEffects.Where(e => e.Type == GameEffectType.DamageBonus).Sum(e => e.Value);
         if (!card.MaxHealth.HasValue) return;
         card.BaseHealth ??= card.MaxHealth;
-        var maximum = card.BaseHealth.Value + (int)card.AppliedEffects.Where(e => e.Type == GameEffectType.HealthBonus).Sum(e => e.Value);
+        var maximum = Math.Max(0, card.BaseHealth.Value + (int)card.AppliedEffects.Where(e => e.Type == GameEffectType.HealthBonus).Sum(e => e.Value));
         var difference = maximum - card.MaxHealth.Value;
         card.MaxHealth = maximum;
         if (card.CurrentHealth.HasValue && difference != 0) card.CurrentHealth = Math.Clamp(card.CurrentHealth.Value + difference,0,maximum);

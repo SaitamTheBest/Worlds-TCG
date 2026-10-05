@@ -4,6 +4,9 @@
     ViewData["Title"] = "Partie";
 }
 
+<link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
+<script src="~/js/card-layout.js" asp-append-version="true" defer></script>
+
 @foreach (var card in Model.VisibleCards)
 {
     <template id="card-template-@card.Id">@await Component.InvokeAsync("Card", new { model = card })</template>

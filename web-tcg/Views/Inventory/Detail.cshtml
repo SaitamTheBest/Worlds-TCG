@@ -227,6 +227,23 @@
                 </div>
 
                 <div class="detail-info-grid">
+                    <div class="detail-info-item">
+                        <span>PARTI POLITIQUE</span>
+                        @if (!string.IsNullOrWhiteSpace(Model.Card.PoliticalPartyName))
+                        {
+                            <div class="detail-party">
+                                <div class="detail-party-logo"><img src="@Model.Card.PoliticalPartyImageUrl" alt="Logo de @Model.Card.PoliticalPartyName" /></div>
+                                <div><strong>@Model.Card.PoliticalPartyName</strong>
+                                @if (Model.Card.PoliticalPartyOrientation.HasValue)
+                                {
+                                    var orientation = typeof(PoliticalOrientation).GetField(Model.Card.PoliticalPartyOrientation.Value.ToString())?.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.DisplayAttribute), false).OfType<System.ComponentModel.DataAnnotations.DisplayAttribute>().FirstOrDefault()?.Name;
+                                    <small>@orientation</small>
+                                }
+                                </div>
+                            </div>
+                        }
+                        else { <strong>Aucun parti</strong> }
+                    </div>
 
                     <div class="detail-info-item">
                         <span>NUMÉRO DE COLLECTION</span>
@@ -687,3 +704,4 @@
         });
     </script>
 }
+<style>.detail-party{display:flex;align-items:center;gap:12px}.detail-party-logo{width:42px;height:42px;padding:5px;background:#f7f3e7;border:1px solid #cfb367;border-radius:8px;flex-shrink:0}.detail-party-logo img{width:100%;height:100%;object-fit:contain}.detail-party small{display:block;color:#a3a3a3;margin-top:4px}</style>

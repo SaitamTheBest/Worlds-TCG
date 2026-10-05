@@ -274,6 +274,9 @@
 
                 </a>
 
+                <a asp-controller="PoliticalParties" asp-action="Index" class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "PoliticalParties" ? "active" : "")" title="Partis politiques">
+                    <i data-lucide="landmark"></i><span class="sidebar-label">Partis politiques</span>
+                </a>
                 <a asp-controller="Admin"
                    asp-action="Countries"
                    class="sidebar-nav-item @(ViewContext.RouteData.Values["controller"]?.ToString() == "Admin" && ViewContext.RouteData.Values["action"]?.ToString() == "Countries" ? "active" : "")"

@@ -112,6 +112,7 @@ namespace web_tcg.Game.Runtime
         public int GameplayCardId { get; set; }
         public int RegionId { get; set; }
         public int? CountryId { get; set; }
+        public int? PoliticalPartyId { get; set; }
 
         public string OwnerUserId { get; set; } = string.Empty;
         public string ControllerUserId { get; set; } = string.Empty;

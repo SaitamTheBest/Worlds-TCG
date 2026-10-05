@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using web_tcg.Data;
 using web_tcg.Data.Entities;
 
+if (args.Contains("--parties")) { await PoliticalPartyChecks.RunAsync(); return; }
+
 if (args.Contains("--market"))
 {
     await MarketChecks.RunAsync();
@@ -189,6 +191,7 @@ Check(streamedLogs.SequenceEqual(aiLogs), "IA : historique progressif complet sa
 
 await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
+await PartyRuleChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
 BoosterDropChecks.Run(Check);
 var releaseNow = new DateTime(2026, 10, 5, 12, 0, 0, DateTimeKind.Utc);

@@ -176,7 +176,7 @@ namespace web_tcg.Services
                             {
                                 Id =
                                     x.Id,
-                                UnavailableReason = new web_tcg.Game.Engine.GameConditionEvaluator().Failure(state,player,card,null,x.Conditions.Where(c => c.Type is not (GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry))),
+                                UnavailableReason = new web_tcg.Game.Engine.GameConditionEvaluator().Failure(state,player,card,null,x.Conditions.Where(c => c.Type is not (GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty))),
                                 TargetIds = GameActionTargets.Get(state, player, card, new[] { x }, x.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent),
                                 IsAttack = x.Effects.Any(e => e.Type == GameEffectType.Damage && e.Trigger == (x.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent)),
 

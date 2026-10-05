@@ -24,7 +24,7 @@ public class CardController : Controller
             .AsNoTracking()
             .Include(c => c.CardSet)
             .Include(c => c.Region)
-            .Include(c => c.Country)
+            .Include(c => c.Country).Include(c => c.PoliticalParty)
             .Include(c => c.Variants)
             .Include(c => c.Abilities)
             .FirstOrDefaultAsync(c => c.Id == id);
@@ -49,6 +49,9 @@ public class CardController : Controller
             CollectionNumber = card.CollectionNumber + ((mainVariant?.VariantNumber ?? card.VariantNumber) is int variantNumber ? $"-{variantNumber}" : ""),
             CardSetCode = card.CardSet?.Code ?? string.Empty,
             RegionName = card.Region?.Name ?? string.Empty,
+            PoliticalPartyName = card.PoliticalParty?.Name,
+                PoliticalPartyOrientation = card.PoliticalParty?.Orientation,
+            PoliticalPartyImageUrl = card.PoliticalParty?.ImageUrl,
             CountryName = card.Country?.Name ?? string.Empty,
             RegionColor = card.Region?.Color ?? "#FFD700",
             Abilities = card.Abilities

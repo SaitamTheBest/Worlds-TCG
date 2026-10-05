@@ -39,7 +39,7 @@ namespace web_tcg.Game.Effects
                 Math.Max(
                     0,
                     target.CurrentHealth.Value -
-                    (int)((effect.Value + (context.Source?.DamageBonus ?? 0)) * (context.Source?.DamageMultiplier ?? 1m)));
+                    Math.Max(0, (int)((effect.Value + (context.Source?.DamageBonus ?? 0)) * (context.Source?.DamageMultiplier ?? 1m))));
 
             return Task.CompletedTask;
         }

@@ -104,6 +104,8 @@
         SourceCountry = 51,
         TargetRegion = 52,
         TargetCountry = 53,
+        SourceParty = 54,
+        TargetParty = 55,
         MatchingFriendlyCharactersAtLeast = 60,
         MatchingEnemyCharactersAtLeast = 61,
         MatchingCharactersAtLeast = 62

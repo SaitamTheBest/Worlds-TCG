@@ -24,6 +24,9 @@ public static class AbilityRuleChecks
             "éditeur : effets, recharge et conditions conservés en modification");
         check(db.Entry(removed).State == EntityState.Deleted && db.Entry(stored.Effects.Single()).State == EntityState.Added,
             "éditeur : remplacement des actions suivi comme suppression et insertion EF");
+        var freeEffect = new CardAbility { UsageCost = 30 };
+        CardAbilityEditor.Write(freeEffect,new CardAbilityInputModel { Type = AbilityType.Effect, UsageCost = 30 });
+        check(freeEffect.UsageCost == 0,"éditeur : un effet ne conserve jamais un coût même si une valeur est envoyée");
         check(!CardAbilityEditor.Validate(CardType.Character,input).Any(), "éditeur : talent de soin valide");
         var forbidden = new CardAbilityInputModel { Type = AbilityType.Effect, Effects = new() { new() { Type = GameEffectType.Block, Trigger = GameEffectTrigger.Passive, Target = GameTargetType.Self } } };
         check(CardAbilityEditor.Validate(CardType.Leader,forbidden).Any() && CardAbilityEditor.Validate(CardType.Location,forbidden).Any(),

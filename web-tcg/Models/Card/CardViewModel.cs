@@ -25,6 +25,9 @@ namespace web_tcg.Models.Card
         public string RegionColor { get; set; } = "#F4C430";
 
         public string? CountryName { get; set; }
+        public string? PoliticalPartyName { get; set; }
+        public PoliticalOrientation? PoliticalPartyOrientation { get; set; }
+        public string? PoliticalPartyImageUrl { get; set; }
 
         public string CardSetCode { get; set; } = string.Empty;
 

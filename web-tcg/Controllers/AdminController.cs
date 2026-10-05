@@ -48,6 +48,7 @@ namespace web_tcg.Controllers
                 .Include(x => x.CardSet)
                 .Include(x => x.Region)
                 .Include(x => x.Country)
+            .Include(x => x.PoliticalParty)
                 .Include(x => x.Abilities).ThenInclude(a => a.Effects)
                 .Include(x => x.Abilities).ThenInclude(a => a.Conditions)
                 .Include(x => x.BaseCard)
@@ -146,7 +147,10 @@ namespace web_tcg.Controllers
                     RegionName =
                         card.Region?.Name ?? "Région",
 
-                    CountryName =
+                PoliticalPartyName = card.PoliticalParty?.Name,
+                PoliticalPartyOrientation = card.PoliticalParty?.Orientation,
+                PoliticalPartyImageUrl = card.PoliticalParty?.ImageUrl,
+                CountryName =
                         card.Country?.Name ?? string.Empty,
 
                     RegionColor =
@@ -343,6 +347,7 @@ namespace web_tcg.Controllers
 
                 RegionId = card.RegionId,
                 CountryId = card.CountryId,
+                PoliticalPartyId = card.PoliticalPartyId,
 
                 CardSetId = card.CardSetId,
 
@@ -507,6 +512,7 @@ namespace web_tcg.Controllers
 
             foreach (var ability in Input.Abilities)
             {
+                if (ability.Type == AbilityType.Effect) ability.UsageCost = 0;
                 ability.Name =
                     ability.Name?.Trim()
                     ?? string.Empty;
@@ -520,6 +526,9 @@ namespace web_tcg.Controllers
                 foreach (var error in CardAbilityEditor.Validate(Input.Type, ability))
                     ModelState.AddModelError(nameof(Input.Abilities), error);
 
+            var abilityPartyIds = Input.Abilities.SelectMany(a => a.Effects.SelectMany(e => e.PartyIds.Concat(e.CountPartyIds)).Concat(a.Conditions.SelectMany(c => c.PartyIds))).Distinct().ToList();
+            if (abilityPartyIds.Count > 0 && await _context.PoliticalParties.CountAsync(p => abilityPartyIds.Contains(p.Id)) != abilityPartyIds.Count)
+                ModelState.AddModelError(nameof(Input.Abilities), "Un parti sélectionné dans les capacités n’existe pas.");
             var abilityRegionIds = Input.Abilities.SelectMany(a => a.Effects.SelectMany(e => e.RegionIds.Concat(e.CountRegionIds)).Concat(a.Conditions.SelectMany(c => c.RegionIds))).Distinct().ToList();
             var abilityCountryIds = Input.Abilities.SelectMany(a => a.Effects.SelectMany(e => e.CountryIds.Concat(e.CountCountryIds)).Concat(a.Conditions.SelectMany(c => c.CountryIds))).Distinct().ToList();
             if (abilityRegionIds.Count > 0 && await _context.Regions.CountAsync(r => abilityRegionIds.Contains(r.Id)) != abilityRegionIds.Count)
@@ -562,6 +571,15 @@ namespace web_tcg.Controllers
             // ============================================================
             // PAYS
             // ============================================================
+
+            if (Input.PoliticalPartyId.HasValue)
+            {
+                var party = await _context.PoliticalParties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == Input.PoliticalPartyId);
+                if (party == null) ModelState.AddModelError(nameof(Input.PoliticalPartyId), "Ce parti n'existe pas.");
+                else if (Input.CountryId.HasValue && Input.CountryId != party.CountryId)
+                    ModelState.AddModelError(nameof(Input.PoliticalPartyId), "Le parti doit appartenir au pays de la carte.");
+                else Input.CountryId = party.CountryId;
+            }
 
             if (Input.CountryId.HasValue)
             {
@@ -707,6 +725,7 @@ namespace web_tcg.Controllers
 
                         RegionId = Input.RegionId,
                         CountryId = Input.CountryId,
+                        PoliticalPartyId = Input.PoliticalPartyId,
 
                         CardSetId = Input.CardSetId,
 
@@ -760,6 +779,7 @@ namespace web_tcg.Controllers
 
                                 CountryId =
                                     card.CountryId,
+                                PoliticalPartyId = card.PoliticalPartyId,
 
                                 CardSetId =
                                     card.CardSetId,
@@ -875,6 +895,7 @@ namespace web_tcg.Controllers
 
                     card.CountryId =
                         Input.CountryId;
+                    card.PoliticalPartyId = Input.PoliticalPartyId;
 
                     card.CardSetId =
                         Input.CardSetId;
@@ -1696,6 +1717,9 @@ namespace web_tcg.Controllers
                 "Id",
                 "Name");
 
+            ViewBag.PoliticalParties = await _context.PoliticalParties.AsNoTracking().Include(p => p.Country)
+            .OrderBy(p => p.Name).ToListAsync();
+
             ViewBag.CardTypes =
                 new SelectList(GetCardTypeOptions(), "Value", "Text");
 
@@ -1818,11 +1842,14 @@ namespace web_tcg.Controllers
         /// Retourne un aperçu HTML de la carte basé sur les données du formulaire.
         /// </summary>
         [HttpPost("PreviewCard")]
-        public IActionResult PreviewCard(
+        public async Task<IActionResult> PreviewCard(
             [FromBody] CardPreviewViewModel previewData)
         {
             try
             {
+                var previewParty = previewData.PoliticalPartyId.HasValue
+                    ? await _context.PoliticalParties.AsNoTracking().FirstOrDefaultAsync(p => p.Id == previewData.PoliticalPartyId)
+                    : null;
                 var cardViewModel = new CardViewModel
                 {
                     Name = previewData.Name,
@@ -1854,6 +1881,9 @@ namespace web_tcg.Controllers
                             ? "Région"
                             : previewData.RegionName,
 
+                    PoliticalPartyName = previewParty?.Name,
+                    PoliticalPartyOrientation = previewParty?.Orientation,
+                    PoliticalPartyImageUrl = previewParty?.ImageUrl,
                     CountryName =
                         previewData.CountryName ?? string.Empty,
 
@@ -2583,6 +2613,12 @@ namespace web_tcg.Controllers
             var hasCards = await _context.Cards
                 .AnyAsync(c => c.CountryId == id);
 
+            if (await _context.PoliticalParties.AnyAsync(p => p.CountryId == id))
+            {
+                TempData["ErrorMessage"] = "Impossible de supprimer ce pays : des partis politiques lui sont associés.";
+                return RedirectToAction(nameof(Countries));
+            }
+
             if (hasCards)
             {
                 TempData["ErrorMessage"] =
@@ -2805,6 +2841,7 @@ namespace web_tcg.Controllers
 
             variant.CountryId =
                 baseCard.CountryId;
+            variant.PoliticalPartyId = baseCard.PoliticalPartyId;
 
             variant.CardSetId =
                 baseCard.CardSetId;

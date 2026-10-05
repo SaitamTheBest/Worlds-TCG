@@ -189,6 +189,7 @@ namespace web_tcg.Services
                     GameplayCardId = gameplayCard.Id,
                     RegionId = gameplayCard.RegionId,
                     CountryId = gameplayCard.CountryId,
+                    PoliticalPartyId = gameplayCard.PoliticalPartyId,
                     OwnerUserId = userId,
                     ControllerUserId = userId,
                     Name = printedCard.Name,

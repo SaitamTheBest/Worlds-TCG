@@ -1,0 +1,39 @@
+@model web_tcg.Models.Admin.PoliticalPartyViewModel
+@using web_tcg.Data.Enums
+@{
+    ViewData["Title"] = Model.Id.HasValue ? "Modifier un parti politique" : "Créer un parti politique";
+    Layout = "_Layout";
+    var actionUrl = Model.Id.HasValue ? Url.Action("Save", "PoliticalParties", new { id = Model.Id }) : Url.Action("Save", "PoliticalParties");
+}
+<link rel="stylesheet" href="~/css/admin-political-parties.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/card-image-upload.css" asp-append-version="true" />
+<div class="party-admin">
+    <a asp-action="Index" class="party-back">← Partis politiques</a>
+    <header><div><span class="party-eyebrow">ADMINISTRATION</span><h1>@ViewData["Title"]</h1><p>Définissez l’identité et l’origine du parti affiché sur les cartes.</p></div></header>
+    <form action="@actionUrl" method="post" data-card-image-upload-url="/Admin/PoliticalParties/UploadImage" class="party-form">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="party-error" role="alert"></div>
+        <div class="party-fields">
+            <label>Nom du parti<input asp-for="Name" maxlength="150" placeholder="Nom du parti" required /></label>
+            <label>Pays<select asp-for="CountryId" asp-items="ViewBag.Countries" required><option value="">Sélectionnez un pays</option></select></label>
+            <label>Orientation politique<select asp-for="Orientation" asp-items="Html.GetEnumSelectList<PoliticalOrientation>()"></select></label>
+        </div>
+        <section class="party-logo-editor">
+            <h2>Logo du parti</h2><p>Un PNG ou WEBP transparent permet de conserver la forme de votre logo.</p>
+            <div class="card-image-uploader" data-card-image-uploader>
+                <input asp-for="ImageUrl" type="hidden" class="card-image-path" />
+                <input type="file" class="card-image-file" accept="image/png,image/jpeg,image/webp" tabindex="-1" />
+                <div class="card-image-preview @(string.IsNullOrWhiteSpace(Model.ImageUrl) ? "is-empty" : "")">
+                    <img src="@Model.ImageUrl" class="card-image-preview-img" alt="Aperçu du logo" hidden="@string.IsNullOrWhiteSpace(Model.ImageUrl)" />
+                    <div class="card-image-preview-empty"><i data-lucide="image"></i><span>Aucun logo</span></div>
+                </div>
+                <button type="button" class="card-image-dropzone" data-card-image-dropzone>
+                    <span class="card-image-dropzone-copy"><strong>Choisir ou déposer un logo</strong><small>PNG · JPG · WEBP · 8 Mo maximum</small></span>
+                </button>
+                <div class="card-image-upload-status" data-card-image-status role="status" aria-live="polite"></div>
+            </div>
+        </section>
+        <footer><a asp-action="Index" class="party-button">Annuler</a><button type="submit" class="party-button party-primary">Enregistrer le parti</button></footer>
+    </form>
+</div>
+@section Scripts { <script src="~/js/card-image-upload.js" asp-append-version="true"></script> }

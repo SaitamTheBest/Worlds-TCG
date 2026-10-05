@@ -14,11 +14,12 @@ public static class CardAbilityEditor
         UsageCost = ability.UsageCost, DisplayOrder = ability.DisplayOrder, CooldownTurns = ability.CooldownTurns,
         Effects = ability.Effects.OrderBy(e => e.DisplayOrder).Select(ReadEffect).ToList(),
         Conditions = ability.Conditions.OrderBy(c => c.DisplayOrder).Select(c => new CardConditionInputModel
-        { Type = c.Type, Value = c.Value, Negate = c.Negate, RegionIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"regions"), CountryIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"countries") }).ToList()
+        { Type = c.Type, Value = c.Value, Negate = c.Negate, RegionIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"regions"), CountryIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"countries"), PartyIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"parties") }).ToList()
     };
 
     public static void Write(CardAbility ability, CardAbilityInputModel input)
     {
+        ability.UsageCost = input.Type == AbilityType.Effect ? 0 : input.UsageCost;
         ability.CooldownTurns = input.Type == AbilityType.Trait ? input.CooldownTurns : 0;
         ability.Effects.Clear();
         foreach (var (effect, index) in input.Effects.Select((e, i) => (e, i)))
@@ -31,15 +32,15 @@ public static class CardAbilityEditor
         foreach (var (condition, index) in input.Conditions.Select((c, i) => (c, i)))
             ability.Conditions.Add(new CardAbilityCondition
             { Type = condition.Type, Value = condition.Value, Negate = condition.Negate, DisplayOrder = index,
-                ParametersJson = JsonSerializer.Serialize(new Dictionary<string,string> { ["regions"] = string.Join(',',condition.RegionIds.Distinct()), ["countries"] = string.Join(',',condition.CountryIds.Distinct()) }) });
+                ParametersJson = JsonSerializer.Serialize(new Dictionary<string,string> { ["regions"] = string.Join(',',condition.RegionIds.Distinct()), ["countries"] = string.Join(',',condition.CountryIds.Distinct()), ["parties"] = string.Join(',',condition.PartyIds.Distinct()) }) });
     }
 
     private static CardEffectInputModel ReadEffect(CardAbilityEffect e)
     {
         var parameters = GameGeography.Parse(e.ParametersJson);
         return new() { Type = e.Type, Trigger = e.Trigger, Target = e.Target, Value = e.Value, DurationTurns = e.DurationTurns, ParametersJson = e.ParametersJson,
-            RegionIds = GameGeography.Ids(parameters,"regions"), CountryIds = GameGeography.Ids(parameters,"countries"),
-            CountRegionIds = GameGeography.Ids(parameters,"countregions"), CountCountryIds = GameGeography.Ids(parameters,"countcountries"),
+            RegionIds = GameGeography.Ids(parameters,"regions"), CountryIds = GameGeography.Ids(parameters,"countries"), PartyIds = GameGeography.Ids(parameters,"parties"),
+            CountRegionIds = GameGeography.Ids(parameters,"countregions"), CountCountryIds = GameGeography.Ids(parameters,"countcountries"), CountPartyIds = GameGeography.Ids(parameters,"countparties"),
             ScaleByMatchingCharacters = parameters.GetValueOrDefault("scaleByCount") == "true", CountScope = int.TryParse(parameters.GetValueOrDefault("countScope"),out var scope) ? scope : 1 };
     }
     private static string EffectParameters(CardEffectInputModel effect)
@@ -47,6 +48,7 @@ public static class CardAbilityEditor
         var parameters = GameGeography.Parse(effect.ParametersJson);
         parameters["regions"] = string.Join(',',effect.RegionIds.Distinct()); parameters["countries"] = string.Join(',',effect.CountryIds.Distinct());
         parameters["countregions"] = string.Join(',',effect.CountRegionIds.Distinct()); parameters["countcountries"] = string.Join(',',effect.CountCountryIds.Distinct());
+        parameters["parties"] = string.Join(',',effect.PartyIds.Distinct()); parameters["countparties"] = string.Join(',',effect.CountPartyIds.Distinct());
         parameters["scaleByCount"] = effect.ScaleByMatchingCharacters ? "true" : "false"; parameters["countScope"] = effect.CountScope.ToString();
         return JsonSerializer.Serialize(parameters);
     }
@@ -64,6 +66,8 @@ public static class CardAbilityEditor
             yield return "Les lieux et décisions utilisent des effets automatiques, pas des compétences ou talents.";
         foreach (var e in ability.Effects)
         {
+            if (e.Value < 0 && e.Type is not (GameEffectType.HealthBonus or GameEffectType.DamageBonus))
+                yield return "Seuls les bonus/malus de PV et de dégâts acceptent une valeur négative.";
             if (e.ScaleByMatchingCharacters && e.Type is not (GameEffectType.HealthBonus or GameEffectType.DamageBonus))
                 yield return "Le calcul par personnage s'applique aux bonus de PV et aux bonus de dégâts fixes.";
             if (ability.Type == AbilityType.Skill && e.Trigger != GameEffectTrigger.OnSkill ||
@@ -116,10 +120,11 @@ public static class CardAbilityEditor
         }
         foreach (var condition in ability.Conditions)
         {
+            if (condition.Type is GameConditionType.SourceParty or GameConditionType.TargetParty && condition.PartyIds.Count == 0) yield return "Choisissez au moins un parti pour cette condition.";
             if (condition.Type is GameConditionType.SourceRegion or GameConditionType.TargetRegion && condition.RegionIds.Count == 0) yield return "Choisissez au moins une région pour cette condition.";
             if (condition.Type is GameConditionType.SourceCountry or GameConditionType.TargetCountry && condition.CountryIds.Count == 0) yield return "Choisissez au moins un pays pour cette condition.";
         }
-        var geographicIds = ability.Effects.SelectMany(e => e.RegionIds.Concat(e.CountryIds).Concat(e.CountRegionIds).Concat(e.CountCountryIds)).Concat(ability.Conditions.SelectMany(c => c.RegionIds.Concat(c.CountryIds))).ToList();
+        var geographicIds = ability.Effects.SelectMany(e => e.RegionIds.Concat(e.CountryIds).Concat(e.CountRegionIds).Concat(e.CountCountryIds).Concat(e.PartyIds).Concat(e.CountPartyIds)).Concat(ability.Conditions.SelectMany(c => c.RegionIds.Concat(c.CountryIds).Concat(c.PartyIds))).ToList();
         if (geographicIds.Count > 256 || geographicIds.Any(id => id <= 0)) yield return "Sélection géographique invalide ou trop grande.";
         var chosenTargets = ability.Effects.Where(e => e.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyLeader or GameTargetType.EnemyCharacterOrLeader).Select(e => e.Target).ToList();
         if (chosenTargets.Count > 0 && !new[] { GameTargetType.FriendlyCharacter, GameTargetType.FriendlyLeader, GameTargetType.EnemyCharacter, GameTargetType.EnemyLeader }

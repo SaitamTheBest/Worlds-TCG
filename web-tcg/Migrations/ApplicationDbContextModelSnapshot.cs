@@ -334,6 +334,9 @@ namespace web_tcg.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<int?>("PoliticalPartyId")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("Rarity")
                         .HasColumnType("integer");
 
@@ -357,6 +360,8 @@ namespace web_tcg.Migrations
                         .HasFilter("\"CollectionNumber\" = 0");
 
                     b.HasIndex("CountryId");
+
+                    b.HasIndex("PoliticalPartyId");
 
                     b.HasIndex("RegionId");
 
@@ -946,6 +951,38 @@ namespace web_tcg.Migrations
                     b.ToTable("PoliticalDecisionCards");
                 });
 
+            modelBuilder.Entity("web_tcg.Data.Entities.PoliticalParty", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CountryId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int>("Orientation")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CountryId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("PoliticalParties");
+                });
+
             modelBuilder.Entity("web_tcg.Data.Entities.Region", b =>
                 {
                     b.Property<int>("Id")
@@ -1159,6 +1196,11 @@ namespace web_tcg.Migrations
                         .WithMany("Cards")
                         .HasForeignKey("CountryId");
 
+                    b.HasOne("web_tcg.Data.Entities.PoliticalParty", "PoliticalParty")
+                        .WithMany()
+                        .HasForeignKey("PoliticalPartyId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("web_tcg.Data.Entities.Region", "Region")
                         .WithMany("Cards")
                         .HasForeignKey("RegionId")
@@ -1170,6 +1212,8 @@ namespace web_tcg.Migrations
                     b.Navigation("CardSet");
 
                     b.Navigation("Country");
+
+                    b.Navigation("PoliticalParty");
 
                     b.Navigation("Region");
                 });
@@ -1376,6 +1420,17 @@ namespace web_tcg.Migrations
                         .IsRequired();
 
                     b.Navigation("Card");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.PoliticalParty", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.Country", "Country")
+                        .WithMany()
+                        .HasForeignKey("CountryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Country");
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.UserCardCollection", b =>

@@ -1,4 +1,4 @@
-﻿/* =========================================================
+/* =========================================================
    ADMIN CREATE CARD
    Premium TCG / Dark / Gold
    ========================================================= */
@@ -1294,3 +1294,5 @@
 .ability-geography-options label { display: flex; gap: 8px; align-items: center; color: #d4deed; font-size: .8rem; }
 .ability-geography-options input { width: 17px; height: 17px; accent-color: #f4c430; }
 @media (max-width:650px) { .ability-geography-panel { grid-template-columns: 1fr; } }
+
+.ability-item .create-field[hidden] { display:none; }

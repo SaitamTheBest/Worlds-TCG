@@ -89,7 +89,7 @@
         if (card.isStealthed) states.push("Furtif");
         if (card.damageMultiplier && card.damageMultiplier !== 1) states.push(`Dégâts ×${card.damageMultiplier}`);
         if (card.extraSkillUses > 0) states.push(`+${card.extraSkillUses} attaque(s)`);
-        if (card.damageBonus > 0) states.push(`Dégâts +${card.damageBonus}`);
+        if (card.damageBonus) states.push(`Dégâts ${card.damageBonus > 0 ? "+" : ""}${card.damageBonus}`);
         return states;
     }
 

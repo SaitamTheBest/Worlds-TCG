@@ -13,7 +13,8 @@ public sealed class CardPresentationService(ApplicationDbContext context)
         var ids = cardIds.Distinct().ToList();
         if (ids.Count == 0) return new List<CardViewModel>();
         var cards = await context.Cards.AsNoTracking().Where(c => ids.Contains(c.Id))
-            .Include(c => c.Region).Include(c => c.Country).Include(c => c.CardSet)
+            .Include(c => c.Region).Include(c => c.Country)
+            .Include(c => c.PoliticalParty).Include(c => c.CardSet)
             .Include(c => c.Abilities).Include(c => c.BaseCard).ThenInclude(c => c!.Abilities)
             .ToListAsync();
         var gameplayIds = cards.Select(c => c.BaseCardId ?? c.Id).Distinct().ToList();
@@ -31,6 +32,9 @@ public sealed class CardPresentationService(ApplicationDbContext context)
                 ImageUrl = card.ImageUrl ?? string.Empty,
                 CollectionNumber = card.CollectionNumber + (card.VariantNumber.HasValue ? $"-{card.VariantNumber}" : ""),
                 RegionName = card.Region?.Name ?? "Région", RegionColor = card.Region?.Color ?? "#F4C430",
+                PoliticalPartyName = card.PoliticalParty?.Name,
+                PoliticalPartyOrientation = card.PoliticalParty?.Orientation,
+                PoliticalPartyImageUrl = card.PoliticalParty?.ImageUrl,
                 CountryName = card.Country?.Name, CardSetCode = card.CardSet?.Code ?? string.Empty,
                 Abilities = gameplay.Abilities.OrderBy(a => a.DisplayOrder).Select(a => new CardAbilityViewModel
                 {

@@ -19,6 +19,7 @@ namespace web_tcg.Data
         public DbSet<Region> Regions { get; set; }
 
         public DbSet<Country> Countries { get; set; }
+        public DbSet<PoliticalParty> PoliticalParties { get; set; }
 
         public DbSet<CardAbility> CardAbilities { get; set; }
 
@@ -44,6 +45,11 @@ namespace web_tcg.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<PoliticalParty>().HasOne(p => p.Country).WithMany()
+                .HasForeignKey(p => p.CountryId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<PoliticalParty>().HasIndex(p => new { p.CountryId, p.Name }).IsUnique();
+            modelBuilder.Entity<Card>().HasOne(c => c.PoliticalParty).WithMany()
+                .HasForeignKey(c => c.PoliticalPartyId).OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<MarketAuction>(entity =>
             {

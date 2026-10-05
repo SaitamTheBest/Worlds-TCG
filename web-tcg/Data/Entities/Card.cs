@@ -35,6 +35,8 @@ namespace web_tcg.Data.Entities
         public int? CountryId { get; set; }
 
         public Country? Country { get; set; }
+        public int? PoliticalPartyId { get; set; }
+        public PoliticalParty? PoliticalParty { get; set; }
 
         public int CardSetId { get; set; }
 

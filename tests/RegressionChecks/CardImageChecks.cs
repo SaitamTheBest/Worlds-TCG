@@ -48,6 +48,14 @@ public static class CardImageChecks
             check(boosterPath?.StartsWith("/uploads/cardsets/") == true, "extensions : image enregistrée dans le dossier dédié");
             var boosterDiskPath = Path.Combine(environment.WebRootPath,boosterPath!.TrimStart('/').Replace('/',Path.DirectorySeparatorChar));
             check(File.Exists(boosterDiskPath) && (await File.ReadAllBytesAsync(boosterDiskPath)).SequenceEqual(bytes), "extensions : fichier image copié intégralement");
+            using var partyStream = new MemoryStream(bytes);
+            var partyResult = await controller.UploadPoliticalParty(new FormFile(partyStream,0,bytes.Length,"file","logo.png"),CancellationToken.None) as OkObjectResult;
+            var partyPath = partyResult?.Value?.GetType().GetProperty("path")?.GetValue(partyResult.Value) as string;
+            check(partyPath?.StartsWith("/uploads/parties/") == true && File.ReadAllBytes(Path.Combine(environment.WebRootPath,partyPath.TrimStart('/'))).SequenceEqual(bytes),
+                "partis : logo PNG enregistré sans modifier ses pixels ou sa transparence");
+            var partyModel = new PoliticalPartyViewModel { ImageUrl = partyPath! };
+            check(Validator.TryValidateProperty(partyModel.ImageUrl,new ValidationContext(partyModel) { MemberName = nameof(partyModel.ImageUrl) },new List<ValidationResult>()),
+                "partis : le formulaire accepte le chemin du logo téléversé");
             var set = new CreateCardSetViewModel { BoosterImageUrl=boosterPath };
             bool ValidBoosterPath() => Validator.TryValidateProperty(set.BoosterImageUrl,new ValidationContext(set) { MemberName=nameof(set.BoosterImageUrl) },new List<ValidationResult>());
             check(ValidBoosterPath(), "extensions : le chemin interne retourné est accepté par le formulaire");

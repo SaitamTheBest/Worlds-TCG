@@ -162,7 +162,7 @@
                                 <span>@ability.Name</span>
                             </div>
 
-                            @if (ability.UsageCost > 0)
+                            @if (ability.Type == AbilityType.Skill || ability.UsageCost > 0)
                             {
                                 <span class="tcg-card-ability-cost">@ability.UsageCost</span>
                             }
@@ -196,6 +196,7 @@
     </div>
 
     <div class="tcg-card-bottom-meta">
+        @await Html.PartialAsync("~/Views/Shared/Components/Card/_PoliticalParty.cshtml", Model)
         <span class="tcg-card-number">@cardCode</span>
 
         @if (!string.IsNullOrEmpty(rarityName))

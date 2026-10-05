@@ -478,6 +478,20 @@
                         <!-- Country -->
 
                         <div class="create-field">
+                            <label for="PoliticalPartyId">Parti politique <em>OPTIONNEL</em></label>
+                            <div class="create-select-wrapper">
+                                <i data-lucide="landmark"></i>
+                                <select asp-for="PoliticalPartyId" id="PoliticalPartyId">
+                                    <option value="">Aucun parti</option>
+                                    @foreach (var party in (ViewBag.PoliticalParties as IEnumerable<web_tcg.Data.Entities.PoliticalParty> ?? Array.Empty<web_tcg.Data.Entities.PoliticalParty>()))
+                                    {
+                                        <option value="@party.Id" data-country-id="@party.CountryId">@party.Name · @party.Country.Name</option>
+                                    }
+                                </select>
+                            </div>
+                            <span asp-validation-for="PoliticalPartyId"></span>
+                        </div>
+                        <div class="create-field">
                             <label for="CountryId">
                                 Pays
                                 <em>OPTIONNEL</em>
@@ -1115,7 +1129,8 @@
     <script type="application/json" id="abilityRulesData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Abilities, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }))</script>
     <script type="application/json" id="abilityGeographyData">@Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
         regions = regions.Where(x => int.TryParse(x.Value, out _)).Select(x => new { id = int.Parse(x.Value), name = x.Text }),
-        countries = countries.Where(x => int.TryParse(x.Value, out _)).Select(x => new { id = int.Parse(x.Value), name = x.Text })
+        countries = countries.Where(x => int.TryParse(x.Value, out _)).Select(x => new { id = int.Parse(x.Value), name = x.Text }),
+        parties = (ViewBag.PoliticalParties as IEnumerable<web_tcg.Data.Entities.PoliticalParty> ?? Array.Empty<web_tcg.Data.Entities.PoliticalParty>()).Select(p => new { id = p.Id, name = p.Name + " · " + p.Country.Name })
     }))</script>
     <script src="~/js/admin-ability-editor.js" asp-append-version="true"></script>
 
@@ -1801,6 +1816,7 @@
                     regionOption?.textContent?.trim() ||
                     "Région",
 
+                politicalPartyId: Number(form.querySelector("#PoliticalPartyId")?.value) || null,
                 countryName:
                     countryOption?.value
                         ? countryOption.textContent.trim()
@@ -1994,3 +2010,8 @@
 
     </script>
 }
+
+<script src="~/js/card-party-select.js" asp-append-version="true"></script>
+
+<link rel="stylesheet" href="~/css/searchable-select.css" asp-append-version="true" />
+<script src="~/js/searchable-select.js" asp-append-version="true"></script>

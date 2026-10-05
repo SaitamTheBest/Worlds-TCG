@@ -43,6 +43,12 @@ namespace web_tcg.Controllers
         public Task<IActionResult> UploadCardSet(IFormFile? file, CancellationToken cancellationToken)
             => SaveImageAsync(file, cancellationToken, "cardsets");
 
+        [HttpPost("/Admin/PoliticalParties/UploadImage")]
+        [ValidateAntiForgeryToken]
+        [RequestSizeLimit(MaxFileSize + 1024 * 1024)]
+        public Task<IActionResult> UploadPoliticalParty(IFormFile? file, CancellationToken cancellationToken)
+            => SaveImageAsync(file, cancellationToken, "parties");
+
         private async Task<IActionResult> SaveImageAsync(
             IFormFile? file, CancellationToken cancellationToken, string folder)
         {
