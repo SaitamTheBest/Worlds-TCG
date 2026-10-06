@@ -193,6 +193,7 @@ await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
 await PartyRuleChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
+CardPreviewChecks.Run(Check);
 BoosterDropChecks.Run(Check);
 var releaseNow = new DateTime(2026, 10, 5, 12, 0, 0, DateTimeKind.Utc);
 var releaseSets = new[]
