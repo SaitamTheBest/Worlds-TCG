@@ -180,9 +180,49 @@ test('variantes utilisent le composant Card et le vrai ArtType', () => {
     assert.match(html, /data-card-component="11"/); assert.match(html, /Alternate Art/); assert.doesNotMatch(html, /<img/);
 });
 
+function cardComponentDocument() {
+    const baseURI = 'https://worlds-tcg.test/';
+    class Resource extends Element {
+        constructor(tag, attribute, value) { super(); this.tag = tag; this.attributes = { [attribute]: value }; }
+        getAttribute(name) { return this.attributes[name]; }
+        get href() { return new URL(this.attributes.href, baseURI).href; }
+        set href(value) { this.attributes.href = value; }
+        get src() { return new URL(this.attributes.src, baseURI).href; }
+        set src(value) { this.attributes.src = value; }
+        cloneNode() { return new Resource(this.tag, ...Object.entries(this.attributes)[0]); }
+    }
+    const templates = new Map();
+    const head = new Element();
+    head.querySelectorAll = () => head.children.filter(node => node.tag === 'link');
+    const document = {
+        baseURI, head, get scripts() { return head.children.filter(node => node.tag === 'script'); },
+        getElementById: id => templates.get(id) || null,
+        createElement(tag) {
+            if (tag === 'script') return new Resource('script', 'src', '');
+            assert.equal(tag, 'template');
+            return {
+                set innerHTML(html) {
+                    const cardHtml = html.match(/<div class="tcg-card">.*?<\/div>/s)?.[0];
+                    const resources = [...html.matchAll(/<(link|script)\b[^>]*(href|src)="([^"]+)"/g)]
+                        .map(match => new Resource(match[1], match[2], match[3]));
+                    this.content = {
+                        querySelectorAll: selector => resources.filter(node => node.tag === (selector.startsWith('link') ? 'link' : 'script')),
+                        querySelector: selector => {
+                            assert.equal(selector, '.tcg-card');
+                            return cardHtml ? { cloneNode: () => ({ outerHTML: cardHtml }) } : null;
+                        }
+                    };
+                }
+            };
+        }
+    };
+    return { document, templates };
+}
+
 test('composants : cache commun aux copies, reprise après erreur', async () => {
     let requests = 0, fail = true;
-    const context = { window: {}, document: { getElementById: () => null }, fetch: async () => {
+    const { document } = cardComponentDocument();
+    const context = { window: {}, document, fetch: async () => {
         requests++; return { ok: !fail, text: async () => '<div class="tcg-card">Carte</div>' };
     } };
     vm.runInNewContext(script('card-components.js'), context);
@@ -192,7 +232,36 @@ test('composants : cache commun aux copies, reprise après erreur', async () => 
     context.window.worldsCardComponents.hydrate(root); await tick();
     assert.equal(requests, 1); assert.equal(first.textContent, 'Carte indisponible');
     fail = false; context.window.worldsCardComponents.hydrate(root); await tick();
-    assert.equal(requests, 2); assert.match(first.innerHTML, /tcg-card/); assert.equal(first.innerHTML, second.innerHTML);
+    assert.equal(requests, 2); assert.match(first.children[0].outerHTML, /tcg-card/);
+    assert.equal(first.children[0].outerHTML, second.children[0].outerHTML);
+    assert.notEqual(first.children[0], second.children[0]);
+});
+
+test('composants : ressources persistantes uniques et cartes seules après chaque rendu', async () => {
+    const { document, templates } = cardComponentDocument();
+    const html = '<link rel="stylesheet" href="/css/card.css"><script src="/js/card-layout.js"></script><div class="tcg-card">Carte</div>';
+    const template = document.createElement('template'); template.innerHTML = html;
+    templates.set('card-template-42', template);
+    let requests = 0;
+    const context = { window: {}, document, URL, fetch: async () => {
+        requests++; return { ok: true, text: async () => html };
+    } };
+    vm.runInNewContext(script('card-components.js'), context);
+    const first = new Element(); first.dataset.cardComponent = '42';
+    const fetched = new Element(); fetched.dataset.cardComponent = '43';
+    const root = { querySelectorAll: () => [first, fetched] };
+    for (let render = 0; render < 3; render++) {
+        first.replaceChildren(); fetched.replaceChildren();
+        context.window.worldsCardComponents.hydrate(root); await tick();
+        assert.equal(document.head.children.length, 2);
+        assert.equal(document.head.children[0].href, 'https://worlds-tcg.test/css/card.css');
+        assert.equal(document.scripts[0].src, 'https://worlds-tcg.test/js/card-layout.js');
+        for (const card of [first, fetched]) {
+            assert.equal(card.children.length, 1);
+            assert.equal(card.children[0].outerHTML, '<div class="tcg-card">Carte</div>');
+        }
+    }
+    assert.equal(requests, 1);
 });
 
 function game(motion = false) {
