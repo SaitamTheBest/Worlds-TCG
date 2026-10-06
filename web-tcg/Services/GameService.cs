@@ -196,7 +196,8 @@ namespace web_tcg.Services
             Guid cardInstanceId,
             int? slot,
             CancellationToken cancellationToken = default,
-            Guid? targetInstanceId = null)
+            Guid? targetInstanceId = null,
+            IReadOnlyList<GameHandCostSelection>? handCosts = null)
         {
             return ExecuteCommandAsync(
                 matchId,
@@ -208,8 +209,8 @@ namespace web_tcg.Services
                         cardInstanceId,
                         slot,
                         cancellationToken,
-                        targetInstanceId),
-                cancellationToken);
+                        targetInstanceId, handCosts),
+                cancellationToken, cardInstanceId, null, targetInstanceId, slot);
         }
 
         public Task BlockAsync(
@@ -227,7 +228,7 @@ namespace web_tcg.Services
                         userId,
                         sourceInstanceId,
                         cancellationToken),
-                cancellationToken);
+                cancellationToken, sourceInstanceId);
         }
 
         public Task UseAbilityAsync(
@@ -236,7 +237,8 @@ namespace web_tcg.Services
             Guid sourceInstanceId,
             int abilityId,
             Guid? targetInstanceId,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            IReadOnlyList<GameHandCostSelection>? handCosts = null)
         {
             return ExecuteCommandAsync(
                 matchId,
@@ -248,8 +250,22 @@ namespace web_tcg.Services
                         sourceInstanceId,
                         abilityId,
                         targetInstanceId,
-                        cancellationToken),
-                cancellationToken);
+                        cancellationToken, handCosts),
+                cancellationToken, sourceInstanceId, abilityId, targetInstanceId);
+        }
+
+        public async Task PreviewActionAsync(Guid matchId, string userId, Guid? sourceId, int? abilityId, Guid? targetId, int? slot)
+        {
+            await EnsurePlayerInMatchAsync(matchId, userId);
+            var semaphore = _locks.Get(matchId);
+            await semaphore.WaitAsync();
+            try
+            {
+                var state = await _repository.LoadAsync(matchId) ?? throw new GameRuleException("Partie introuvable.");
+                var preview = GameActionPreviewBuilder.Create(state, userId, sourceId, abilityId, targetId, slot);
+                await _hub.Clients.Group($"game:{matchId}").SendAsync("GameActionPreviewUpdated", preview);
+            }
+            finally { semaphore.Release(); }
         }
 
         public Task EndTurnAsync(
@@ -455,10 +471,20 @@ namespace web_tcg.Services
                             state.LastActionAtUtc = DateTime.UtcNow;
                             await _repository.SaveAsync(state, cancellationToken);
                             await _repository.AddLogsAsync(state.MatchId, actionLogs, cancellationToken);
+                            if(state.ActionReveals.Count>0) {
+                                await _hub.Clients.Group($"game:{state.MatchId}").SendAsync("GameCardsRevealed",new { userId=activePlayerId,
+                                    cards=state.ActionReveals.Select(c=>new { c.CardId,c.Name }).ToArray() },cancellationToken);
+                                state.ActionReveals.Clear();
+                            }
                             foreach (var log in actionLogs)
                                 await _hub.Clients.Group($"game:{state.MatchId}").SendAsync("GameLogAdded", new { message = log, createdAt = DateTime.UtcNow }, cancellationToken);
                             await BroadcastStateAsync(state, cancellationToken);
                             if (state.Status == GameMatchStatus.InProgress) await Task.Delay(750, cancellationToken);
+                        } : null,
+                        progressive ? async preview =>
+                        {
+                            await _hub.Clients.Group($"game:{state.MatchId}").SendAsync("GameActionPreviewUpdated", preview, cancellationToken);
+                            if (!preview.Confirmed) await Task.Delay(600, cancellationToken);
                         } : null);
 
                 if (!progressive) logs.AddRange(aiLogs);
@@ -469,7 +495,8 @@ namespace web_tcg.Services
             Guid matchId,
             string userId,
             Func<GameState, Task<List<string>>> command,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            Guid? sourceId = null, int? abilityId = null, Guid? targetId = null, int? slot = null)
         {
             var semaphore =
                 _locks.Get(matchId);
@@ -521,6 +548,12 @@ namespace web_tcg.Services
                     state,
                     now);
 
+                var source = sourceId.HasValue ? state.FindCard(sourceId.Value) : null;
+                var ability = source?.Abilities.FirstOrDefault(a => a.Id == abilityId);
+                var actionLabel = source == null ? null : ability != null ? $"{source.Name} · {ability.Name}" :
+                    source.Zone == GameCardZone.Hand ? $"Joue {source.Name}" : $"{source.Name} passe en blocage";
+                var isAttack = ability?.Effects.Any(e => e.Type == GameEffectType.Damage && e.Trigger ==
+                    (ability.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent)) == true;
                 var logs =
                     await command(state);
 
@@ -562,6 +595,20 @@ namespace web_tcg.Services
                     }
                 }
 
+                if (state.ActionReveals.Count > 0) {
+                    await _hub.Clients.Group($"game:{matchId}").SendAsync("GameCardsRevealed", new {
+                        userId, cards = state.ActionReveals.Select(c=>new { c.CardId, c.Name }).ToArray()
+                    }, cancellationToken);
+                    state.ActionReveals.Clear();
+                }
+
+                if (actionLabel != null)
+                {
+                    await _hub.Clients.Group($"game:{matchId}").SendAsync("GameActionPreviewUpdated",
+                        new GameActionPreviewDto { UserId = userId, Version = state.Version, SourceId = sourceId,
+                            TargetId = targetId, Slot = slot, Label = actionLabel, IsAttack = isAttack, Confirmed = true }, cancellationToken);
+                    await BroadcastStateAsync(state, cancellationToken);
+                }
                 await RunAiTurnsIfNeededAsync(state, logs, cancellationToken, progressive: true);
 
                 if (state.Status ==

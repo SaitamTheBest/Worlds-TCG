@@ -102,9 +102,11 @@
                 </div>
             </div>
             <div class="game-center-actions">
+                <span id="gameOpponentAction" class="game-opponent-action" role="status" aria-live="polite" hidden></span>
+                <div id="gameOpponentActionLine" class="game-opponent-action-line" aria-hidden="true" hidden></div>
 
             <div class="game-action-feedback">
-                <span id="gameActionStatus" role="status" aria-live="polite">Sélectionnez une carte de votre main pour la jouer.</span>
+                <span id="gameActionStatus" role="status" aria-live="polite"></span>
                 <button type="button" id="playCardButton" class="game-end-turn-button" hidden>Poser la carte</button>
             </div>
 
@@ -216,10 +218,8 @@
     <aside class="game-sidebar">
         <section class="game-guide" aria-label="Situation de la partie">
             <div class="game-guide-heading"><strong id="gamePhase">Préparation du plateau</strong><span id="gameConnection" role="status">Connexion…</span></div>
-            <p id="gameTurnAdvice">Distribution des cartes en cours…</p>
-            <div class="game-guide-counts"><span id="gameReadyCount"></span><span id="gameOpponentHand"></span></div>
+            <div class="game-guide-counts"><span id="gameOpponentHand"></span></div>
         </section>
-        <div id="gameRecentAction" class="game-recent-action" role="status" aria-live="polite">Les actions jouées apparaîtront ici.</div>
 
         <div class="game-sidebar-tabs">
             <button type="button"
@@ -276,6 +276,18 @@
 </div>
 
 <div id="gameTurnAnnouncement" class="game-turn-announcement" role="status" aria-live="polite" hidden></div>
+<dialog id="gameOpeningDialog" class="game-opening-dialog" aria-labelledby="gameOpeningTitle" aria-describedby="gameOpeningStatus">
+    <span class="game-result-kicker">DÉBUT DE PARTIE</span>
+    <h2 id="gameOpeningTitle">Pile ou face</h2>
+    <div class="game-opening-players"><span id="gameOpeningMe"></span><span id="gameOpeningOpponent"></span></div>
+    <div class="game-opening-coin-stage" aria-hidden="true">
+        <div id="gameOpeningCoin" class="game-opening-coin">
+            <div class="game-opening-face"><img id="gameOpeningMeAvatar" alt="" /><span id="gameOpeningMeInitial"></span></div>
+            <div class="game-opening-face game-opening-face-back"><img id="gameOpeningOpponentAvatar" alt="" /><span id="gameOpeningOpponentInitial"></span></div>
+        </div>
+    </div>
+    <p id="gameOpeningStatus" role="status" aria-live="polite">Qui va commencer ?</p>
+</dialog>
 <dialog id="gameResultDialog" class="game-result-dialog" aria-labelledby="gameResultTitle">
     <span class="game-result-emblem" id="gameResultEmblem" aria-hidden="true">✦</span>
     <span class="game-result-kicker">PARTIE TERMINÉE</span>
@@ -309,6 +321,7 @@
         </div>
     </div>
 </dialog>
+<aside id="gameRevealedCards" class="game-revealed-cards" role="status" aria-live="polite" hidden></aside>
 
 @section Scripts {
     <script src="~/js/card-components.js" asp-append-version="true"></script>

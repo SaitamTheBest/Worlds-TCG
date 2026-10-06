@@ -116,5 +116,6 @@ namespace web_tcg.Models.Admin
         public List<int> RegionIds { get; set; } = new();
         public List<int> CountryIds { get; set; } = new();
         public List<int> PartyIds { get; set; } = new();
+        public List<int> CardTypes { get; set; } = new();
     }
 }

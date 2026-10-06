@@ -2,6 +2,30 @@ using web_tcg.Data.Enums;
 
 namespace web_tcg.Models.Game
 {
+    public sealed class GameHandCostSelection
+    {
+        public int ConditionIndex { get; set; }
+        public List<Guid> CardIds { get; set; } = new();
+    }
+    public sealed class GameHandCostDto
+    {
+        public int ConditionIndex { get; init; }
+        public bool Discard { get; init; }
+        public int Count { get; init; }
+        public IReadOnlyList<Guid> EligibleIds { get; init; } = Array.Empty<Guid>();
+    }
+    public sealed class GameActionPreviewDto
+    {
+        public string UserId { get; init; } = string.Empty;
+        public long Version { get; init; }
+        public Guid? SourceId { get; init; }
+        public Guid? TargetId { get; init; }
+        public int? Slot { get; init; }
+        public string Label { get; init; } = string.Empty;
+        public bool IsAttack { get; init; }
+        public bool Confirmed { get; init; }
+    }
+
     public sealed class GameViewModel
     {
         public Guid MatchId { get; init; }
@@ -25,6 +49,7 @@ namespace web_tcg.Models.Game
         public int TurnNumber { get; init; }
 
         public string ActivePlayerId { get; init; } = string.Empty;
+        public string FirstPlayerId { get; init; } = string.Empty;
 
         public bool IsMyTurn { get; init; }
 
@@ -94,6 +119,7 @@ namespace web_tcg.Models.Game
         public bool HasShield { get; init; }
         public bool IsStealthed { get; init; }
         public IReadOnlyList<GameTargetType> PlayTargetTypes { get; init; } = Array.Empty<GameTargetType>();
+        public IReadOnlyList<GameHandCostDto> PlayHandCosts { get; init; } = Array.Empty<GameHandCostDto>();
         public IReadOnlyList<Guid> PlayTargetIds { get; init; } = Array.Empty<Guid>();
 
         public IReadOnlyList<GameAbilityDto> Abilities { get; init; } =
@@ -102,6 +128,7 @@ namespace web_tcg.Models.Game
 
     public sealed class GameAbilityDto
     {
+        public IReadOnlyList<GameHandCostDto> HandCosts { get; init; } = Array.Empty<GameHandCostDto>();
         public int Id { get; init; }
         public AbilityType Type { get; init; }
 
@@ -114,5 +141,6 @@ namespace web_tcg.Models.Game
         public IReadOnlyList<Guid> TargetIds { get; init; } = Array.Empty<Guid>();
         public bool IsAttack { get; init; }
         public string? UnavailableReason { get; init; }
+        public string? TargetRefusalReason { get; init; }
     }
 }

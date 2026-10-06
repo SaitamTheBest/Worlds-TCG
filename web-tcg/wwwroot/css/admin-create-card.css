@@ -1296,3 +1296,13 @@
 @media (max-width:650px) { .ability-geography-panel { grid-template-columns: 1fr; } }
 
 .ability-item .create-field[hidden] { display:none; }
+.ability-rules { background: #0b0c0e; }
+.ability-rule-row { background: #141414; border-color: #3c3525; }
+.ability-rule-field input,.ability-rule-field select { background: #0b0c0e; border-color: #51442a; }
+.ability-rules-help { color: #c1beb6; }
+.ability-rule-summary { margin-top: 20px; padding: 16px 20px; border-left: 3px solid #f4c430; border-radius: 8px; background: linear-gradient(115deg,#30271177,#121212); color: #eee9dd; line-height: 1.7; font-size: .85rem; }
+.ability-rule-summary h3 { margin-top: 0; }
+.ability-rule-summary ul,.ability-rule-summary ol { padding-left: 22px; margin: 10px 0; }
+.ability-rule-summary li { margin-block: 8px; }
+.ability-rule-summary p { color: #ffde87; }
+.ability-geography-panel { background: #101010; border-color: #3c3525; }

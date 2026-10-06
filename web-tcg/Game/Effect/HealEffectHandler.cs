@@ -24,14 +24,17 @@ namespace web_tcg.Game.Effects
                 return Task.CompletedTask;
             }
 
+            var before = target.CurrentHealth.Value;
             target.CurrentHealth =
                 Math.Min(
                     target.MaxHealth.Value,
                     target.CurrentHealth.Value +
                     (int)effect.Value);
 
-            context.Logs.Add(
-                $"{target.Name} récupère {(int)effect.Value} point(s) de vie.");
+            var restored = target.CurrentHealth.Value - before;
+            context.Logs.Add(restored > 0
+                ? $"{target.Name} récupère {restored} point(s) de vie ({target.CurrentHealth}/{target.MaxHealth})."
+                : $"{target.Name} ne récupère aucun PV : ses PV sont déjà au maximum ou le soin vaut 0.");
 
             return Task.CompletedTask;
         }

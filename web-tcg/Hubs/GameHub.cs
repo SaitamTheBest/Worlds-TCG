@@ -65,6 +65,12 @@ namespace web_tcg.Hubs
             return ExecuteAsync(() => _gameService.PlayCardAsync(matchId, UserId, cardInstanceId, slot, targetInstanceId: targetInstanceId));
         }
 
+        public Task PlayCardWithCosts(Guid matchId, Guid cardInstanceId, int? slot, Guid? targetInstanceId, List<web_tcg.Models.Game.GameHandCostSelection> costs)
+            => ExecuteAsync(() => _gameService.PlayCardAsync(matchId,UserId,cardInstanceId,slot,targetInstanceId:targetInstanceId,handCosts:costs));
+
+        public Task UseAbilityWithCosts(Guid matchId, Guid sourceInstanceId, int abilityId, Guid? targetInstanceId, List<web_tcg.Models.Game.GameHandCostSelection> costs)
+            => ExecuteAsync(() => _gameService.UseAbilityAsync(matchId,UserId,sourceInstanceId,abilityId,targetInstanceId,handCosts:costs));
+
         public Task Block(
             Guid matchId,
             Guid sourceInstanceId)
@@ -101,6 +107,11 @@ namespace web_tcg.Hubs
                     _gameService.EndTurnAsync(
                         matchId,
                         UserId));
+        }
+
+        public Task PreviewAction(Guid matchId, Guid? sourceId, int? abilityId, Guid? targetId, int? slot)
+        {
+            return ExecuteAsync(() => _gameService.PreviewActionAsync(matchId, UserId, sourceId, abilityId, targetId, slot));
         }
 
         public Task Surrender(

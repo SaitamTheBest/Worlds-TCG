@@ -17,11 +17,10 @@ namespace web_tcg.Game.Effects
             var player =
                 effect.Target == GameTargetType.EnemyPlayer ? context.Opponent : context.Player;
 
-            player.Money +=
-                (int)effect.Value;
+            var gained = web_tcg.Game.Engine.GameEnergy.Gain(player, (int)effect.Value);
 
             context.Logs.Add(
-                $"{player.DisplayName} gagne {(int)effect.Value} énergie.");
+                $"{player.DisplayName} gagne {gained} énergie.");
 
             return Task.CompletedTask;
         }
@@ -41,13 +40,14 @@ namespace web_tcg.Game.Effects
             var opponent =
                 effect.Target == GameTargetType.FriendlyPlayer ? context.Player : context.Opponent;
 
+            var before = opponent.Money;
             opponent.Money =
                 Math.Max(
                     0,
                     opponent.Money - (int)effect.Value);
 
             context.Logs.Add(
-                $"{opponent.DisplayName} perd {(int)effect.Value} énergie.");
+                $"{opponent.DisplayName} perd {before - opponent.Money} énergie.");
 
             return Task.CompletedTask;
         }
@@ -75,10 +75,10 @@ namespace web_tcg.Game.Effects
                     (int)effect.Value,
                     opponent.Money);
 
-            opponent.Money -=
-                amount;
+            // Transfer only the amount that can actually be stored by the recipient.
+            amount = web_tcg.Game.Engine.GameEnergy.Gain(player, amount);
 
-            player.Money +=
+            opponent.Money -=
                 amount;
 
             context.Logs.Add(

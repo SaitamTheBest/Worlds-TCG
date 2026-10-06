@@ -45,7 +45,26 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-card-visual { width: 100%; height: 100%; pointer-events: none; }
 .game-card-visual .tcg-card { --card-width: 100%; width: 100%; height: 100%; box-shadow: none; }
 .game-card-visual .tcg-card:hover { transform: none; }
-.game-card-hp { position: absolute; z-index: 60; top: 3px; right: 3px; padding: 2px 3px; background: #090a0c; border-radius: 4px; color: #ff7c7c; font-size: .65rem; font-weight: 800; }
+.game-card-hp { position: absolute; z-index: 60; top: 3px; right: 3px; padding: 2px 3px; background: #090a0c; border-radius: 4px; color: #eef1f5; font-size: .65rem; font-weight: 800; }
+.game-card-hp.is-healthy { color: #73e5a6; background: #0e1913; }
+.game-card-hp.is-wounded { color: #ffb45e; background: #261b0e; }
+.game-card-hp.is-critical { color: #ff7c7c; background: #261413; }
+.game-opening-dialog { width: min(440px,calc(100vw - 32px)); padding: 32px; border: 1px solid #b58c2b; border-radius: 24px; background: radial-gradient(ellipse at 50% 45%,#f4c43018,transparent 65%),#0b0c0e; color: #fff; text-align: center; box-shadow: 0 24px 80px #0009; }
+.game-opening-dialog::backdrop { background: #000c; backdrop-filter: blur(6px); }
+.game-opening-dialog h2 { margin: 12px 0; color: #ffe08a; font-size: 1.6rem; overflow-wrap: anywhere; }
+.game-opening-players { display: flex; justify-content: space-between; gap: 16px; color: #bfc4cc; font-size: .85rem; overflow-wrap: anywhere; }
+.game-opening-players span { min-width: 0; flex: 1; }
+.game-opening-coin-stage { perspective: 900px; padding: 32px 0; }
+.game-opening-coin { position: relative; width: 140px; height: 140px; margin: auto; transform-style: preserve-3d; }
+.game-opening-face { position: absolute; inset: 0; display: grid; place-items: center; border: 7px solid #e6bc47; border-radius: 50%; background: #17140b; backface-visibility: hidden; box-shadow: 0 0 0 3px #725622,0 0 35px #f4c43030; overflow: hidden; }
+.game-opening-face-back { transform: rotateY(180deg); }
+.game-opening-face img { width: 100%; height: 100%; object-fit: cover; }
+.game-opening-face span { font-size: 3rem; font-weight: 900; color: #f4c430; }
+.game-opening-face [hidden] { display: none; }
+.game-opening-coin.is-tossing { animation: gameOpeningFlip 1.8s cubic-bezier(.18,.7,.2,1) forwards; }
+.game-opening-dialog p { margin-bottom: 0; color: #d6dbe3; line-height: 1.5; }
+@keyframes gameOpeningFlip { 0% { transform: rotateY(0) scale(.85); } 40% { transform: rotateY(900deg) scale(1.08); } 100% { transform: rotateY(var(--coin-end)) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .game-opening-coin.is-tossing { animation: none; transform: rotateY(var(--coin-end)); } }
 .game-card-states { position: absolute; z-index: 65; bottom: 3px; left: 3px; right: 3px; display: flex; flex-wrap: wrap; gap: 2px; pointer-events: none; }
 .game-card-states span { padding: 2px 4px; border: 1px solid #f4c43044; border-radius: 4px; background: #101723ee; color: #ffdc75; font-size: .52rem; line-height: 1.2; }
 .game-card.is-exhausted .game-card-visual { opacity: .65; }
@@ -53,6 +72,13 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-card.is-imprisoned .game-card-visual { opacity: .65; }
 .game-card.is-imprisoned .game-card-states span:first-child { background: #3b1559; color: #f3e8ff; border: 2px solid #c084fc; }
 .game-card.is-selected { outline: 2px solid #f4c430; }
+.game-card.is-opponent-source { outline: 3px solid #ffcf65; outline-offset: 3px; box-shadow: 0 0 20px #ffcf6555; }
+.game-card.is-opponent-target { outline: 3px solid #ff8e82; outline-offset: 3px; box-shadow: 0 0 20px #ff8e8255; }
+.game-character-slot.is-opponent-slot { border: 2px dashed #ffcf65; background: #ffcf6518; }
+.game-center-actions { position: relative; }
+.game-opponent-action { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); z-index: 90; width: max-content; max-width: min(620px,90vw); padding: 8px 14px; border: 1px solid #ffcf65; border-radius: 8px; background: #16130af5; color: #ffe8b2; font-size: .8rem; pointer-events: none; }
+.game-opponent-action-line { position: fixed; height: 3px; z-index: 85; transform-origin: left center; background: linear-gradient(90deg,#ffcf65,#ff8e82); box-shadow: 0 0 8px #ffcf6577; pointer-events: none; }
+.game-opponent-action-line::after { content: ""; position: absolute; right: -1px; top: -5px; border-left: 12px solid #ff8e82; border-top: 6px solid transparent; border-bottom: 6px solid transparent; }
 .game-card.is-blocking { box-shadow: 0 0 0 2px #60a5fa; }
 .game-card.has-shield { outline: 2px solid #a5f3fc; }
 .game-card.is-stealthed .game-card-visual { filter: saturate(.4); }
@@ -178,3 +204,59 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-page.is-dragging-hand .game-self-zone .game-character-slot:empty, .game-page.is-dragging-hand .game-self-zone .game-character-slot[role="button"] { background: #f4c4300e; border-color: #f4c43077; }
 .game-character-slot.is-drop-target { outline: 2px solid #95e5be; outline-offset: 3px; background: #244435bb !important; border-color: #95e5be !important; color: #d7ffea; box-shadow: 0 0 22px #68c69944; }
 @media(prefers-reduced-motion:reduce) { .game-dialog-action { transition: none; } }
+
+/* Disparition d'une carte : impact, braises et départ vers le cimetière. */
+.game-card-dying { transform-origin: center; overflow: hidden; box-shadow: 0 0 0 2px #e5b753,0 0 28px #ed713555; }
+.game-card-dying::after { content: ""; position: absolute; inset: 0; z-index: 100; pointer-events: none; background: linear-gradient(165deg,transparent 40%,#fff0bd77 48%,#f4c430aa 49%,transparent 52%); animation: game-death-fracture .65s ease-out both; }
+.game-death-burst { position: fixed; z-index: 2001; pointer-events: none; border-radius: 10px; background: radial-gradient(circle at 12% 15%,#ffde82 0 2px,transparent 3px),radial-gradient(circle at 85% 25%,#ffb74a 0 2px,transparent 3px),radial-gradient(circle at 20% 80%,#e88043 0 2px,transparent 3px),radial-gradient(circle at 78% 90%,#ffde82 0 2px,transparent 3px); animation: game-death-embers .9s ease-out both; }
+@keyframes game-death-fracture { 0% { opacity: 0; transform: translateY(-30%); } 25% { opacity: .9; } 100% { opacity: 0; transform: translateY(50%); } }
+@keyframes game-death-embers { 0% { opacity: 0; transform: scale(.85); } 20% { opacity: .9; } 100% { opacity: 0; transform: translateY(-28px) scale(1.7); } }
+
+/* Boutons du plateau et des actions : métal sombre, relief doré, états lisibles. */
+.game-end-turn-button, .game-dialog-action, .game-target-bar button, .game-chat-form button, .game-surrender-button {
+    transition: background .18s,border-color .18s,box-shadow .18s,transform .18s;
+}
+.game-end-turn-button, .game-chat-form button {
+    border: 1px solid #ffe58b; background: linear-gradient(145deg,#ffe589,#f4c430 55%,#c5941a);
+    color: #181103; text-shadow: 0 1px #fff5; box-shadow: inset 0 1px #fff9,inset 0 -2px #86600755,0 3px 0 #715315,0 5px 14px #0006;
+}
+.game-end-turn-button:hover:not(:disabled), .game-chat-form button:hover:not(:disabled) {
+    background: linear-gradient(145deg,#fff0b5,#ffda4f 55%,#dba829); box-shadow: inset 0 1px #fffc,0 3px 0 #715315,0 0 18px #f4c43044; transform: translateY(-1px);
+}
+.game-dialog-action, .game-target-bar button {
+    border: 1px solid #b48c36; background: linear-gradient(145deg,#3d3015,#201c11 55%,#121211);
+    color: #ffe394; box-shadow: inset 0 1px #ffe8a22b,inset 0 -2px #0007,0 4px 12px #0005;
+    font-weight: 750; text-shadow: 0 1px 2px #0008;
+}
+.game-dialog-action:hover:not(:disabled), .game-target-bar button:hover:not(:disabled) {
+    border-color: #ffe078; background: linear-gradient(145deg,#59431a,#302611 55%,#1c1911); color: #fff0bd;
+    box-shadow: inset 0 1px #ffe8a244,0 0 0 1px #f4c43022,0 6px 18px #0006; transform: translateY(-2px);
+}
+.game-dialog-action::after { color: #ffda65; transition: transform .18s; }
+.game-dialog-action:hover:not(:disabled)::after { transform: translateX(3px); }
+.game-dialog-action.is-primary:not(:disabled) { border-color: #ffe8a0; background: linear-gradient(135deg,#ffe99d,#f4c430 55%,#d2a026); color: #201604; text-shadow: 0 1px #fff4; box-shadow: inset 0 1px #fff9,inset 0 -2px #92640666,0 3px 0 #6d4e13,0 6px 18px #0007; }
+.game-dialog-action.is-primary:hover:not(:disabled) { background: linear-gradient(135deg,#fff2bd,#ffda55 55%,#e8b43b); border-color: #fff0bb; color: #171004; box-shadow: inset 0 1px #fffc,0 3px 0 #6d4e13,0 0 22px #f4c43044; }
+.game-dialog-action.is-primary:not(:disabled)::after { color: #513809; }
+.game-hand-cost-group { padding: 12px; border: 1px solid #f4c43044; border-radius: 10px; background: #111; }
+.game-hand-cost-group > strong,.game-hand-cost-description { color: #ffe090; }
+.game-hand-cost-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(90px,1fr)); gap: 10px; margin-top: 12px; }
+.game-hand-cost-card { min-width: 0; padding: 3px; border: 2px solid #514632; border-radius: 8px; background: #090909; cursor: pointer; }
+.game-hand-cost-card .game-card { aspect-ratio: 63/88; height: auto; width: 100%; pointer-events: none; }
+.game-hand-cost-card.is-chosen { border-color: #ffe090; box-shadow: 0 0 0 2px #f4c43055,0 0 14px #f4c43044; }
+.game-hand-cost-card:disabled { opacity: .35; cursor: not-allowed; }
+.game-hand-cost-card:focus-visible { outline: 2px solid #ffe090; outline-offset: 3px; }
+.game-revealed-cards { position: fixed; z-index: 2500; left: 50%; top: 10%; transform: translateX(-50%); max-width: min(900px,90vw); padding: 20px; border: 1px solid #f4c430; border-radius: 16px; background: #101010f5; box-shadow: 0 12px 50px #000a; color: #ffe090; }
+.game-revealed-card-list { display: flex; gap: 12px; margin: 14px 0; overflow: auto; max-height: 45dvh; }
+.game-revealed-card { flex: 0 0 150px; width: 150px; }
+.game-revealed-card .tcg-card { --card-width: 100%; width: 100%; }
+.game-dialog-action.is-primary:active:not(:disabled) { box-shadow: inset 0 2px 6px #5d410755; }
+.game-surrender-button { background: linear-gradient(145deg,#301715,#161111); border-color: #ad4e4366; color: #ffa598; box-shadow: inset 0 1px #ffaaa211,0 3px 10px #0004; font-weight: 700; }
+.game-surrender-button:hover:not(:disabled) { background: linear-gradient(145deg,#48201c,#231211); border-color: #ef8878; color: #ffd3cc; box-shadow: 0 0 14px #df584322; }
+.game-end-turn-button:active:not(:disabled), .game-dialog-action:active:not(:disabled), .game-target-bar button:active:not(:disabled), .game-chat-form button:active:not(:disabled), .game-surrender-button:active:not(:disabled) { transform: translateY(1px); box-shadow: inset 0 2px 6px #0006; }
+.game-end-turn-button:disabled, .game-dialog-action:disabled, .game-target-bar button:disabled, .game-chat-form button:disabled, .game-surrender-button:disabled { background: #181818; border-color: #484339; color: #a19b8f; text-shadow: none; opacity: .6; box-shadow: none; transform: none; cursor: not-allowed; }
+.game-end-turn-button:focus-visible, .game-dialog-action:focus-visible, .game-target-bar button:focus-visible, .game-chat-form button:focus-visible, .game-surrender-button:focus-visible { outline: 2px solid #ffe078; outline-offset: 4px; }
+@media(prefers-reduced-motion:reduce) {
+    .game-death-burst,.game-card-dying::after { animation: none; display: none; }
+    .game-end-turn-button,.game-dialog-action,.game-target-bar button,.game-chat-form button,.game-surrender-button,.game-dialog-action::after { transition: none; }
+    .game-end-turn-button:hover:not(:disabled),.game-dialog-action:hover:not(:disabled),.game-target-bar button:hover:not(:disabled),.game-chat-form button:hover:not(:disabled) { transform: none; }
+}

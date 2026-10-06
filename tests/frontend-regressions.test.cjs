@@ -265,6 +265,7 @@ test('composants : ressources persistantes uniques et cartes seules après chaqu
 });
 
 function game(motion = false) {
+    const timeouts = [];
     const animations = [];
     let now = Date.UTC(2026, 9, 2, 12), clockTick, dropHit = null;
     class GameElement extends Element {
@@ -297,17 +298,19 @@ function game(motion = false) {
     const handlers = {}, calls = [];
     let failure = null;
     let onPlay = null;
+    let onInvoke = null;
     const hub = {
         on(name, fn) { handlers[name] = fn; }, onreconnected() {},
         async start() {}, async invoke(name, ...args) {
             calls.push({ name, args });
+            if (onInvoke) await onInvoke(name, ...args);
             if (['PlayCard','UseAbility','PlayCardWithTarget'].includes(name) && failure) throw new Error(failure);
             if (name === 'PlayCard') onPlay?.();
         }
     };
     vm.runInNewContext(script('game.js'), {
         document: { body: new GameElement(), elementFromPoint: () => dropHit, addEventListener() {}, getElementById: id => elements[id], createElement: () => new GameElement(), querySelectorAll: () => [] },
-        window: { matchMedia: () => ({ matches: !motion }), setTimeout() {}, clearTimeout() {}, setInterval(fn) { clockTick = fn; return 1; }, clearInterval() {}, addEventListener() {} }, console,
+        window: { matchMedia: () => ({ matches: !motion }), setTimeout(fn,delay) { timeouts.push({fn,delay}); return timeouts.length; }, clearTimeout() {}, setInterval(fn) { clockTick = fn; return 1; }, clearInterval() {}, addEventListener() {} }, console,
         Date: class extends Date { static now() { return now; } },
         signalR: { HubConnectionBuilder: class { withUrl() { return this; } withAutomaticReconnect() { return this; } build() { return hub; } } }
     });
@@ -315,7 +318,7 @@ function game(motion = false) {
     const player = () => ({ displayName: 'Test', money: 40, remainingSeconds: 1200, characters: [null, null, null, null], leader: { ...card, type: 1, instanceId: 'leader' }, hand: [card] });
     const state = { turnNumber: 1, isMyTurn: true, me: { ...player(), userId: 'me', turnsPlayed: 1 }, opponent: { ...player(), userId: 'opponent', handCount: 5 } };
     handlers.GameStateUpdated(state);
-    return { elements, handlers, calls, state, animations,
+    return { elements, handlers, calls, state, animations, runTimeout(delay) { const index=timeouts.findLastIndex(t=>t.delay===delay); assert.notEqual(index,-1); timeouts.splice(index,1)[0].fn(); },
         dragTo(slot, cancel = false) {
             const node = elements.selfHand.children[0];
             node.listeners.pointerdown({ button: 0, pointerId: 1, clientX: 10, clientY: 400 });
@@ -324,8 +327,67 @@ function game(motion = false) {
             if (cancel) node.listeners.pointercancel();
             else node.listeners.pointerup({ pointerId: 1 });
         },
-        advance(ms) { now += ms; clockTick(); }, now: () => now, select: () => elements.selfHand.children[0].click(), fail(message) { failure = message; }, onPlay(fn) { onPlay = fn; } };
+        advance(ms) { now += ms; clockTick(); }, now: () => now, select: () => elements.selfHand.children[0].click(), fail(message) { failure = message; }, onPlay(fn) { onPlay = fn; }, onInvoke(fn) { onInvoke = fn; } };
 }
+
+test('adversaire : préparation visible, annulation et anciennes sélections ignorées', () => {
+    const app = game(true);
+    const state = { ...app.state, version: 2, isMyTurn: false,
+        me: { ...app.state.me, leader: { ...app.state.me.leader, instanceId: 'self' } },
+        opponent: { ...app.state.opponent, leader: { ...app.state.opponent.leader, instanceId: 'enemy' } } };
+    app.handlers.GameStateUpdated(state);
+    const preview = { userId: 'opponent', version: 2, sourceId: 'enemy', targetId: 'self', label: 'Frappe', isAttack: true };
+    app.handlers.GameActionPreviewUpdated(preview);
+    assert.match(app.elements.gameOpponentAction.textContent, /Préparation.*Frappe/);
+    assert.equal(app.elements.opponentLeader.children[0].classList.contains('is-opponent-source'), true);
+    assert.equal(app.elements.selfLeader.children[0].classList.contains('is-opponent-target'), true);
+    assert.equal(app.elements.gameOpponentActionLine.hidden, false);
+    assert.equal(app.animations.some(a => a.options.duration === 650), false);
+    app.handlers.GameActionPreviewUpdated({ userId: 'opponent', version: 2, label: '' });
+    assert.equal(app.elements.gameOpponentAction.hidden, true);
+    assert.equal(app.elements.gameOpponentActionLine.hidden, true);
+    assert.equal(app.elements.selfLeader.children[0].classList.contains('is-opponent-target'), false);
+    app.handlers.GameActionPreviewUpdated({ ...preview, version: 1 });
+    assert.equal(app.elements.gameOpponentAction.hidden, true);
+    app.handlers.GameActionPreviewUpdated(preview);
+    app.handlers.GameStateUpdated({ ...state, version: 3 });
+    assert.equal(app.elements.gameOpponentAction.hidden, true);
+});
+
+test('pile ou face : avatars, gagnant serveur, annonce puis fermeture automatique sans répétition', () => {
+    const app=game(true);
+    app.elements.gameOpeningCoin.style.setProperty=function(name,value) { this[name]=value; };
+    const state={...app.state,status:2,firstPlayerId:'opponent',opponent:{...app.state.opponent,displayName:'Adversaire',avatarUrl:'/uploads/avatar.png'}};
+    app.handlers.GameStateUpdated(state);
+    assert.equal(app.elements.gameOpeningDialog.open,true);
+    assert.equal(app.elements.gameOpeningOpponentAvatar.src,'/uploads/avatar.png');
+    assert.equal(app.elements.gameOpeningMeAvatar.hidden,true);
+    assert.equal(app.elements.gameOpeningMeInitial.textContent,'T');
+    assert.equal(app.elements.gameOpeningCoin.style['--coin-end'],'1980deg');
+    app.runTimeout(1800);
+    assert.equal(app.elements.gameOpeningTitle.textContent,'Adversaire commence');
+    app.runTimeout(2200);
+    assert.equal(app.elements.gameOpeningDialog.open,false);
+    app.handlers.GameStateUpdated(state);
+    assert.equal(app.elements.gameOpeningDialog.open,false);
+    const resumed=game(); resumed.handlers.GameStateUpdated({...state,turnNumber:5});
+    assert.notEqual(resumed.elements.gameOpeningDialog.open,true);
+});
+
+test('adversaire : seule une attaque confirmée déclenche le mouvement', () => {
+    const app = game(true);
+    const state = { ...app.state, version: 1, isMyTurn: false,
+        me: { ...app.state.me, leader: { ...app.state.me.leader, instanceId: 'self' } },
+        opponent: { ...app.state.opponent, leader: { ...app.state.opponent.leader, instanceId: 'enemy' } } };
+    app.handlers.GameStateUpdated(state);
+    app.handlers.GameActionPreviewUpdated({ userId: 'opponent', version: 2, sourceId: 'enemy', targetId: 'self', label: 'Frappe', confirmed: true, isAttack: true });
+    assert.match(app.elements.gameOpponentAction.textContent, /Action confirmée/);
+    assert.equal(app.animations.filter(a => a.options.duration === 650).length, 0);
+    app.handlers.GameStateUpdated({ ...state, version: 2 });
+    assert.equal(app.animations.filter(a => a.options.duration === 650).length, 1);
+    app.handlers.GameActionPreviewUpdated({ userId: 'me', version: 1, sourceId: 'self', targetId: 'enemy', label: 'Frappe', confirmed: true, isAttack: true });
+    assert.equal(app.animations.filter(a => a.options.duration === 650).length, 1);
+});
 
 test('partie : la confirmation serveur anime la pose sans remplacer la carte animée', async () => {
     const app = game(true); await app.select();
@@ -338,6 +400,34 @@ test('partie : la confirmation serveur anime la pose sans remplacer la carte ani
     assert.equal(animation.options.duration, 620);
     assert.equal(animation.node, app.elements.selfCharacters.children[0].children[0]);
     assert.match(animation.frames[0].transform, /translate\(-100px, 300px\)/);
+});
+
+test('mort : impact et départ vers le cimetière uniquement pour une carte du terrain', () => {
+    const app = game(true);
+    const card = { ...app.state.me.hand[0], instanceId: 'dying', currentHealth: 20 };
+    const before = { ...app.state, me: { ...app.state.me, characters: [card, null, null, null] } };
+    app.handlers.GameStateUpdated(before); app.animations.length = 0;
+    app.handlers.GameStateUpdated({ ...before, me: { ...before.me, characters: [null,null,null,null], graveyardCount: 1 } });
+    const death = app.animations.find(a => a.options.duration === 1050);
+    assert.equal(death.node.dataset.instanceId, 'dying');
+    assert.equal(death.node.classList.contains('game-card-dying'), true);
+    assert.equal(death.node['aria-hidden'], 'true');
+    assert.equal(death.frames.length, 5);
+    assert.equal(death.frames.at(-1).opacity, 0);
+    assert.match(death.frames.at(-1).transform, /scale\(\.12\)/);
+    assert.equal(app.animations.some(a => a.node === app.elements.selfGraveyard && a.options.delay === 750), true);
+    app.animations.length = 0;
+    app.handlers.GameStateUpdated({ ...before, me: { ...before.me, characters: [null,null,null,null], hand: [] } });
+    assert.equal(app.animations.some(a => a.options.duration === 1050), false);
+    assert.equal(app.animations.some(a => a.options.duration === 520), true);
+});
+
+test('mort : aucun déplacement lorsque les animations sont réduites', () => {
+    const app = game(false);
+    const before = { ...app.state, me: { ...app.state.me, characters: [app.state.me.hand[0],null,null,null], hand: [] } };
+    app.handlers.GameStateUpdated(before);
+    app.handlers.GameStateUpdated({ ...before, me: { ...before.me, characters: [null,null,null,null] } });
+    assert.equal(app.animations.length, 0);
 });
 
 test('partie : une carte sélectionnée peut être posée dans un emplacement précis', async () => {
@@ -467,6 +557,24 @@ test('partie : la mise à jour du chrono préserve les actions de la popup', asy
     assert.equal(app.elements.gameCardDialogActions.children[0], action);
 });
 
+test('popup : retour de tour avant la réponse du Hub réactive les capacités sans rouvrir', async () => {
+    const app = game(); app.state.me.turnsPlayed = 2;
+    app.state.me.leader.abilities = [{ id: 1, type: 2, name: 'Soin', usageCost: 0, cooldownRemaining: 0, targetTypes: [1], targetIds: [] }];
+    app.handlers.GameStateUpdated(app.state);
+    let release;
+    app.onInvoke(name => name === 'EndTurn' ? new Promise(resolve => { release = resolve; }) : undefined);
+    const ending = app.elements.endTurnButton.click();
+    app.handlers.GameStateUpdated({ ...app.state, turnNumber: 3, isMyTurn: true });
+    await app.elements.selfLeader.children[0].click();
+    const actions = () => app.elements.gameCardDialogActions.children.filter(node => node.textContent.startsWith('Utiliser'));
+    assert.equal(actions()[0].disabled, true);
+    assert.match(app.elements.gameCardDialogStatus.textContent, /Action en cours/);
+    release(); await ending;
+    assert.equal(app.elements.gameCardDialog.open, true);
+    assert.equal(actions()[0].disabled, false);
+    assert.doesNotMatch(app.elements.gameCardDialogStatus.textContent, /Action en cours/);
+});
+
 test('partie : la pose d’une décision transmet la cible choisie dans la popup', async () => {
     const app = game(); app.state.me.hand[0].type = 3; app.state.me.hand[0].playTargetTypes = [22];
     app.state.opponent.leader.instanceId = 'enemy-leader';
@@ -530,6 +638,47 @@ test('ciblage : annulation sans paiement, carte interdite ignorée et retrait de
     assert.match(app.elements.gameActionStatus.textContent,/plus disponible/);
 });
 
+test('ciblage : actions automatiques ne masquent pas les cibles adverses autorisées par région', async () => {
+    for (const automaticTarget of [1,11,40,41,50,51,52]) {
+        const app=game(); app.state.me.turnsPlayed=2;app.state.opponent.leader.instanceId='enemy';
+        app.state.me.leader.abilities=[{id:7,type:1,name:'Attaque Europe',usageCost:0,targetTypes:[22,automaticTarget],targetIds:['enemy']}];
+        app.handlers.GameStateUpdated(app.state);await app.elements.selfLeader.children[0].click();
+        const use=app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Utiliser Attaque Europe');
+        assert.equal(use.disabled,false,`action automatique ${automaticTarget}`);
+        await use.click(); await app.elements.opponentLeader.children[0].click();
+        assert.match(app.elements.gameCardDialogStatus.textContent,/Confirmez/);
+    }
+});
+
+test('coût de main : choix obligatoire, annulation sans appel et confirmation avec les cartes choisies', async () => {
+    const app=game(); app.state.me.turnsPlayed=2;
+    app.state.me.leader.abilities=[{id:7,type:2,name:'Marchander',usageCost:1,targetTypes:[],handCosts:[{conditionIndex:0,discard:true,count:1,eligibleIds:['hand-1']}]}];
+    app.handlers.GameStateUpdated(app.state);
+    const open=async()=>{await app.elements.selfLeader.children[0].click();await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Utiliser Marchander').click();};
+    await open();
+    assert.equal(app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Confirmer les cartes et effectuer l’action').disabled,true);
+    await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Annuler').click();
+    assert.equal(app.calls.some(c=>c.name==='UseAbilityWithCosts'),false);
+    await open();
+    const group=app.elements.gameCardDialogActions.children.find(n=>n.className==='game-hand-cost-group');
+    await group.children[1].children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Confirmer les cartes et effectuer l’action').click();await tick();
+    assert.deepEqual(JSON.parse(JSON.stringify(app.calls.find(c=>c.name==='UseAbilityWithCosts').args)),['match-1','leader',7,null,[{conditionIndex:0,cardIds:['hand-1']}]]);
+});
+
+test('coût de main : une pose attend son paiement et une révélation adverse utilise Card', async () => {
+    const app=game(); app.state.me.hand[0].playHandCosts=[{conditionIndex:0,discard:false,count:1,eligibleIds:['extra']}];
+    app.state.me.hand.push({...app.state.me.hand[0],instanceId:'extra',playHandCosts:[]});
+    app.handlers.GameStateUpdated(app.state);await app.select();await app.elements.selfCharacters.children[1].click();
+    assert.equal(app.calls.some(c=>c.name==='PlayCardWithCosts'),false);
+    const group=app.elements.gameCardDialogActions.children.find(n=>n.className==='game-hand-cost-group');await group.children[1].children[0].click();
+    await app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Confirmer les cartes et effectuer l’action').click();await tick();
+    assert.equal(app.calls.find(c=>c.name==='PlayCardWithCosts').args[2],1);
+    app.handlers.GameCardsRevealed({userId:'opponent',cards:[{cardId:12,name:'Carte dévoilée'}]});
+    assert.equal(app.elements.gameRevealedCards.hidden,false);
+    assert.equal(app.elements.gameRevealedCards.children[1].children[0].children[0].dataset.cardComponent,12);
+});
+
 test('ciblage : attaque animée après confirmation, refus sans animation', async () => {
     const app=game(true); app.state.me.turnsPlayed=2; app.state.opponent.leader.instanceId='enemy';
     app.state.me.leader.abilities=[{id:7,type:1,name:'Attaque',usageCost:1,targetTypes:[22],targetIds:['enemy'],isAttack:true}];
@@ -585,7 +734,6 @@ test('guidage : tour, main adverse et capacité disponible sont recalés sur le 
     assert.match(app.elements.gameOpponentHand.textContent, /5 carte/);
     app.handlers.GameStateUpdated({ ...app.state, turnNumber: 4, isMyTurn: false });
     assert.match(app.elements.gamePhase.textContent, /Tour 4.*adverse/);
-    assert.match(app.elements.gameTurnAdvice.textContent, /adversaire/);
 });
 
 

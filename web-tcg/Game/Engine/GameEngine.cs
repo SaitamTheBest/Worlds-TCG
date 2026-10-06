@@ -7,6 +7,8 @@ namespace web_tcg.Game.Engine
     public sealed class GameEngine
     {
         public const int InactivityLimitSeconds = 300;
+        public const int EnergyPerTurn = 40;
+        public const int FirstPlayerOpeningEnergy = 30;
 
         private readonly GameEffectEngine _effects;
         private readonly GameConditionEvaluator _conditions;
@@ -139,7 +141,8 @@ namespace web_tcg.Game.Engine
             Guid cardInstanceId,
             int? slot,
             CancellationToken cancellationToken = default,
-            Guid? targetInstanceId = null)
+            Guid? targetInstanceId = null,
+            IReadOnlyList<web_tcg.Models.Game.GameHandCostSelection>? handCosts = null)
         {
             EnsureActivePlayer(state, userId);
 
@@ -173,9 +176,10 @@ namespace web_tcg.Game.Engine
             if (card.Type != CardType.Character && card.Type != CardType.Location && card.Type != CardType.PoliticalDecision)
                 throw new GameRuleException("Ce type de carte ne peut pas être joué.");
 
-            var playContext = new GameEffectContext { State = state, Player = player, Source = card, RequestedTargetId = targetInstanceId };
             foreach (var ability in card.Abilities.Where(a => a.Effects.Any(e => e.Trigger == GameEffectTrigger.OnPlay)))
             {
+                var playContext = new GameEffectContext { State = state, Player = player, Source = card, RequestedTargetId = targetInstanceId,
+                    TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetCondition).ToList() };
                 if (!_conditions.AreMet(state, player, card, targetInstanceId.HasValue ? state.FindCard(targetInstanceId.Value) : null, ability.Conditions))
                     throw new GameRuleException(_conditions.Failure(state,player,card,targetInstanceId.HasValue ? state.FindCard(targetInstanceId.Value) : null,ability.Conditions)!);
                 _effects.ValidateTargets(playContext, ability.Effects, GameEffectTrigger.OnPlay);
@@ -184,11 +188,14 @@ namespace web_tcg.Game.Engine
             var logs =
                 new List<string>();
 
+            var costs = GameHandCosts.Validate(player, card, card.Abilities.Where(a=>a.Effects.Any(e=>e.Trigger==GameEffectTrigger.OnPlay)).SelectMany(a=>a.Conditions), handCosts);
+
             player.Money -=
                 card.UsageCost;
 
             player.Hand.Remove(
                 card);
+            GameHandCosts.Pay(state,player,costs,logs);
 
             switch (card.Type)
             {
@@ -208,7 +215,8 @@ namespace web_tcg.Game.Engine
                         GameEffectTrigger.OnPlay,
                         targetInstanceId,
                         logs,
-                        cancellationToken);
+                        cancellationToken,
+                        conditionsValidated: true);
                     break;
 
                 case CardType.Location:
@@ -234,7 +242,8 @@ namespace web_tcg.Game.Engine
                         GameEffectTrigger.OnPlay,
                         targetInstanceId,
                         logs,
-                        cancellationToken);
+                        cancellationToken,
+                        conditionsValidated: true);
                     break;
 
                 case CardType.PoliticalDecision:
@@ -245,7 +254,8 @@ namespace web_tcg.Game.Engine
                         GameEffectTrigger.OnPlay,
                         targetInstanceId,
                         logs,
-                        cancellationToken);
+                        cancellationToken,
+                        conditionsValidated: true);
 
                     card.Zone =
                         GameCardZone.Graveyard;
@@ -317,7 +327,8 @@ namespace web_tcg.Game.Engine
             Guid sourceInstanceId,
             int abilityId,
             Guid? targetInstanceId,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default,
+            IReadOnlyList<web_tcg.Models.Game.GameHandCostSelection>? handCosts = null)
         {
             EnsureActivePlayer(
                 state,
@@ -407,11 +418,14 @@ namespace web_tcg.Game.Engine
                     Player = player,
                     Source = source,
                     RequestedTargetId = targetInstanceId,
-                    TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetGeography).ToList()
+                    TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetCondition).ToList()
                 };
 
             _effects.ValidateTargets(context, ability.Effects, trigger);
+            var costs = GameHandCosts.Validate(player,source,ability.Conditions,handCosts);
+            var costLogs = new List<string>();
             player.Money -= ability.UsageCost;
+            GameHandCosts.Pay(state,player,costs,costLogs);
 
             await _effects.ExecuteAsync(
                 context,
@@ -445,6 +459,7 @@ namespace web_tcg.Game.Engine
 
             logs.AddRange(
                 context.Logs);
+            logs.AddRange(costLogs);
 
             await ResolveDeathsAsync(
                 state,
@@ -559,11 +574,10 @@ namespace web_tcg.Game.Engine
             var moneyGain =
                 player.TurnsPlayed == 1 &&
                 player.UserId == state.FirstPlayerId
-                    ? 10
-                    : 20;
+                    ? FirstPlayerOpeningEnergy
+                    : EnergyPerTurn;
 
-            player.Money +=
-                moneyGain;
+            moneyGain = GameEnergy.Gain(player, moneyGain);
 
             var now =
                 DateTime.UtcNow;
@@ -623,11 +637,12 @@ namespace web_tcg.Game.Engine
             GameEffectTrigger trigger,
             Guid? target,
             List<string> logs,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken,
+            bool conditionsValidated = false)
         {
             foreach (var ability in source.Abilities)
             {
-                if (trigger != GameEffectTrigger.OnPlay && !_conditions.AreMet(state, player, source, target.HasValue ? state.FindCard(target.Value) : null, ability.Conditions))
+                if (!conditionsValidated && !_conditions.AreMet(state, player, source, target.HasValue ? state.FindCard(target.Value) : null, ability.Conditions))
                     continue;
                 var context =
                     new GameEffectContext
@@ -636,7 +651,7 @@ namespace web_tcg.Game.Engine
                         Player = player,
                         Source = source,
                         RequestedTargetId = target,
-                        TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetGeography).ToList()
+                        TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetCondition).ToList()
                     };
 
                 await _effects.ExecuteAsync(
@@ -774,7 +789,7 @@ namespace web_tcg.Game.Engine
                     var aura = ability.Effects.Where(e => e.Trigger == GameEffectTrigger.Passive && e.Target is not (GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyCharacterOrLeader)
                         && e.Type is GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.DamageMultiplier or GameEffectType.HealthBonus or GameEffectType.DamageBonus).ToList();
                     if (aura.Count == 0) continue;
-                    var context = new GameEffectContext { State = state, Player = owner, Source = source, TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetGeography).ToList() };
+                    var context = new GameEffectContext { State = state, Player = owner, Source = source, TargetConditions = ability.Conditions.Where(GameConditionEvaluator.IsTargetCondition).ToList() };
                     await _effects.ExecuteAsync(context,aura,GameEffectTrigger.Passive,cancellationToken);
                     logs.AddRange(context.Logs);
                 }
@@ -968,6 +983,8 @@ namespace web_tcg.Game.Engine
                 throw new GameRuleException(
                     "Ce n'est pas votre tour.");
             }
+            foreach (var player in new[] { state.PlayerOne, state.PlayerTwo })
+                player.Money = Math.Clamp(player.Money, 0, GameEnergy.Maximum);
         }
 
         private static void EnsureNormalGamePhase(

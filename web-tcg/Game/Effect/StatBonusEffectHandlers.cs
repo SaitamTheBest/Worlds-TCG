@@ -25,8 +25,11 @@ public sealed class HealthBonusEffectHandler : IGameEffectHandler
     {
         var target = context.Target ?? throw new GameRuleException("Une cible est nécessaire pour le bonus de PV.");
         if (!target.MaxHealth.HasValue) return Task.CompletedTask;
+        var before = target.MaxHealth.Value;
         ShieldEffectHandler.ApplyDurableEffect(target,effect,context,GameGeography.Amount(context,effect));
         GameStatBonuses.Refresh(target);
+        var change = target.MaxHealth.Value - before;
+        if (change != 0) context.Logs.Add($"{target.Name} : {(change > 0 ? "+" : "")}{change} PV maximum ({target.CurrentHealth}/{target.MaxHealth}).");
         return Task.CompletedTask;
     }
 }

@@ -122,7 +122,11 @@ namespace web_tcg.Game.Engine
                     x?.InstanceId == requestedTargetId.Value);
 
             if (card == null)
+            {
+                if (effect.Trigger == GameEffectTrigger.OnDamaged)
+                    return Array.Empty<GameCardState>();
                 throw new GameRuleException("Personnage cible introuvable.");
+            }
 
             return ResolveSpecific(
                 state,
@@ -187,11 +191,14 @@ namespace web_tcg.Game.Engine
             GameEffectDefinition effect,
             Guid? requestedTargetId)
         {
-            if (effect.Type == GameEffectType.Damage)
+            if (target.ControllerUserId != player.UserId && target.IsStealthed)
             {
-                if (target.IsStealthed)
-                    throw new GameRuleException("Cette carte est camouflée.");
+                if (IsAutomatic(effect.Trigger)) return Array.Empty<GameCardState>();
+                throw new GameRuleException("Cette carte est camouflée : elle ne peut pas être ciblée par l'adversaire.");
+            }
 
+            if (effect.Type == GameEffectType.Damage && target.ControllerUserId != player.UserId)
+            {
                 var opponent = state.GetOpponent(player.UserId);
 
                 var blockers = opponent.Characters
@@ -205,6 +212,7 @@ namespace web_tcg.Game.Engine
                 if (blockers.Count > 0 &&
                     blockers.All(x => x.InstanceId != target.InstanceId))
                 {
+                    if (IsAutomatic(effect.Trigger)) return Array.Empty<GameCardState>();
                     throw new GameRuleException(
                         "Une carte adverse bloque les attaques.");
                 }
@@ -212,5 +220,8 @@ namespace web_tcg.Game.Engine
 
             return new[] { target };
         }
+
+        private static bool IsAutomatic(GameEffectTrigger trigger) => trigger is GameEffectTrigger.Passive
+            or GameEffectTrigger.OnDeath or GameEffectTrigger.OnTurnStart or GameEffectTrigger.OnTurnEnd or GameEffectTrigger.OnDamaged;
     }
 }

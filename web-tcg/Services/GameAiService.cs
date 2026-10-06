@@ -1,6 +1,7 @@
 using web_tcg.Data.Enums;
 using web_tcg.Game.Engine;
 using web_tcg.Game.Runtime;
+using web_tcg.Models.Game;
 
 namespace web_tcg.Services
 {
@@ -28,7 +29,8 @@ namespace web_tcg.Services
             GameState state,
             string botUserId,
             CancellationToken cancellationToken = default,
-            Func<IReadOnlyList<string>, Task>? onAction = null)
+            Func<IReadOnlyList<string>, Task>? onAction = null,
+            Func<GameActionPreviewDto, Task>? onPreview = null)
         {
             var logs =
                 new List<string>();
@@ -47,7 +49,7 @@ namespace web_tcg.Services
                         state,
                         botUserId,
                         logs,
-                        cancellationToken);
+                        cancellationToken, onPreview);
 
                 if (!actionTaken)
                 {
@@ -56,7 +58,7 @@ namespace web_tcg.Services
                             state,
                             botUserId,
                             logs,
-                            cancellationToken);
+                            cancellationToken, onPreview);
                 }
 
                 if (!actionTaken)
@@ -92,7 +94,7 @@ namespace web_tcg.Services
             GameState state,
             string botUserId,
             List<string> logs,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, Func<GameActionPreviewDto, Task>? onPreview)
         {
             var player =
                 state.GetPlayer(botUserId);
@@ -124,16 +126,19 @@ namespace web_tcg.Services
 
                 try
                 {
+                    if (onPreview != null) await onPreview(GameActionPreviewBuilder.Create(state, botUserId, card.InstanceId, null, null, slot));
                     var playLogs =
                         await _engine.PlayCardAsync(
                             state,
                             botUserId,
                             card.InstanceId,
                             slot,
-                            cancellationToken);
+                            cancellationToken, handCosts: GameHandCosts.AutoChoose(player,card,card.Abilities.Where(a=>a.Effects.Any(e=>e.Trigger==GameEffectTrigger.OnPlay)).SelectMany(a=>a.Conditions)));
 
                     logs.AddRange(
                         playLogs);
+                    if (onPreview != null) await onPreview(new() { UserId = botUserId, Version = state.Version,
+                        SourceId = card.InstanceId, Slot = slot, Label = $"Joue {card.Name}", Confirmed = true });
 
                     return true;
                 }
@@ -152,7 +157,7 @@ namespace web_tcg.Services
             GameState state,
             string botUserId,
             List<string> logs,
-            CancellationToken cancellationToken)
+            CancellationToken cancellationToken, Func<GameActionPreviewDto, Task>? onPreview)
         {
             var player =
                 state.GetPlayer(botUserId);
@@ -180,6 +185,7 @@ namespace web_tcg.Services
 
                 try
                 {
+                    if (onPreview != null) await onPreview(GameActionPreviewBuilder.Create(state, botUserId, source.InstanceId, skill.Id, target?.InstanceId, null));
                     var skillLogs =
                         await _engine.UseAbilityAsync(
                             state,
@@ -187,10 +193,13 @@ namespace web_tcg.Services
                             source.InstanceId,
                             skill.Id,
                             target?.InstanceId,
-                            cancellationToken);
+                            cancellationToken, GameHandCosts.AutoChoose(player,source,skill.Conditions));
 
                     logs.AddRange(
                         skillLogs);
+                    if (onPreview != null) await onPreview(new() { UserId = botUserId, Version = state.Version, SourceId = source.InstanceId,
+                        TargetId = target?.InstanceId, Label = $"{source.Name} · {skill.Name}",
+                        IsAttack = skill.Effects.Any(e => e.Type == GameEffectType.Damage && e.Trigger == GameEffectTrigger.OnSkill), Confirmed = true });
 
                     return true;
                 }

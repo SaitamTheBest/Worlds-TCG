@@ -26,6 +26,8 @@ namespace web_tcg.Game.Runtime
         public decimal? RewardCardBalance { get; set; }
 
         public GamePlayerState PlayerOne { get; set; } = new();
+        [System.Text.Json.Serialization.JsonIgnore]
+        public List<GameCardState> ActionReveals { get; } = new();
         public GamePlayerState PlayerTwo { get; set; } = new();
 
         public GamePlayerState GetPlayer(string userId)

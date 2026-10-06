@@ -155,13 +155,17 @@ public sealed class PreviewGameHub : Hub
         GamePlayerDto Player(bool self) => new() { UserId = self ? "me" : "them", DisplayName = self ? "Joueur test" : "Adversaire test", TurnsPlayed = 2, Money = 5, RemainingSeconds = 1200, DeckCount = 35, Leader = Card(1), Characters = new GameCardDto?[] { ChangeCard(Card(2), blocking: true), null, null, null }, Hand = self ? Enumerable.Range(0, 16).Select(i => Card(i % 2 + 2)).ToArray() : Array.Empty<GameCardDto>() };
         var opponent = Player(false);
         demoTargets.Add(opponent.Characters[0]!.InstanceId);
-        States[Context.ConnectionId] = new GameStateDto { MatchId = matchId, IsMyTurn = true, Status = GameMatchStatus.InProgress, ClockAnchorUtc = DateTime.UtcNow, ServerTimeUtc = DateTime.UtcNow, TurnNumber = 1, Me = Player(true), Opponent = opponent, ActivePlayerId = "me" };
+        var opponentDemo = matchId == Guid.Parse("22222222-2222-2222-2222-222222222222");
+        States[Context.ConnectionId] = new GameStateDto { MatchId = matchId, IsMyTurn = !opponentDemo, Status = GameMatchStatus.InProgress, ClockAnchorUtc = DateTime.UtcNow, ServerTimeUtc = DateTime.UtcNow, TurnNumber = 1, Me = Player(true), Opponent = opponent, ActivePlayerId = opponentDemo ? "them" : "me" };
         await Clients.Caller.SendAsync("GameStateUpdated", States[Context.ConnectionId]);
         for (var i = 1; i <= 120; i++)
         {
             await Clients.Caller.SendAsync("GameLogAdded", new { message = $"Événement de démonstration {i} : vérification du défilement indépendant.", createdAt = DateTime.UtcNow });
             await Clients.Caller.SendAsync("ChatMessageReceived", new { username = "Adversaire test", message = $"Message de démonstration {i}.", createdAt = DateTime.UtcNow });
         }
+        if (opponentDemo) await Clients.Caller.SendAsync("GameActionPreviewUpdated", new GameActionPreviewDto {
+            UserId = "them", SourceId = opponent.Leader.InstanceId, TargetId = States[Context.ConnectionId].Me.Characters[0]!.InstanceId,
+            Label = "Attaque de démonstration", IsAttack = true });
     }
     public Task PlayCard(Guid matchId, Guid cardInstanceId, int? slot)
     {

@@ -8,7 +8,7 @@
     const types = [[1,"Dégâts"],[2,"Soins"],[3,"Piocher"],[10,"Gagner de l'énergie"],[11,"Perdre de l'énergie"],[12,"Voler de l'énergie"],[20,"Provocation / Blocage"],[21,"Bouclier"],[22,"Camouflage"],[23,"Prison : aucune action pendant le prochain tour"],[30,"Coup d'état : attaques supplémentaires"],[31,"Multiplier les dégâts"],[32,"Bonus de PV maximum (+PV)"],[33,"Bonus de dégâts des compétences (+attaque)"],[40,"Second souffle : revivre à 50 %"],[50,"Défausser"],[60,"Détruire le lieu adverse"]];
     const triggers = [[1,"Quand la carte est jouée"],[2,"À l'utilisation de la compétence"],[3,"À l'utilisation du talent"],[4,"Passif (états et bonus liés à la présence sur le terrain)"],[5,"À la mort — Dernier souffle"],[6,"Au début de votre tour"],[7,"À la fin de votre tour"],[8,"Quand la carte subit des dégâts"]];
     const targets = [[1,"Cette carte"],[10,"Un personnage allié"],[11,"Votre Leader"],[12,"Un personnage allié ou votre Leader"],[20,"Un personnage adverse"],[21,"Le Leader adverse"],[22,"Un personnage adverse ou son Leader"],[31,"Le lieu adverse"],[40,"Votre joueur"],[41,"Le joueur adverse"],[50,"Tous vos personnages"],[51,"Tous les personnages adverses"],[52,"Tous les personnages des deux joueurs"]];
-    const conditions = [[1,"PV de cette carte inférieurs à"],[2,"PV de cette carte supérieurs à"],[10,"PV de la cible inférieurs à"],[11,"PV de la cible supérieurs à"],[20,"Votre énergie au moins égale à"],[30,"L'adversaire possède un personnage"],[31,"L'adversaire possède un lieu"],[40,"Nombre de personnages alliés au moins égal à"],[41,"Nombre de personnages adverses au moins égal à"],[50,"Cette carte provient des régions choisies"],[51,"Cette carte provient des pays choisis"],[52,"La cible provient des régions choisies"],[53,"La cible provient des pays choisis"],[54,"Cette carte appartient aux partis choisis"],[55,"La cible appartient aux partis choisis"],[60,"Personnages alliés des régions/pays/partis choisis : au moins"],[61,"Personnages adverses des régions/pays/partis choisis : au moins"],[62,"Personnages des deux joueurs des régions/pays/partis choisis : au moins"]];
+    const conditions = [[1,"PV de cette carte inférieurs à"],[2,"PV de cette carte supérieurs à"],[10,"PV de la cible inférieurs à"],[11,"PV de la cible supérieurs à"],[20,"Votre énergie au moins égale à"],[30,"L'adversaire possède un personnage"],[31,"L'adversaire possède un lieu"],[40,"Nombre de personnages alliés au moins égal à"],[41,"Nombre de personnages adverses au moins égal à"],[50,"Cette carte provient des régions choisies"],[51,"Cette carte provient des pays choisis"],[52,"La cible provient des régions choisies"],[53,"La cible provient des pays choisis"],[54,"Cette carte appartient aux partis choisis"],[55,"La cible appartient aux partis choisis"],[60,"Personnages alliés des régions/pays/partis choisis : au moins"],[61,"Personnages adverses des régions/pays/partis choisis : au moins"],[62,"Personnages des deux joueurs des régions/pays/partis choisis : au moins"],[70,"Dévoiler des cartes de votre main pour activer"],[71,"Défausser des cartes de votre main pour activer"]];
     let sequence = 0;
     function node(tag, text, cls) {
         const e = document.createElement(tag); if (text) e.textContent = text; if (cls) e.className = cls; return e;
@@ -38,6 +38,7 @@
     function addEffect(item, list, value = {}) {
         const prefix = `Abilities[${item.dataset.abilityKey}].Effects`, key = sequence++;
         const row = node("div",null,"ability-rule-row"); row.appendChild(input(`${prefix}.Index`,key,"hidden"));
+        row.dataset.ruleKind = "action";
         const name = `${prefix}[${key}]`;
         const effect = select(`${name}.Type`,types,value.type ?? (cardType() === 4 ? 10 : abilityType(item) === 3 ? 21 : 1));
         const trigger = select(`${name}.Trigger`,triggers,value.trigger ?? defaultTrigger(item));
@@ -79,20 +80,23 @@
             for (const option of target.options) {
                 const v = Number(option.value);
                 option.disabled = player ? (t === 12 ? v !== 41 : ![40,41].includes(v)) : t === 60 ? v !== 31 : t === 40 ? v !== 1 : [31,40,41].includes(v) || t === 20 && ([11,12,21,22].includes(v) || cardType() === 1 && v === 1);
+                if ([4,5,6,7].includes(Number(trigger.value)) && [10,12,20,22].includes(v) || Number(trigger.value) === 8 && [10,12].includes(v)) option.disabled = true;
             }
             for (const option of trigger.options) {
                 const v = Number(option.value), a = abilityType(item);
-                option.disabled = (t === 23 && v === 4) || (cardType() === 3 ? v !== 1 : a === 1 ? v !== 2 : a === 2 ? v !== 3 : [2,3].includes(v));
+                option.disabled = (v === 4 && ![20,21,22,30,31,32,33].includes(t)) || (cardType() === 3 ? v !== 1 : a === 1 ? v !== 2 : a === 2 ? v !== 3 : [2,3].includes(v));
             }
         };
         effect.addEventListener("change",()=> { duration.value = 0; update(); if (target.selectedOptions[0]?.disabled) target.value = Array.from(target.options).find(o=>!o.disabled)?.value; });
         scale.addEventListener("change",update);
+        trigger.addEventListener("change",update);
         item.addEventListener("ability-type-change",()=>{ trigger.value = defaultTrigger(item); update(); });
         update();
     }
     function addCondition(item,list,value = {}) {
         const prefix = `Abilities[${item.dataset.abilityKey}].Conditions`, key = sequence++;
         const row = node("div",null,"ability-rule-row"); row.appendChild(input(`${prefix}.Index`,key,"hidden"));
+        row.dataset.ruleKind = "condition";
         const name = `${prefix}[${key}]`;
         const type = select(`${name}.Type`,conditions,value.type ?? 20);
         field(row,"Condition",type);
@@ -100,17 +104,18 @@
         const regionGroup = geographicChoices(row,"Régions de la condition",`${name}.RegionIds`,geography.regions,value.regionIds);
         const countryGroup = geographicChoices(row,"Pays de la condition",`${name}.CountryIds`,geography.countries,value.countryIds);
         const partyGroup = geographicChoices(row,"Partis de la condition",`${name}.PartyIds`,geography.parties,value.partyIds);
-        const update = () => { const t = Number(type.value); partyGroup.hidden = ![54,55,60,61,62].includes(t); regionGroup.hidden = ![50,52,60,61,62].includes(t); countryGroup.hidden = ![51,53,60,61,62].includes(t); threshold.hidden = [50,51,52,53,54,55].includes(t); };
+        const typesGroup = geographicChoices(row,"Types de cartes autorisées",`${name}.CardTypes`,[{id:2,name:"Personnage"},{id:3,name:"Décision politique"},{id:4,name:"Lieu"},{id:5,name:"SECRET"}],value.cardTypes);
+        const update = () => { const t = Number(type.value), payment = [70,71].includes(t); typesGroup.hidden = !payment; threshold.querySelector("span").textContent = payment ? "Nombre exact de cartes à choisir" : "Seuil"; threshold.querySelector("input").min=payment ? 1 : 0; threshold.querySelector("input").max=payment ? 40 : 100000; partyGroup.hidden = ![54,55,60,61,62,70,71].includes(t); regionGroup.hidden = ![50,52,60,61,62,70,71].includes(t); countryGroup.hidden = ![51,53,60,61,62,70,71].includes(t); threshold.hidden = [50,51,52,53,54,55].includes(t); };
         type.addEventListener("change",update); update();
         const negate = input(`${name}.Negate`,"true","checkbox"); negate.checked = !!value.negate;
-        field(row,"Inverser la condition",negate); row.appendChild(input(`${name}.Negate`,"false","hidden"));
+        const inversion=field(row,"Inverser la condition",negate); const updateInversion=()=>{ inversion.hidden=[70,71].includes(Number(type.value)); if(inversion.hidden) negate.checked=false; }; type.addEventListener("change",updateInversion); updateInversion(); row.appendChild(input(`${name}.Negate`,"false","hidden"));
         row.appendChild(button("Retirer la condition",()=>row.remove())); list.appendChild(row);
     }
     function attach(item) {
         if (item.dataset.rulesReady) return; item.dataset.rulesReady = "true";
         const data = initial[Number(item.dataset.abilityKey)] || {};
         if (!initial[Number(item.dataset.abilityKey)] && [3,4].includes(cardType())) item.querySelector('[name$=".Type"]').value = "3";
-        const section = node("section",null,"ability-rules"); section.appendChild(node("h3","Actions en jeu"));
+        const section = node("section",null,"ability-rules"); section.appendChild(node("h3","1. Définir ce que fait la capacité"));
         const help = node("p","La description est le texte de la carte. Configurez ici ce qu'elle fait réellement. Les actions sont exécutées dans l'ordre ; toutes les conditions doivent être remplies.","ability-rules-help"); section.appendChild(help);
         const cooldown = input(`Abilities[${item.dataset.abilityKey}].CooldownTurns`,data.cooldownTurns ?? 0); cooldown.max = 99;
         field(section,"Recharge du talent (tours à attendre, y compris à la pose)",cooldown);
@@ -122,8 +127,43 @@
             const b = button(label,()=>addEffect(item,list,{type,target:cardType() === 4 ? 50 : 1,value:type === 31 ? 2 : 1,trigger:type === 40 ? 5 : defaultTrigger(item)}));
             b.dataset.effectType = type; presets.appendChild(b);
         });
-        section.append(presets,node("h3","Conditions (facultatif)"),conditionList,button("Ajouter une condition",()=>addCondition(item,conditionList)));
+        section.append(presets,node("h3","2. Conditions et coûts supplémentaires"),
+            node("p","Toutes les conditions doivent être remplies (ET). « Cette carte » désigne la source ; « la cible » désigne chaque bénéficiaire. Pour donner +20 PV aux personnages d’Europe, choisissez un groupe comme cible et Europe dans les régions des bénéficiaires de l’action.","ability-rules-help"),
+            conditionList,button("Ajouter une condition",()=>addCondition(item,conditionList)));
         (data.conditions || []).forEach(c=>addCondition(item,conditionList,c)); item.appendChild(section);
+        const summary = node("aside",null,"ability-rule-summary");
+        summary.appendChild(node("h3","3. Lecture de la capacité"));
+        const summaryCost = node("p"), summaryConditions = node("ul"), summaryActions = node("ol");
+        summary.append(summaryCost, summaryConditions, summaryActions); section.appendChild(summary);
+        const selected = (row,suffix) => row.querySelector(`[name$=".${suffix}"]`);
+        const optionText = control => control?.selectedOptions?.[0]?.textContent || "";
+        const filtersText = row => [...row.querySelectorAll("fieldset")].filter(group=>!group.hidden)
+            .map(group=>{ const names=[...group.querySelectorAll('input[type="checkbox"]:checked')].map(box=>box.parentElement.textContent.trim());
+                return names.length ? `${group.querySelector('legend').textContent} : ${names.join(' ou ')}` : ""; }).filter(Boolean).join(" ; ");
+        const summarize = () => {
+            const kind=abilityType(item), cost=Number(item.querySelector('[name$=".UsageCost"]')?.value || 0);
+            summaryCost.textContent = kind===1 ? `Compétence · ${cost} énergie · épuise la carte après utilisation.`
+                : kind===2 ? `Talent · ${cost} énergie · recharge de ${cooldown.value} tour(s), à la pose et après utilisation · n’épuise pas la carte.`
+                : "Effet · sans coût d’activation · automatique au déclenchement choisi.";
+            summaryConditions.replaceChildren(); summaryActions.replaceChildren();
+            [...conditionList.children].forEach(row=>{
+                const condition=selected(row,"Type"), value=selected(row,"Value"), inverted=selected(row,"Negate")?.checked;
+                const ids=[50,51,52,53,54,55];
+                summaryConditions.appendChild(node("li",`${inverted ? "Ne doit PAS remplir : " : "Requis : "}${optionText(condition)}${ids.includes(Number(condition.value)) ? "" : ` ${value.value}`}${filtersText(row) ? ` · ${filtersText(row)}` : ""}`));
+            });
+            [...list.children].forEach(row=>{
+                const type=selected(row,"Type"), trigger=selected(row,"Trigger"), target=selected(row,"Target"), value=selected(row,"Value"), duration=selected(row,"DurationTurns");
+                const scaled=selected(row,"ScaleByMatchingCharacters")?.checked;
+                summaryActions.appendChild(node("li",`${optionText(trigger)} : ${optionText(type)} (${value.value}${scaled ? " par personnage correspondant" : ""}) → ${optionText(target)}${Number(duration.value)>0 ? ` · pendant ${duration.value} prochain(s) tour(s) du bénéficiaire` : [20,21,22,30,31,32,33].includes(Number(type.value)) ? Number(trigger.value)===4 ? " · tant que la source reste sur le terrain" : " · permanent" : ""}${filtersText(row) ? ` · ${filtersText(row)}` : ""}`));
+            });
+            if (!list.children.length) summaryActions.appendChild(node("li","Aucune action configurée : la description seule ne produit aucun effet en jeu."));
+            if ([...conditionList.children].some(row=>[70,71].includes(Number(selected(row,"Type")?.value))) && [...list.children].some(row=>![1,2,3].includes(Number(selected(row,"Trigger")?.value))))
+                summaryConditions.appendChild(node("li","À corriger : dévoiler/défausser nécessite une activation de compétence/talent ou une pose. Un effet automatique ne peut pas demander ce paiement."));
+        };
+        section.addEventListener("input",summarize); section.addEventListener("change",summarize);
+        const ruleObserver = new MutationObserver(summarize);
+        ruleObserver.observe(list,{childList:true}); ruleObserver.observe(conditionList,{childList:true});
+        item.querySelector('[name$=".UsageCost"]')?.addEventListener("input",summarize);
         const update = () => {
             const cost = item.querySelector('[name$=".UsageCost"]');
             if (cost) {
@@ -133,6 +173,7 @@
                 if (passive) cost.value = 0;
             }
             cooldown.parentElement.hidden = abilityType(item) !== 2;
+            summarize();
             presets.querySelectorAll("button").forEach(b=>{ const t = Number(b.dataset.effectType); b.disabled = t === 40 && (abilityType(item) !== 3 || cardType() !== 2) || t === 20 && cardType() === 1 || cardType() === 4 && t !== 31;
                 b.title = b.disabled ? "Choisissez un effet passif de personnage pour Second souffle ; le Leader ne bloque pas et les lieux ne donnent pas d'états." : ""; });
             help.textContent = cardType() === 3 ? "Décision : choisissez le type Effet, avec un déclenchement à la pose, puis cimetière. Dégâts, soins et ressources sont instantanés ; les états et bonus d'attaque peuvent durer plusieurs tours." : cardType() === 4 ? "Lieu : choisissez le type Effet et des bonus ou malus automatiques. Aucun blocage, bouclier, camouflage, attaque supplémentaire ou résurrection de personnages." : "Compétence : attaque puis épuisement. Talent : recharge initiale et après utilisation, sans épuiser la carte. Une carte déjà épuisée ne peut effectuer aucune action. Effet : automatique, jamais activé manuellement.";

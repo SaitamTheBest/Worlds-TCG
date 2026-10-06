@@ -1,4 +1,5 @@
 using web_tcg.Game.Runtime;
+using web_tcg.Game.Engine;
 using web_tcg.Models.Game;
 using web_tcg.Data.Enums;
 
@@ -34,6 +35,7 @@ namespace web_tcg.Services
 
                 ActivePlayerId =
                     state.ActivePlayerId,
+                FirstPlayerId = state.FirstPlayerId,
 
                 IsMyTurn =
                     state.ActivePlayerId ==
@@ -96,32 +98,32 @@ namespace web_tcg.Services
 
                 Leader =
                     MapCard(
-                        state, player, player.Leader),
+                        state, player, player.Leader, includeHand),
 
                 Location =
                     player.Location == null
                         ? null
-                        : MapCard(state, player, player.Location),
+                        : MapCard(state, player, player.Location, includeHand),
 
                 Characters =
                     player.Characters
                         .Select(x =>
                             x == null
                                 ? null
-                                : MapCard(state, player, x))
+                                : MapCard(state, player, x, includeHand))
                         .ToList(),
 
                 Hand =
                     includeHand
                         ? player.Hand
-                            .Select(c => MapCard(state, player, c))
+                            .Select(c => MapCard(state, player, c, includeHand))
                             .ToList()
                         : Array.Empty<GameCardDto>()
             };
         }
 
         private static GameCardDto MapCard(
-            GameState state, GamePlayerState player, GameCardState card)
+            GameState state, GamePlayerState player, GameCardState card, bool includeHand)
         {
             return new GameCardDto
             {
@@ -168,6 +170,7 @@ namespace web_tcg.Services
                 PlayTargetTypes = card.Abilities.SelectMany(a => a.Effects)
                     .Where(e => e.Trigger is GameEffectTrigger.OnPlay or GameEffectTrigger.Passive)
                     .Select(e => e.Target).Distinct().ToList(),
+                PlayHandCosts = includeHand ? GameHandCosts.Requirements(player,card,card.Abilities.Where(a=>a.Effects.Any(e=>e.Trigger==GameEffectTrigger.OnPlay)).SelectMany(a=>a.Conditions)) : Array.Empty<GameHandCostDto>(),
 
                 Abilities =
                     card.Abilities
@@ -176,8 +179,10 @@ namespace web_tcg.Services
                             {
                                 Id =
                                     x.Id,
-                                UnavailableReason = new web_tcg.Game.Engine.GameConditionEvaluator().Failure(state,player,card,null,x.Conditions.Where(c => c.Type is not (GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty))),
+                                HandCosts = includeHand ? GameHandCosts.Requirements(player,card,x.Conditions) : Array.Empty<GameHandCostDto>(),
+                                UnavailableReason = new web_tcg.Game.Engine.GameConditionEvaluator().Failure(state,player,card,null,x.Conditions.Where(c=>includeHand || !GameHandCosts.IsCost(c)).Where(c => c.Type is not (GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty))),
                                 TargetIds = GameActionTargets.Get(state, player, card, new[] { x }, x.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent),
+                                TargetRefusalReason = includeHand ? GameActionTargets.Refusal(state,player,card,x,x.Type==AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent) : null,
                                 IsAttack = x.Effects.Any(e => e.Type == GameEffectType.Damage && e.Trigger == (x.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent)),
 
                                 Type =

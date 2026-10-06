@@ -63,6 +63,81 @@
     let inspectedCardId = null;
     let dialogSignature = null;
     let targeting = null;
+    let costSelection = null, authorizedCosts = null;
+    function openCostSelection(card, requirements, proceed, abilityId = null) {
+        if (requirements.some(r => r.eligibleIds.length < r.count)) { showStatus("Pas assez de cartes de main autorisées pour payer cette capacité.", true); return; }
+        costSelection = { sourceId: card.instanceId, abilityId, requirements, proceed,
+            choices: requirements.map(r => ({ conditionIndex: r.conditionIndex, cardIds: [] })) };
+        renderCostSelection(); updateControls();
+    }
+    function cancelCostSelection() {
+        costSelection = null; authorizedCosts = null; el.dialog.close(); updateControls(); showStatus("");
+    }
+    function renderCostSelection() {
+        if (!costSelection) return;
+        const selection = costSelection, source = visibleCard(selection.sourceId);
+        if (!source || !latestState.isMyTurn || gameFinished) { cancelCostSelection(); return; }
+        el.dialogTitle.textContent = "Payer les conditions de la capacité";
+        el.dialogStatus.textContent = "Choisissez dans votre main. Paiement à la confirmation ; chaque carte ne peut être choisie qu’une fois.";
+        el.dialogPreview.replaceChildren(createCardElement(source)); el.dialogActions.replaceChildren();
+        selection.requirements.forEach((requirement,index) => {
+            const choice=selection.choices[index];
+            choice.cardIds=choice.cardIds.filter(id=>latestState.me.hand.some(c=>c.instanceId===id) && requirement.eligibleIds.includes(id));
+            const group=document.createElement("section"); group.className="game-hand-cost-group";
+            const title=document.createElement("strong"); title.textContent=`${requirement.discard ? "Défausser" : "Dévoiler"} ${requirement.count} carte(s) · ${choice.cardIds.length}/${requirement.count}`;
+            group.appendChild(title);
+            const grid=document.createElement("div"); grid.className="game-hand-cost-cards";
+            latestState.me.hand.filter(c=>requirement.eligibleIds.includes(c.instanceId)).forEach(card=>{
+                const button=document.createElement("button"); button.type="button"; button.className="game-hand-cost-card";
+                const chosen=choice.cardIds.includes(card.instanceId);
+                button.classList.toggle("is-chosen",chosen); button.setAttribute("aria-pressed",String(chosen)); button.setAttribute("aria-label",`${card.name} · ${chosen ? "sélectionnée" : "choisir"}`);
+                button.disabled=!chosen && (choice.cardIds.length>=requirement.count || selection.choices.some(other=>other!==choice && other.cardIds.includes(card.instanceId)));
+                const visual=createCardElement(card); visual.removeAttribute("role"); visual.removeAttribute("tabindex");
+                button.appendChild(visual);
+                button.addEventListener("click",()=>{ choice.cardIds=chosen ? choice.cardIds.filter(id=>id!==card.instanceId) : [...choice.cardIds,card.instanceId]; renderCostSelection(); });
+                grid.appendChild(button);
+            });
+            group.appendChild(grid); el.dialogActions.appendChild(group);
+        });
+        const confirm=document.createElement("button"); confirm.type="button"; confirm.className="game-dialog-action"; confirm.classList.add("is-primary"); confirm.textContent="Confirmer les cartes et effectuer l’action";
+        confirm.disabled=selection.requirements.some((r,i)=>selection.choices[i].cardIds.length!==r.count);
+        confirm.addEventListener("click",()=>{ authorizedCosts={ sourceId:selection.sourceId, abilityId:selection.abilityId, selections:selection.choices.map(c=>({conditionIndex:c.conditionIndex,cardIds:[...c.cardIds]})) }; costSelection=null; selection.proceed(); });
+        const cancel=document.createElement("button"); cancel.type="button"; cancel.className="game-dialog-action"; cancel.textContent="Annuler"; cancel.addEventListener("click",cancelCostSelection);
+        el.dialogActions.appendChild(confirm); el.dialogActions.appendChild(cancel); if (!el.dialog.open) el.dialog.showModal();
+    }
+    let opponentPreview = null, opponentPreviewTimer, pendingOpponentAttack = null;
+    function publishPreview(sourceId = null, abilityId = null, targetId = null, slot = null) {
+        if (!latestState || gameFinished || !latestState.isMyTurn) return;
+        connection.invoke("PreviewAction", matchId, sourceId, abilityId, targetId, slot).catch(() => {});
+    }
+
+    function renderOpponentPreview() {
+        const label = document.getElementById("gameOpponentAction");
+        const line = document.getElementById("gameOpponentActionLine");
+        if (!label || !line) return;
+        label.hidden = !opponentPreview; line.hidden = true;
+        const nodes = [...page.querySelectorAll(".game-card[data-instance-id]")];
+        nodes.forEach(node => {
+            node.classList.toggle("is-opponent-source", !!opponentPreview?.sourceId && node.dataset.instanceId === opponentPreview.sourceId);
+            node.classList.toggle("is-opponent-target", !!opponentPreview?.targetId && node.dataset.instanceId === opponentPreview.targetId);
+        });
+        [...el.opponentCharacters.children].forEach((node, index) => node.classList.toggle("is-opponent-slot", !!opponentPreview && opponentPreview.slot === index));
+        if (!opponentPreview) return;
+        const source = nodes.find(n => n.dataset.instanceId === opponentPreview.sourceId);
+        const target = nodes.find(n => n.dataset.instanceId === opponentPreview.targetId);
+        const targetCard = visibleCard(opponentPreview.targetId);
+        label.textContent = `${latestState.opponent.displayName} · ${opponentPreview.confirmed ? "Action confirmée" : "Préparation"} : ${opponentPreview.label}${targetCard ? ` → ${targetCard.name}` : ""}`;
+        if (!source || !target) return;
+        const a = source.getBoundingClientRect(), b = target.getBoundingClientRect();
+        const x = a.left + a.width / 2, y = a.top + a.height / 2;
+        const dx = b.left + b.width / 2 - x, dy = b.top + b.height / 2 - y;
+        Object.assign(line.style, { left: `${x}px`, top: `${y}px`, width: `${Math.hypot(dx, dy)}px`, transform: `rotate(${Math.atan2(dy, dx)}rad)` });
+        line.hidden = false;
+    }
+
+    function clearOpponentPreview() {
+        window.clearTimeout(opponentPreviewTimer); opponentPreview = null; renderOpponentPreview();
+    }
     let handDrag = null;
     let ignoreHandClickUntil = 0;
     let clockReceivedAt = Date.now();
@@ -169,6 +244,10 @@
         if (card.currentHealth !== null && card.currentHealth !== undefined) {
             const hp = document.createElement("span");
             hp.className = "game-card-hp";
+            if (card.maxHealth > 0) {
+                const ratio = card.currentHealth / card.maxHealth;
+                hp.classList.add(ratio > .75 ? "is-healthy" : ratio > .25 ? "is-wounded" : "is-critical");
+            }
             hp.textContent = `${card.currentHealth}/${card.maxHealth ?? "?"}`;
             div.appendChild(hp);
         }
@@ -320,6 +399,7 @@
         const width = Math.max(28, Math.floor(Math.min(180, (board.clientWidth - 88) / 5.85, (height - 24) * 63 / 88)));
         page.style.setProperty("--game-card-width", `${width}px`);
         updateHandSpacing();
+        if (opponentPreview) renderOpponentPreview();
     }
     if (window.ResizeObserver) {
         const resizeObserver = new window.ResizeObserver(fitBoard);
@@ -335,7 +415,8 @@
         const positions = new Map();
         if (previous && !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
             page.querySelectorAll(".game-card[data-instance-id]").forEach(node => {
-                positions.set(node.dataset.instanceId, { rect: node.getBoundingClientRect(), node, self: !!node.closest(".game-self-zone") });
+                const onBoard = [previous.me, previous.opponent].some(player => [player.leader, player.location, ...player.characters].some(card => card?.instanceId === node.dataset.instanceId));
+                positions.set(node.dataset.instanceId, { rect: node.getBoundingClientRect(), node, onBoard, self: !!node.closest(".game-self-zone") });
             });
         }
         latestState = state;
@@ -353,30 +434,29 @@
         renderPlayer(state, state.opponent, "opponent");
         renderPlayer(state, state.me, "self");
         refreshTargeting();
+        if (opponentPreview && (state.isMyTurn || gameFinished || state.version > opponentPreview.version && !opponentPreview.confirmed)) clearOpponentPreview();
+        else renderOpponentPreview();
         updateClocks();
         if (previous && previous !== state) notifyStatChanges(previous, state);
-        if (el.dialog.open) renderCardDialog();
+        if (el.dialog.open) { if (costSelection) renderCostSelection(); else renderCardDialog(); }
         if (previous !== state && positions.size) animateCards(positions);
-        if (state.status === 3) showResult(state);
+        if (pendingOpponentAttack && state.version >= pendingOpponentAttack.version) {
+            animateAttack(pendingOpponentAttack.animation); pendingOpponentAttack = null;
+        }
+        if (state.status === 3) {
+            document.getElementById("gameOpeningDialog")?.close();
+            showResult(state);
+        } else showOpeningToss(state);
     }
 
     function renderGameplayGuide(state, previous) {
         const phase = document.getElementById("gamePhase");
-        const advice = document.getElementById("gameTurnAdvice");
-        const ready = document.getElementById("gameReadyCount");
         const hand = document.getElementById("gameOpponentHand");
         if (!phase) return;
         page.classList.toggle("is-my-turn", state.isMyTurn && !gameFinished);
         phase.textContent = gameFinished ? "Partie terminée" : `Tour ${state.turnNumber} · ${state.isMyTurn ? "À vous de jouer" : "Tour adverse"}`;
         el.turnLabel.textContent = `TOUR ${state.turnNumber}`;
-        const units = [state.me.leader, ...state.me.characters].filter(Boolean);
-        const count = units.filter(card => !card.isExhausted && !card.isImprisoned && (card.abilities || []).some(a => a.type !== 3 && !a.cooldown && !a.unavailableReason && a.usageCost <= state.me.money && (a.type !== 1 || state.me.turnsPlayed > 1))).length;
-        ready.textContent = `${count} carte(s) avec une capacité disponible`;
         hand.textContent = `Main adverse : ${state.opponent.handCount} carte(s)`;
-        advice.textContent = gameFinished ? "Consultez le résultat ou revoyez les dernières actions." : !state.isMyTurn
-            ? "L’adversaire prépare ses actions. Vous pouvez consulter vos cartes et leurs capacités."
-            : state.me.turnsPlayed <= 1 ? "Posez vos premières cartes. Les personnages arrivent épuisés ; les compétences sont disponibles dès votre deuxième tour."
-            : "Jouez une carte, utilisez une capacité ou préparez un blocage. Les cibles possibles s’illuminent avant confirmation.";
         const announcement = document.getElementById("gameTurnAnnouncement");
         if (!gameFinished && announcement && (!previous || previous.turnNumber !== state.turnNumber)) {
             window.clearTimeout(announcementTimer);
@@ -384,8 +464,47 @@
             announcement.hidden = false;
             announcement.classList.remove("is-visible"); void announcement.offsetWidth; announcement.classList.add("is-visible");
             announcementTimer = window.setTimeout(() => { announcement.hidden = true; }, 2200);
-            if (previous) showStatus(state.isMyTurn ? "Votre tour commence : cartes piochées, énergie et capacités actualisées." : "Tour adverse. Consultez les actions dans l’historique.");
+            if (previous) showStatus("");
         }
+    }
+
+    let openingShown = false;
+    function showOpeningToss(state) {
+        if (openingShown || state.status !== 2 || state.turnNumber > 2 || !state.firstPlayerId) return;
+        const winner = [state.me, state.opponent].find(player => player.userId === state.firstPlayerId);
+        const dialog = document.getElementById("gameOpeningDialog");
+        if (!winner || !dialog) return;
+        openingShown = true;
+        const storageKey = `worlds-tcg-opening:${matchId}`;
+        try {
+            if (window.sessionStorage?.getItem(storageKey)) return;
+            window.sessionStorage?.setItem(storageKey, "seen");
+        } catch (_) { /* The in-memory flag also prevents repeats when storage is unavailable. */ }
+        const avatar = (player, prefix) => {
+            document.getElementById(`gameOpening${prefix}`).textContent = player.displayName;
+            const image = document.getElementById(`gameOpening${prefix}Avatar`);
+            const initial = document.getElementById(`gameOpening${prefix}Initial`);
+            initial.textContent = (player.displayName || "?").slice(0, 1).toUpperCase();
+            image.hidden = !player.avatarUrl; initial.hidden = !!player.avatarUrl;
+            if (player.avatarUrl) {
+                image.src = player.avatarUrl;
+                image.addEventListener("error", () => { image.hidden = true; initial.hidden = false; }, { once: true });
+            }
+        };
+        avatar(state.me, "Me"); avatar(state.opponent, "Opponent");
+        const coin = document.getElementById("gameOpeningCoin");
+        coin.style.setProperty("--coin-end", winner.userId === state.me.userId ? "1800deg" : "1980deg");
+        coin.classList.add("is-tossing");
+        dialog.addEventListener("cancel", event => event.preventDefault());
+        dialog.showModal();
+        const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        window.setTimeout(() => {
+            if (!dialog.open || gameFinished) return;
+            document.getElementById("gameOpeningTitle").textContent = `${winner.displayName} commence`;
+            document.getElementById("gameOpeningStatus").textContent = winner.userId === state.me.userId
+                ? "Vous jouez en premier. À vous de jouer !" : "Votre adversaire joue en premier.";
+            window.setTimeout(() => dialog.close(), 2200);
+        }, reduced ? 150 : 1800);
     }
 
     function showResult(state) {
@@ -413,9 +532,20 @@
     document.getElementById("gameResultClose")?.addEventListener("click", () => document.getElementById("gameResultDialog").close());
 
     function updateControls() {
-        el.endTurnButton.disabled = !latestState?.isMyTurn || actionPending || gameFinished || !!targeting;
+        el.endTurnButton.disabled = !latestState?.isMyTurn || actionPending || gameFinished || !!targeting || !!costSelection;
         el.playCardButton.hidden = !latestState?.me.hand.some(card => card.instanceId === selectedHandCardId && card.type === 2);
         el.playCardButton.disabled = actionPending || !latestState?.isMyTurn || gameFinished;
+        // A state update can arrive before the Hub invocation finishes (including the AI turn).
+        // Refresh the open inspector when the pending flag changes, without reopening it.
+        if (latestState && el.dialog.open && !costSelection && !targeting) {
+            const errorMessage = el.dialogStatus.classList.contains("is-error") ? el.dialogStatus.textContent : null;
+            renderCardDialog();
+            if (errorMessage) {
+                el.dialogStatus.textContent = errorMessage;
+                el.dialogStatus.classList.add("is-error");
+                el.dialogStatus.setAttribute("role", "alert");
+            }
+        }
     }
 
     function notifyStatChanges(previous, next) {
@@ -494,12 +624,37 @@
             if (currentIds.has(id) || !previous.node.animate) return;
             const ghost = previous.node.cloneNode(true);
             ghost.classList.add("game-card-moving");
+            ghost.setAttribute("aria-hidden", "true");
+            ghost.style.visibility = "visible";
             const rect = previous.rect;
             Object.assign(ghost.style, { position: "fixed", left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px`, margin: "0" });
             document.body.appendChild(ghost);
-            const target = (previous.self ? el.selfGraveyard : el.opponentGraveyard).getBoundingClientRect();
-            const animation = ghost.animate([{ transform: "none", opacity: 1 }, { transform: `translate(${target.left - rect.left}px, ${target.top - rect.top}px) scale(.35)`, opacity: 0 }], { duration: 520, easing: "ease-in" });
-            animation.finished.then(() => ghost.remove(), () => ghost.remove());
+            const graveyard = previous.self ? el.selfGraveyard : el.opponentGraveyard;
+            const target = graveyard.getBoundingClientRect();
+            const dx = target.left + target.width / 2 - rect.left - rect.width / 2;
+            const dy = target.top + target.height / 2 - rect.top - rect.height / 2;
+            let burst = null;
+            if (previous.onBoard) {
+                ghost.classList.add("game-card-dying");
+                burst = document.createElement("div"); burst.className = "game-death-burst"; burst.setAttribute("aria-hidden", "true");
+                Object.assign(burst.style, { left: `${rect.left}px`, top: `${rect.top}px`, width: `${rect.width}px`, height: `${rect.height}px` });
+                document.body.appendChild(burst);
+            }
+            const frames = previous.onBoard ? [
+                { transform: "scale(1) rotate(0deg)", opacity: 1, filter: "brightness(1) saturate(1) blur(0px)", offset: 0 },
+                { transform: "scale(1.06) rotate(-3deg)", opacity: 1, filter: "brightness(1.7) saturate(.5) blur(0px)", offset: .14 },
+                { transform: "translateY(8px) scale(.98) rotate(5deg)", opacity: .85, filter: "brightness(.7) saturate(0) blur(.4px)", offset: .36 },
+                { transform: `translate(${dx * .25}px,${dy * .25}px) scale(.8) rotate(-8deg)`, opacity: .6, filter: "brightness(.6) saturate(0) blur(1px)", offset: .6 },
+                { transform: `translate(${dx}px,${dy}px) scale(.12) rotate(-18deg)`, opacity: 0, filter: "brightness(.4) saturate(0) blur(4px)", offset: 1 }
+            ] : [{ transform: "none", opacity: 1 }, { transform: `translate(${dx}px,${dy}px) scale(.35)`, opacity: 0 }];
+            const animation = ghost.animate(frames, { duration: previous.onBoard ? 1050 : 520, easing: "cubic-bezier(.3,.05,.35,1)", fill: "forwards" });
+            if (previous.onBoard) graveyard.animate?.([
+                { boxShadow: "0 0 0 0 #f4c43000", borderColor: "#ffffff12" },
+                { boxShadow: "0 0 18px 3px #f4c43077", borderColor: "#f4c430" },
+                { boxShadow: "0 0 0 0 #f4c43000", borderColor: "#ffffff12" }
+            ], { duration: 450, delay: 750, easing: "ease-out" });
+            const finish = () => { ghost.remove(); burst?.remove(); };
+            animation.finished.then(finish, finish);
         });
     }
 
@@ -516,8 +671,6 @@
             : message;
 
         el.history.appendChild(line);
-        const recent = document.getElementById("gameRecentAction");
-        if (recent) { recent.textContent = message; recent.classList.remove("is-new"); void recent.offsetWidth; recent.classList.add("is-new"); }
         el.history.scrollTop = el.history.scrollHeight;
     }
 
@@ -563,8 +716,9 @@
         selectedHandCardId = card.instanceId;
         selectedHandTargetId = null;
         if (card.type === 2) {
+            publishPreview(card.instanceId);
             renderState(latestState);
-            showStatus("Glissez ce personnage sur un emplacement libre. Au clavier, choisissez l’emplacement puis appuyez sur Entrée.");
+            showStatus("Choisissez un emplacement libre.");
         } else playSelectedCard(null);
     }
 
@@ -577,6 +731,7 @@
             const refusal = handPlayRefusal(card);
             if (refusal) { showStatus(refusal, true); return; }
             handDrag = { cardId: card.instanceId, pointerId: event.pointerId, startX: event.clientX, startY: event.clientY, node, ghost: null, slot: null };
+            publishPreview(card.instanceId);
             node.setPointerCapture?.(event.pointerId);
         });
         node.addEventListener("pointermove", event => {
@@ -593,13 +748,15 @@
                 document.body.appendChild(drag.ghost);
                 node.classList.add("is-dragging");
                 page.classList.add("is-dragging-hand");
-                showStatus("Déposez le personnage sur un emplacement libre de votre terrain.");
+                showStatus("Déposez sur un emplacement libre.");
             }
             drag.ghost.style.left = `${event.clientX - drag.ghost.getBoundingClientRect().width / 2}px`;
             drag.ghost.style.top = `${event.clientY - drag.ghost.getBoundingClientRect().height / 2}px`;
             const hit = document.elementFromPoint(event.clientX, event.clientY)?.closest(".game-character-slot");
             const slot = hit?.parentElement === el.selfCharacters ? Number(hit.dataset.slot) : null;
+            const previousSlot = drag.slot;
             drag.slot = slot !== null && Number.isInteger(slot) && !latestState.me.characters[slot] ? slot : null;
+            if (previousSlot !== drag.slot) publishPreview(drag.cardId, null, null, drag.slot);
             [...el.selfCharacters.children].forEach((element, index) => element.classList.toggle("is-drop-target", index === drag.slot));
         });
         node.addEventListener("pointerup", event => {
@@ -608,7 +765,7 @@
             endHandDrag();
             if (!dropped) return;
             ignoreHandClickUntil = Date.now() + 400;
-            if (drag.slot === null) { showStatus("Déplacement annulé. Déposez la carte sur un emplacement libre de votre terrain."); return; }
+            if (drag.slot === null) { showStatus(""); return; }
             const current = latestState.me.hand.find(c => c.instanceId === drag.cardId);
             const refusal = current ? handPlayRefusal(current) : "Cette carte n’est plus dans votre main.";
             if (refusal) { showStatus(refusal, true); return; }
@@ -623,6 +780,7 @@
     function endHandDrag() {
         if (!handDrag) return;
         const drag = handDrag; handDrag = null;
+        publishPreview();
         drag.ghost?.remove(); drag.node.classList.remove("is-dragging");
         if (drag.node.hasPointerCapture?.(drag.pointerId)) drag.node.releasePointerCapture(drag.pointerId);
         page.classList.remove("is-dragging-hand");
@@ -648,19 +806,22 @@
         if (refusal) { showStatus(refusal, true); return; }
         const needsTarget = (selectedCard?.playTargetTypes || []).some(type => [10,12,20,21,22].includes(type));
         if (needsTarget && !selectedHandTargetId) { beginTargeting(selectedCard, null, slot); return; }
+        if (selectedCard.playHandCosts?.length && authorizedCosts?.sourceId !== cardInstanceId) { openCostSelection(selectedCard,selectedCard.playHandCosts,()=>playSelectedCard(slot)); return; }
         actionPending = true;
         el.dialog.close();
         renderState(latestState);
         try {
-            if (needsTarget) await connection.invoke("PlayCardWithTarget", matchId, cardInstanceId, slot, selectedHandTargetId);
+            if (authorizedCosts?.sourceId === cardInstanceId) await connection.invoke("PlayCardWithCosts",matchId,cardInstanceId,slot,selectedHandTargetId,authorizedCosts.selections);
+            else if (needsTarget) await connection.invoke("PlayCardWithTarget", matchId, cardInstanceId, slot, selectedHandTargetId);
             else await connection.invoke("PlayCard", matchId, cardInstanceId, slot);
             selectedHandCardId = null;
             selectedHandTargetId = null;
-            showStatus("Carte jouée. Sélectionnez une autre carte ou terminez le tour.");
+            showStatus("");
         } catch (error) {
             showError(error);
 
         } finally {
+            authorizedCosts = null;
             actionPending = false;
             updateControls();
             if (el.dialog.open) {
@@ -681,6 +842,7 @@
         if (targeting) {
             if (!targeting.ids.includes(card.instanceId) || actionPending) return;
             targeting.targetId = card.instanceId;
+            publishPreview(targeting.sourceId, targeting.abilityId ?? null, targeting.targetId, targeting.slot);
             refreshTargeting();
             renderTargetConfirmation();
             return;
@@ -688,9 +850,9 @@
         openCardDialog(card.instanceId);
     }
 
-    document.getElementById("gameCardDialogClose").addEventListener("click", () => { if (targeting) cancelTargeting(); else el.dialog.close(); });
-    el.dialog.addEventListener("click", event => { if (event.target === el.dialog) { if (targeting) cancelTargeting(); else el.dialog.close(); } });
-    el.dialog.addEventListener("cancel", () => cancelTargeting());
+    document.getElementById("gameCardDialogClose").addEventListener("click", () => { if(costSelection) cancelCostSelection(); else if (targeting) cancelTargeting(); else el.dialog.close(); });
+    el.dialog.addEventListener("click", event => { if (event.target === el.dialog) { if(costSelection) cancelCostSelection(); else if (targeting) cancelTargeting(); else el.dialog.close(); } });
+    el.dialog.addEventListener("cancel", () => { if(costSelection) cancelCostSelection(); else cancelTargeting(); });
     document.getElementById("gameTargetCancel").addEventListener("click", cancelTargeting);
     document.addEventListener?.("keydown", event => {
         if (event.key !== "Escape") return;
@@ -723,13 +885,15 @@
         el.dialogActions.replaceChildren();
         const hand = latestState.me.hand.some(c => c.instanceId === card.instanceId);
         const unit = latestState.me.leader.instanceId === card.instanceId || latestState.me.characters.some(c => c?.instanceId === card.instanceId);
+        const stateReason = card.isImprisoned ? "Cette carte est en prison jusqu’à la fin de son prochain tour." : card.isExhausted ? "Cette carte est épuisée." : "";
         const turnReason = gameFinished ? "La partie est terminée." : !own ? "Carte adverse : consultation uniquement." : !latestState.isMyTurn ? "Attendez votre tour pour agir." : actionPending ? "Action en cours…" : "";
-        el.dialogStatus.textContent = [turnReason || (hand ? "Choisissez où jouer cette carte." : "Choisissez une action ou consultez les capacités."), ...cardStates(card)].join(" · ");
+        el.dialogStatus.textContent = [turnReason, ...cardStates(card)].filter(Boolean).join(" · ");
         function button(label, action, reason = "") {
             const b = document.createElement("button"); b.type = "button";
             b.className = "game-dialog-action"; b.textContent = label; b.disabled = !!reason;
+            b.classList.toggle("is-primary", /^(Utiliser|Poser|Jouer)/.test(label));
             b.title = reason; b.addEventListener("click", action); el.dialogActions.appendChild(b);
-            if (reason) { const note = document.createElement("div"); note.className = "game-action-refusal"; note.setAttribute("role", "status"); note.textContent = reason; el.dialogActions.appendChild(note); }
+            if (reason && reason !== turnReason && reason !== stateReason) { const note = document.createElement("div"); note.className = "game-action-refusal"; note.setAttribute("role", "status"); note.textContent = reason; el.dialogActions.appendChild(note); }
         }
         if (hand && own) {
             let reason = turnReason || (card.usageCost > latestState.me.money ? `Énergie insuffisante : ${card.usageCost} nécessaire, ${latestState.me.money} disponible.` : "");
@@ -750,9 +914,11 @@
         }
         for (const ability of card.abilities || []) {
             const detail = document.createElement("div"); detail.className = "game-dialog-ability";
-            const name = document.createElement("strong"); name.textContent = `${ability.name} · ${ability.usageCost} énergie`;
+            const name = document.createElement("strong"); name.textContent = ability.type === 1 || ability.usageCost > 0 ? `${ability.name} · ${ability.usageCost} énergie` : ability.name;
             const description = document.createElement("p"); description.textContent = ability.description;
             detail.appendChild(name); detail.appendChild(description); el.dialogActions.appendChild(detail);
+            if (ability.handCosts?.length) { const costs=document.createElement("p"); costs.className="game-hand-cost-description";
+                costs.textContent="Pour activer : "+ability.handCosts.map(r=>`${r.discard ? "défausser" : "dévoiler"} ${r.count} carte(s) autorisée(s) de votre main`).join(" ET "); detail.appendChild(costs); }
             if (!own || !unit || ability.type === 3) continue;
             const reason = turnReason || (ability.usageCost > latestState.me.money ? "Énergie insuffisante." : "") ||
                 (ability.type === 1 && latestState.me.turnsPlayed <= 1 ? "Disponible à partir de votre deuxième tour." : "") ||
@@ -761,7 +927,7 @@
             const types = (ability.targetTypes || []).filter(type => [10, 12, 20, 21, 22].includes(type));
             if (!types.length) button(`Utiliser ${ability.name}`, () => executeCardAction("UseAbility", card.instanceId, ability.id, null), reason);
             else {
-                button(`Utiliser ${ability.name}`, () => beginTargeting(card,ability), reason || (!targetsFor(card,ability).length ? "Aucune cible ne remplit les conditions de cette capacité (ciblage, blocage, camouflage ou origines)." : ""));
+                button(`Utiliser ${ability.name}`, () => beginTargeting(card,ability), reason || (!targetsFor(card,ability).length ? ability.targetRefusalReason || "Aucune cible ne remplit les conditions de cette capacité (ciblage, blocage, camouflage ou origines)." : ""));
             }
         }
     }
@@ -774,7 +940,9 @@
 
     function targetsFor(card, ability) {
         const ids = ability ? ability.targetIds : card.playTargetIds;
-        const candidates = selectableTargets((ability ? ability.targetTypes : card.playTargetTypes) || []);
+        // Automatic recipients (self, players, groups) don't restrict the card clicked for a targeted action.
+        const types = ((ability ? ability.targetTypes : card.playTargetTypes) || []).filter(type => [10,12,20,21,22].includes(type));
+        const candidates = selectableTargets(types);
         return ids ? candidates.filter(t => ids.includes(t.card.instanceId)) : candidates;
     }
 
@@ -787,6 +955,7 @@
         const ids = targetsFor(card,ability).map(t => t.card.instanceId);
         if (!ids.length) { showStatus("Aucune cible ne remplit les conditions de cette action.",true); return; }
         targeting = { sourceId: card.instanceId, abilityId: ability?.id, label: ability?.name || "Jouer la carte", slot, ids, isAttack: !!ability?.isAttack };
+        publishPreview(card.instanceId, ability?.id ?? null, null, slot);
         dialogSignature = null;
         el.dialog.close();
         refreshTargeting(); updateControls();
@@ -794,6 +963,7 @@
     }
 
     function cancelTargeting() {
+        publishPreview();
         targeting = null; selectedHandTargetId = null;
         el.dialog.close(); refreshTargeting(); updateControls();
         showStatus("Sélection annulée. Aucune action effectuée.");
@@ -831,8 +1001,9 @@
         const preview = document.createElement("div"); preview.className = "game-confirm-target";
         const label = document.createElement("strong"); label.textContent = `Cible : ${target.name}`;
         preview.appendChild(label); preview.appendChild(createCardElement(target)); el.dialogActions.appendChild(preview);
-        for (const [text, action] of [["Confirmer l’action",confirmTargeting],["Changer de cible",() => { targeting.targetId = null; el.dialog.close(); refreshTargeting(); }],["Annuler",cancelTargeting]]) {
+        for (const [text, action] of [["Confirmer l’action",confirmTargeting],["Changer de cible",() => { targeting.targetId = null; publishPreview(targeting.sourceId, targeting.abilityId ?? null, null, targeting.slot); el.dialog.close(); refreshTargeting(); }],["Annuler",cancelTargeting]]) {
             const button = document.createElement("button"); button.type = "button"; button.className = "game-dialog-action"; button.textContent = text; button.addEventListener("click",action); el.dialogActions.appendChild(button);
+            button.classList.toggle("is-primary", text === "Confirmer l’action");
         }
         if (!el.dialog.open) el.dialog.showModal();
     }
@@ -873,14 +1044,25 @@
     async function executeCardAction(method, ...args) {
         if (actionPending || !latestState.isMyTurn || gameFinished) return;
         const attack = args.length > 3 ? args.pop() : null;
+        const source=visibleCard(args[0]), ability=source?.abilities?.find(a=>a.id===args[1]);
+        if (method==="UseAbility" && ability?.handCosts?.length && !(authorizedCosts?.sourceId===args[0] && authorizedCosts.abilityId===args[1])) {
+            openCostSelection(source,ability.handCosts,()=>executeCardAction(method,...args,attack),args[1]); return;
+        }
         actionPending = true; el.dialog.close(); updateControls();
         if (method === "UseAbility" && args[2]) {
             const target = [...page.querySelectorAll(".game-card[data-instance-id]")].find(node => node.dataset.instanceId === args[2]);
             target?.scrollIntoView?.({ block: "nearest", inline: "nearest" });
         }
-        try { await connection.invoke(method, matchId, ...args); animateAttack(attack); showStatus("Action effectuée."); }
-        catch (error) { showError(error); openCardDialog(inspectedCardId); el.dialogStatus.textContent = el.actionStatus.textContent; }
+        try { if (method==="UseAbility" && authorizedCosts) await connection.invoke("UseAbilityWithCosts",matchId,...args,authorizedCosts.selections);
+            else await connection.invoke(method, matchId, ...args); animateAttack(attack); showStatus(""); }
+        catch (error) {
+            showError(error); openCardDialog(inspectedCardId);
+            el.dialogStatus.textContent = el.actionStatus.textContent;
+            el.dialogStatus.classList.add("is-error");
+            el.dialogStatus.setAttribute("role", "alert");
+        }
         finally {
+            authorizedCosts = null;
             actionPending = false; updateControls();
             if (el.dialog.open) {
                 const message = el.dialogStatus.textContent;
@@ -927,12 +1109,34 @@
     // =========================================================
 
     connection.on("GameStateUpdated", state => renderState(state));
+    let revealPanelTimer;
+    connection.on("GameCardsRevealed", event => {
+        if (!latestState || event.userId!==latestState.opponent.userId) return;
+        const panel=document.getElementById("gameRevealedCards"); if(!panel) return;
+        panel.replaceChildren();
+        const title=document.createElement("strong"); title.textContent=`${latestState.opponent.displayName} dévoile ${event.cards.length} carte(s) pour son action`;
+        const cards=document.createElement("div"); cards.className="game-revealed-card-list";
+        event.cards.forEach(card=>{ const visual=document.createElement("div"); visual.className="game-revealed-card";
+            const component=document.createElement("div"); component.dataset.cardComponent=card.cardId; visual.appendChild(component); cards.appendChild(visual); });
+        const close=document.createElement("button"); close.className="game-dialog-action"; close.type="button"; close.textContent="Fermer"; close.addEventListener("click",()=>{panel.hidden=true;});
+        panel.appendChild(title); panel.appendChild(cards); panel.appendChild(close); panel.hidden=false; window.worldsCardComponents?.hydrate(panel);
+        window.clearTimeout(revealPanelTimer); revealPanelTimer=window.setTimeout(()=>{panel.hidden=true;panel.replaceChildren();},10000);
+    });
+    connection.on("GameActionPreviewUpdated", preview => {
+        if (!latestState || preview.userId !== latestState.opponent.userId || preview.version < latestState.version) return;
+        if (!preview.label) { clearOpponentPreview(); return; }
+        opponentPreview = preview; renderOpponentPreview();
+        window.clearTimeout(opponentPreviewTimer);
+        opponentPreviewTimer = window.setTimeout(clearOpponentPreview, preview.confirmed ? 1800 : 15000);
+        if (preview.confirmed && preview.isAttack) pendingOpponentAttack = { version: preview.version, animation: captureAttack(preview.sourceId, preview.targetId) };
+    });
 
     connection.on("GameLogAdded", data => appendLog(data.message, data.createdAt));
 
     connection.on("ChatMessageReceived", data => appendChatMessage(data));
 
     connection.on("GameFinished", data => {
+        document.getElementById("gameOpeningDialog")?.close();
         if (latestState) showResult({ ...latestState, winnerUserId: data.winnerUserId, endReason: data.reason,
             xpEarned: data.winnerUserId === latestState.me.userId ? data.xpReward : 0,
             cardBalanceEarned: data.winnerUserId === latestState.me.userId ? data.cardBalanceReward : 0 });
@@ -952,11 +1156,11 @@
 
     function connectionStatus(text, offline = false) {
         const node = document.getElementById("gameConnection");
-        if (node) { node.textContent = text; node.classList.toggle("is-offline", offline); }
+        if (node) { node.textContent = text; node.hidden = !offline; node.classList.toggle("is-offline", offline); }
         if (offline) { actionPending = true; updateControls(); }
     }
-    connection.onreconnecting?.(() => connectionStatus("Reconnexion…", true));
-    connection.onclose?.(() => { connectionStatus("Hors connexion", true); showStatus("Connexion interrompue. Rechargez la page pour reprendre la partie.", true); });
+    connection.onreconnecting?.(() => { clearOpponentPreview(); connectionStatus("Reconnexion…", true); });
+    connection.onclose?.(() => { clearOpponentPreview(); connectionStatus("Hors connexion", true); showStatus("Connexion interrompue. Rechargez la page pour reprendre la partie.", true); });
     connection.onreconnected?.(async () => {
         try { await connection.invoke("JoinGame", matchId); actionPending = false; updateControls(); connectionStatus("En direct"); }
         catch (error) { showError(error); }

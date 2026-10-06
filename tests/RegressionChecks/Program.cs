@@ -192,6 +192,9 @@ Check(streamedLogs.SequenceEqual(aiLogs), "IA : historique progressif complet sa
 await AbilityRuleChecks.RunAsync(Check, context);
 await GeographyChecks.RunAsync(Check);
 await PartyRuleChecks.RunAsync(Check);
+await EffectAuditChecks.RunAsync(Check);
+await ActionFlowAuditChecks.RunAsync(Check);
+await HandCostChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
 CardPreviewChecks.Run(Check);
 BoosterDropChecks.Run(Check);

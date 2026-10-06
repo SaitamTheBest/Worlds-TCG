@@ -108,7 +108,9 @@
         TargetParty = 55,
         MatchingFriendlyCharactersAtLeast = 60,
         MatchingEnemyCharactersAtLeast = 61,
-        MatchingCharactersAtLeast = 62
+        MatchingCharactersAtLeast = 62,
+        RevealHandCards = 70,
+        DiscardHandCards = 71
     }
 
     public enum GameComparisonOperator

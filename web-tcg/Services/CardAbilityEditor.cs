@@ -14,7 +14,7 @@ public static class CardAbilityEditor
         UsageCost = ability.UsageCost, DisplayOrder = ability.DisplayOrder, CooldownTurns = ability.CooldownTurns,
         Effects = ability.Effects.OrderBy(e => e.DisplayOrder).Select(ReadEffect).ToList(),
         Conditions = ability.Conditions.OrderBy(c => c.DisplayOrder).Select(c => new CardConditionInputModel
-        { Type = c.Type, Value = c.Value, Negate = c.Negate, RegionIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"regions"), CountryIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"countries"), PartyIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"parties") }).ToList()
+        { Type = c.Type, Value = c.Value, Negate = c.Negate, RegionIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"regions"), CountryIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"countries"), PartyIds = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"parties"), CardTypes = GameGeography.Ids(GameGeography.Parse(c.ParametersJson),"types") }).ToList()
     };
 
     public static void Write(CardAbility ability, CardAbilityInputModel input)
@@ -32,7 +32,7 @@ public static class CardAbilityEditor
         foreach (var (condition, index) in input.Conditions.Select((c, i) => (c, i)))
             ability.Conditions.Add(new CardAbilityCondition
             { Type = condition.Type, Value = condition.Value, Negate = condition.Negate, DisplayOrder = index,
-                ParametersJson = JsonSerializer.Serialize(new Dictionary<string,string> { ["regions"] = string.Join(',',condition.RegionIds.Distinct()), ["countries"] = string.Join(',',condition.CountryIds.Distinct()), ["parties"] = string.Join(',',condition.PartyIds.Distinct()) }) });
+                ParametersJson = JsonSerializer.Serialize(new Dictionary<string,string> { ["regions"] = string.Join(',',condition.RegionIds.Distinct()), ["countries"] = string.Join(',',condition.CountryIds.Distinct()), ["parties"] = string.Join(',',condition.PartyIds.Distinct()), ["types"] = string.Join(',',condition.CardTypes.Distinct()) }) });
     }
 
     private static CardEffectInputModel ReadEffect(CardAbilityEffect e)
@@ -103,8 +103,10 @@ public static class CardAbilityEditor
                 yield return "Second souffle s'applique au personnage lui-même à sa mort.";
             if (e.Type == GameEffectType.DamageMultiplier && e.Value < 1)
                 yield return "Le multiplicateur de dégâts doit être au moins égal à 1.";
-            if (e.Trigger is GameEffectTrigger.OnDeath or GameEffectTrigger.OnTurnStart or GameEffectTrigger.OnTurnEnd && e.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyCharacterOrLeader)
+            if (e.Trigger is GameEffectTrigger.Passive or GameEffectTrigger.OnDeath or GameEffectTrigger.OnTurnStart or GameEffectTrigger.OnTurnEnd && e.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyCharacterOrLeader)
                 yield return "Une action automatique doit cibler cette carte, un Leader, un joueur ou un groupe ; personne ne choisit de cible au déclenchement.";
+            if (e.Trigger == GameEffectTrigger.OnDamaged && e.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader)
+                yield return "Une réaction aux dégâts doit cibler cette carte, l'attaquant adverse, un Leader, un joueur ou un groupe.";
             if (cardType == CardType.Leader && e.Trigger is GameEffectTrigger.Passive or GameEffectTrigger.OnPlay && e.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyCharacterOrLeader)
                 yield return "Un effet initial du Leader doit utiliser une cible automatique (cette carte, Leader, joueur ou groupe).";
             if (e.DurationTurns > 0 && e.Type is not (GameEffectType.Prison or GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.DamageMultiplier or GameEffectType.HealthBonus or GameEffectType.DamageBonus))
@@ -113,6 +115,8 @@ public static class CardAbilityEditor
                 yield return "Prison dure exactement un prochain tour et ne peut pas être un effet passif.";
             if (e.Trigger == GameEffectTrigger.Passive && e.DurationTurns != 0)
                 yield return "Un effet passif reste actif tant que sa source est sur le terrain : mettez sa durée à 0.";
+            if (e.Trigger == GameEffectTrigger.Passive && e.Type is not (GameEffectType.Block or GameEffectType.Shield or GameEffectType.Stealth or GameEffectType.ExtraAttack or GameEffectType.DamageMultiplier or GameEffectType.HealthBonus or GameEffectType.DamageBonus))
+                yield return "Le passif concerne les états et bonus continus. Pour les soins, pioches ou ressources, choisissez la pose, le début ou la fin du tour.";
             bool validJson;
             try { using var json = JsonDocument.Parse(e.ParametersJson); validJson = json.RootElement.ValueKind == JsonValueKind.Object; }
             catch (JsonException) { validJson = false; }
@@ -120,6 +124,16 @@ public static class CardAbilityEditor
         }
         foreach (var condition in ability.Conditions)
         {
+            if (condition.Type is GameConditionType.RevealHandCards or GameConditionType.DiscardHandCards)
+            {
+                if (condition.Negate || condition.Value < 1 || condition.Value > 40 || condition.Value != decimal.Truncate(condition.Value))
+                    yield return "Dévoiler/défausser demande de 1 à 40 cartes et ne peut pas être inversé.";
+                if (ability.Effects.Any(e => e.Trigger is not (GameEffectTrigger.OnPlay or GameEffectTrigger.OnSkill or GameEffectTrigger.OnTalent)))
+                    yield return "Un coût de main nécessite une activation manuelle ou la pose d'une carte ; il ne peut pas accompagner un effet automatique ou passif.";
+                if (cardType == CardType.Leader && ability.Effects.Any(e=>e.Trigger==GameEffectTrigger.OnPlay))
+                    yield return "L'effet initial du Leader ne peut pas demander un choix de cartes de main.";
+                if (condition.CardTypes.Any(t => t is < 2 or > 5)) yield return "Types de cartes de main invalides.";
+            }
             if (condition.Type is GameConditionType.SourceParty or GameConditionType.TargetParty && condition.PartyIds.Count == 0) yield return "Choisissez au moins un parti pour cette condition.";
             if (condition.Type is GameConditionType.SourceRegion or GameConditionType.TargetRegion && condition.RegionIds.Count == 0) yield return "Choisissez au moins une région pour cette condition.";
             if (condition.Type is GameConditionType.SourceCountry or GameConditionType.TargetCountry && condition.CountryIds.Count == 0) yield return "Choisissez au moins un pays pour cette condition.";

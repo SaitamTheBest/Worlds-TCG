@@ -1,4 +1,4 @@
-﻿using web_tcg.Data.Enums;
+using web_tcg.Data.Enums;
 using web_tcg.Game.Runtime;
 
 namespace web_tcg.Game.Engine
@@ -14,7 +14,7 @@ namespace web_tcg.Game.Engine
         {
             foreach (var condition in conditions)
             {
-                if (target == null && IsTargetGeography(condition)) continue;
+                if (target == null && IsTargetCondition(condition)) continue;
                 var result = Evaluate(
                     state,
                     player,
@@ -32,14 +32,15 @@ namespace web_tcg.Game.Engine
             return true;
         }
 
-        public static bool IsTargetGeography(GameConditionDefinition condition) => condition.Type is GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty;
+        public static bool IsTargetCondition(GameConditionDefinition condition) => condition.Type is GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty;
 
         public string? Failure(GameState state, GamePlayerState player, GameCardState source, GameCardState? target, IEnumerable<GameConditionDefinition> conditions)
         {
-            var failed = conditions.FirstOrDefault(c => !(target == null && IsTargetGeography(c)) && (Evaluate(state,player,source,target,c) == c.Negate));
+            var failed = conditions.FirstOrDefault(c => !(target == null && IsTargetCondition(c)) && (Evaluate(state,player,source,target,c) == c.Negate));
             if (failed == null) return null;
             var requirement = failed.Type switch
             {
+                GameConditionType.RevealHandCards or GameConditionType.DiscardHandCards => $"{failed.Value} carte(s) de main autorisée(s) à {(failed.Type == GameConditionType.DiscardHandCards ? "défausser" : "dévoiler")} (disponibles : {GameHandCosts.Eligible(player,source,failed).Count()})",
                 GameConditionType.SourceHealthBelow => $"PV de {source.Name} inférieurs à {failed.Value} (actuellement {source.CurrentHealth})",
                 GameConditionType.SourceHealthAbove => $"PV de {source.Name} supérieurs à {failed.Value} (actuellement {source.CurrentHealth})",
                 GameConditionType.TargetHealthBelow => $"PV de la cible inférieurs à {failed.Value} (actuellement {target?.CurrentHealth})",
@@ -75,6 +76,7 @@ namespace web_tcg.Game.Engine
             return condition.Type switch
             {
                 GameConditionType.None => true,
+                GameConditionType.RevealHandCards or GameConditionType.DiscardHandCards => GameHandCosts.Eligible(player,source,condition).Count() >= condition.Value,
                 GameConditionType.SourceParty => source.PoliticalPartyId.HasValue && GameGeography.Ids(condition.Parameters,"parties").Contains(source.PoliticalPartyId.Value),
                 GameConditionType.TargetParty => target?.PoliticalPartyId.HasValue == true && GameGeography.Ids(condition.Parameters,"parties").Contains(target.PoliticalPartyId.Value),
                 GameConditionType.SourceRegion => GameGeography.Ids(condition.Parameters,"regions").Contains(source.RegionId),
