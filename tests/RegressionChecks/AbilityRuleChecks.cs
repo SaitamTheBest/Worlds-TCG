@@ -40,8 +40,8 @@ public static class AbilityRuleChecks
             PlayerOne = new() { UserId = "a", TurnsPlayed = 3, Money = 50, Leader = Unit(CardType.Leader,"a") },
             PlayerTwo = new() { UserId = "b", TurnsPlayed = 2, Money = 50, Leader = Unit(CardType.Leader,"b") } };
         async Task<bool> Rejected(Func<Task> action) { try { await action(); return false; } catch (GameRuleException) { return true; } }
-        check(await Rejected(()=>engine.BlockAsync(state,"a",state.PlayerOne.Leader.InstanceId)) && !state.PlayerOne.Leader.IsBlocking,
-            "moteur : Leader incapable de bloquer sans changer son état");
+        check(typeof(GameEngine).GetMethod("BlockAsync") == null && typeof(web_tcg.Hubs.GameHub).GetMethod("Block") == null,
+            "moteur : blocage manuel absent du moteur et du Hub");
         var character = Unit(CardType.Character,"a"); state.PlayerOne.Characters[0] = character;
         character.Abilities.Add(new() { Id = 1, Type = AbilityType.Trait, CooldownTurns = 2, UsageCost = 5, Effects = new() {
             new() { Type = GameEffectType.Heal, Trigger = GameEffectTrigger.OnTalent, Target = GameTargetType.Self, Value = 20 } } });
@@ -134,8 +134,8 @@ public static class AbilityRuleChecks
         check(prisoner.IsImprisoned && !prisoner.IsExhausted &&
             await Rejected(()=>engine.UseAbilityAsync(prisonState,"b",prisoner.InstanceId,10,prisonState.PlayerOne.Leader.InstanceId)) &&
             await Rejected(()=>engine.UseAbilityAsync(prisonState,"b",prisoner.InstanceId,11,null)) &&
-            await Rejected(()=>engine.BlockAsync(prisonState,"b",prisoner.InstanceId)) && prisonState.PlayerTwo.Money == prisonMoney,
-            "moteur : Prison bloque compétence, talent et blocage au prochain tour sans dépenser d'énergie");
+            prisonState.PlayerTwo.Money == prisonMoney,
+            "moteur : Prison bloque compétence et talent au prochain tour sans dépenser d'énergie");
         check(new GameStateProjector().Project(prisonState,"b").Me.Characters[0]!.IsImprisoned,
             "Play : l'état Prison est transmis au propriétaire");
         var releaseLogs = await engine.EndTurnAsync(prisonState,"b");

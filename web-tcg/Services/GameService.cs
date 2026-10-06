@@ -213,24 +213,6 @@ namespace web_tcg.Services
                 cancellationToken, cardInstanceId, null, targetInstanceId, slot);
         }
 
-        public Task BlockAsync(
-            Guid matchId,
-            string userId,
-            Guid sourceInstanceId,
-            CancellationToken cancellationToken = default)
-        {
-            return ExecuteCommandAsync(
-                matchId,
-                userId,
-                state =>
-                    _engine.BlockAsync(
-                        state,
-                        userId,
-                        sourceInstanceId,
-                        cancellationToken),
-                cancellationToken, sourceInstanceId);
-        }
-
         public Task UseAbilityAsync(
             Guid matchId,
             string userId,
@@ -551,7 +533,7 @@ namespace web_tcg.Services
                 var source = sourceId.HasValue ? state.FindCard(sourceId.Value) : null;
                 var ability = source?.Abilities.FirstOrDefault(a => a.Id == abilityId);
                 var actionLabel = source == null ? null : ability != null ? $"{source.Name} · {ability.Name}" :
-                    source.Zone == GameCardZone.Hand ? $"Joue {source.Name}" : $"{source.Name} passe en blocage";
+                    source.Zone == GameCardZone.Hand ? $"Joue {source.Name}" : source.Name;
                 var isAttack = ability?.Effects.Any(e => e.Type == GameEffectType.Damage && e.Trigger ==
                     (ability.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent)) == true;
                 var logs =

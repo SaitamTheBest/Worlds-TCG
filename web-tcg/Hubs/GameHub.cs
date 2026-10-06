@@ -71,18 +71,6 @@ namespace web_tcg.Hubs
         public Task UseAbilityWithCosts(Guid matchId, Guid sourceInstanceId, int abilityId, Guid? targetInstanceId, List<web_tcg.Models.Game.GameHandCostSelection> costs)
             => ExecuteAsync(() => _gameService.UseAbilityAsync(matchId,UserId,sourceInstanceId,abilityId,targetInstanceId,handCosts:costs));
 
-        public Task Block(
-            Guid matchId,
-            Guid sourceInstanceId)
-        {
-            return ExecuteAsync(
-                () =>
-                    _gameService.BlockAsync(
-                        matchId,
-                        UserId,
-                        sourceInstanceId));
-        }
-
         public Task UseAbility(
             Guid matchId,
             Guid sourceInstanceId,

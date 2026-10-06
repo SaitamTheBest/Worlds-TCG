@@ -279,48 +279,6 @@ namespace web_tcg.Game.Engine
             return logs;
         }
 
-        public Task<List<string>> BlockAsync(
-            GameState state,
-            string userId,
-            Guid sourceInstanceId,
-            CancellationToken cancellationToken = default)
-        {
-            EnsureActivePlayer(
-                state,
-                userId);
-
-            var player =
-                state.GetPlayer(userId);
-
-            EnsureNormalGamePhase(
-                player);
-
-            var source =
-                FindOwnUnit(
-                    player,
-                    sourceInstanceId);
-
-            EnsureReady(
-                source);
-
-            if (source.Type == CardType.Leader)
-                throw new GameRuleException("Un Leader ne peut pas bloquer une attaque.");
-
-            source.IsBlocking = true;
-            source.BlockExpiresAfterTurn =
-                state.TurnNumber + 1;
-
-            Exhaust(
-                player,
-                source);
-
-            return Task.FromResult(
-                new List<string>
-                {
-                    $"{source.Name} passe en position de blocage."
-                });
-        }
-
         public async Task<List<string>> UseAbilityAsync(
             GameState state,
             string userId,

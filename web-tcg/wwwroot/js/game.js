@@ -159,7 +159,7 @@
         const states = [];
         if (card.isImprisoned) states.push("Prison · 1 tour");
         if (card.isExhausted) states.push("Épuisé");
-        if (card.isBlocking) states.push("En blocage");
+        if (card.isBlocking) states.push("Provocation");
         if (card.hasShield) states.push("Bouclier");
         if (card.isStealthed) states.push("Furtif");
         if (card.damageMultiplier && card.damageMultiplier !== 1) states.push(`Dégâts ×${card.damageMultiplier}`);
@@ -907,10 +907,6 @@
                 latestState.me.characters.forEach((c, slot) => { if (!c) button(`Poser · emplacement ${slot + 1}`, () => play(slot), reason); });
                 if (latestState.me.characters.every(Boolean)) el.dialogStatus.textContent = "Les quatre emplacements sont occupés.";
             } else button("Jouer la carte", () => play(null), reason || (card.type === 4 && latestState.me.location ? "Un lieu est déjà posé." : ""));
-        }
-        if (own && unit) {
-            const phase = latestState.me.turnsPlayed <= 1 ? "Disponible à partir de votre deuxième tour." : "";
-            if (card.type !== 1) button("Passer en blocage", () => executeCardAction("Block", card.instanceId), turnReason || phase || (card.isImprisoned ? "Cette carte est en prison jusqu’à la fin de son prochain tour." : card.isExhausted ? "Cette carte est épuisée." : ""));
         }
         for (const ability of card.abilities || []) {
             const detail = document.createElement("div"); detail.className = "game-dialog-ability";

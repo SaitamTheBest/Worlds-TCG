@@ -197,7 +197,7 @@ namespace web_tcg.Game.Effects
                 effect.DurationTurns > 0 ? context.State.TurnNumber + effect.DurationTurns * 2 + 1 : int.MaxValue;
 
             context.Logs.Add(
-                $"{target.Name} passe en position de blocage.");
+                $"{target.Name} obtient Provocation.");
 
             return Task.CompletedTask;
         }

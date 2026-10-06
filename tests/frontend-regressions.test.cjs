@@ -502,7 +502,7 @@ test('partie : sélection de personnage sans popup et pose accessible par emplac
     assert.equal(app.elements.selfHand.children[0].children.some(n => n.className === 'game-card-cost'), false);
 });
 
-test('partie : blocage, talent et compétence ciblée utilisent les actions du Hub', async () => {
+test('partie : compétences ciblées utilisables sans action de blocage manuel', async () => {
     const app = game(); app.state.me.turnsPlayed = 2;
     app.state.opponent.leader.instanceId = 'enemy-leader';
     app.state.me.leader.abilities = [{ id: 7, type: 1, name: 'Attaque', usageCost: 10, targetTypes: [22], cooldown: 0 }];
@@ -518,8 +518,8 @@ test('partie : blocage, talent et compétence ciblée utilisent les actions du H
     assert.equal(app.elements.gameCardDialogActions.children.some(n => n.textContent === 'Passer en blocage'), false);
     app.state.me.characters[0] = { ...app.state.me.leader, type: 2, instanceId: 'own-character' };
     app.handlers.GameStateUpdated(app.state); await app.elements.selfCharacters.children[0].children[0].click();
-    await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Passer en blocage').click(); await tick();
-    assert.deepEqual(app.calls.find(c => c.name === 'Block').args, ['match-1', 'own-character']);
+    assert.equal(app.elements.gameCardDialogActions.children.some(n => n.textContent === 'Passer en blocage'), false);
+    assert.equal(app.calls.some(c => c.name === 'Block'), false);
 });
 
 test('partie : inspection adverse et compétences épuisées ne proposent pas d’action active', async () => {
@@ -615,9 +615,9 @@ test('partie : les états et bonus sont affichés sur la carte et dans sa popup'
     const app = game(); Object.assign(app.state.me.leader, { isExhausted: true, isBlocking: true, hasShield: true, isStealthed: true, damageMultiplier: 1.5, extraSkillUses: 1 });
     app.handlers.GameStateUpdated(app.state);
     const badges = app.elements.selfLeader.children[0].children.find(n => n.className === 'game-card-states');
-    assert.deepEqual(badges.children.map(n => n.textContent), ['Épuisé', 'En blocage', 'Bouclier', 'Furtif', 'Dégâts ×1.5', '+1 attaque(s)']);
+    assert.deepEqual(badges.children.map(n => n.textContent), ['Épuisé', 'Provocation', 'Bouclier', 'Furtif', 'Dégâts ×1.5', '+1 attaque(s)']);
     await app.elements.selfLeader.children[0].click();
-    assert.match(app.elements.gameCardDialogStatus.textContent, /Épuisé.*En blocage.*Bouclier/);
+    assert.match(app.elements.gameCardDialogStatus.textContent, /Épuisé.*Provocation.*Bouclier/);
 });
 
 test('ciblage : annulation sans paiement, carte interdite ignorée et retrait de cible', async () => {
