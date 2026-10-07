@@ -68,7 +68,7 @@ namespace web_tcg.Models.Admin
         [EnumDataType(typeof(AbilityType))]
         public AbilityType Type { get; set; }
 
-        [Range(0, 99)]
+        [Range(0, 750)]
         public int UsageCost { get; set; }
 
         [Required]

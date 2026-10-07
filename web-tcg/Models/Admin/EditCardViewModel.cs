@@ -70,7 +70,7 @@ namespace web_tcg.Models.Admin
         [MaxLength(2000)]
         public string Description { get; set; } = string.Empty;
 
-        [Range(0, 999)]
+        [Range(0, 750)]
         public int UsageCost { get; set; }
 
         public int DisplayOrder { get; set; }

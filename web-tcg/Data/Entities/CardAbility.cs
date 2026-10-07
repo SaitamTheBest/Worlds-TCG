@@ -12,7 +12,7 @@ namespace web_tcg.Data.Entities
 
         public AbilityType Type { get; set; }
 
-        [Range(0, 999)]
+        [Range(0, 750)]
         public int UsageCost { get; set; }
 
         [Required, MaxLength(150)]
