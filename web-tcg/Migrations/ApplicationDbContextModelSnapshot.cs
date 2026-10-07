@@ -279,6 +279,9 @@ namespace web_tcg.Migrations
                     b.Property<int>("CardId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsNew")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsRevealed")
                         .HasColumnType("boolean");
 

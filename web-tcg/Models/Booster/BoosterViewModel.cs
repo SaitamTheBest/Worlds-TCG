@@ -16,6 +16,7 @@ namespace web_tcg.Models.Booster
         public int CardId { get; set; }
         public string Rarity { get; set; } = string.Empty;
         public bool IsRevealed { get; set; }
+        public bool IsNew { get; set; }
         public CardViewModel Card { get; set; } = new();
     }
 }

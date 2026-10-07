@@ -34,5 +34,6 @@ namespace web_tcg.Data.Entities
         /// Indique si la carte a déjà été révélée dans l'interface.
         /// </summary>
         public bool IsRevealed { get; set; } = false;
+        public bool IsNew { get; set; }
     }
 }

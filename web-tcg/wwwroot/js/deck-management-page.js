@@ -117,15 +117,12 @@
                         variants: []
                     });
                 }
-                state.cardsGrouped.get(card.gameplayCardId).variants.push({
-                    cardId: card.cardId,
-                    artType: card.artType,
-                    ownedQuantity: card.ownedQuantity
-                });
+                state.cardsGrouped.get(card.gameplayCardId).variants.push(card);
             });
 
             console.log(`Leaders: ${state.leaders.length}, Groupes de cartes: ${state.cardsGrouped.size}`);
             populateLeaderSelect();
+            populateFilters(data);
         } catch (error) {
             console.error('Erreur loadBuilderData:', error);
             throw error;
@@ -136,15 +133,30 @@
      * Remplir le select des leaders
      */
     function populateLeaderSelect() {
-        if (!DOM.deckLeaderSelect) return;
+        renderLeaderPreview();
+    }
 
-        DOM.deckLeaderSelect.innerHTML = '<option value="">Sélectionnez un Leader</option>';
-        state.leaders.forEach(leader => {
-            const option = document.createElement('option');
-            option.value = leader.cardId;
-            option.textContent = leader.name;
-            DOM.deckLeaderSelect.appendChild(option);
-        });
+    function normalizeSearch(text) {
+        return String(text || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    }
+
+    function matchesFilter(card, kind) {
+        const query = normalizeSearch(document.getElementById(`worldsDeck${kind}Search`)?.value);
+        const extension = document.getElementById(`worldsDeck${kind}Extension`)?.value;
+        const number = card.cardNumber || '';
+        return (!extension || String(card.cardSetId) === extension) &&
+            (!query || normalizeSearch(card.name).includes(query) || normalizeSearch(number).includes(query));
+    }
+
+    function populateFilters(data) {
+        for (const kind of ['Leader', 'Card']) {
+            document.getElementById(`worldsDeck${kind}Search`).value = '';
+            const select = document.getElementById(`worldsDeck${kind}Extension`);
+            const cards = kind === 'Leader' ? data.leaders : data.playableCards;
+            const sets = new Map((cards || []).map(card => [card.cardSetId, `${card.cardSetCode} — ${card.cardSetName}`]));
+            select.replaceChildren(new Option('Toutes les extensions', ''));
+            [...sets].sort((a, b) => a[1].localeCompare(b[1], 'fr')).forEach(([id, name]) => select.add(new Option(name, id)));
+        }
     }
 
     /**
@@ -191,7 +203,7 @@
 
         DOM.deckList.innerHTML = decks.map(deck => `
             <div class="worlds-deck-card" data-deck-id="${deck.id}">
-                <div class="worlds-deck-leader-preview" data-card-component="${deck.leaderCardId}"></div>
+                <div class="worlds-deck-leader-preview"><div class="worlds-deck-card-mount" data-card-component="${deck.leaderCardId}"></div></div>
                 <div class="worlds-deck-card-header">
                     <strong>${escapeHtml(deck.name)}</strong>
                     <small>${escapeHtml(deck.leaderName || 'Pas de leader')}</small>
@@ -205,6 +217,7 @@
                 </div>
 
                 <div class="worlds-deck-card-actions">
+                    <a class="worlds-btn worlds-btn-secondary" href="/Deck/View/${deck.id}"><i data-lucide="eye"></i><span>Afficher</span></a>
                     <button type="button" class="worlds-btn worlds-btn-secondary" data-action="edit">
                         <i data-lucide="edit-3"></i>
                         <span>Éditer</span>
@@ -303,8 +316,9 @@
         console.log('Rendu de la grille, cartes groupées:', state.cardsGrouped.size);
 
         DOM.deckCardGrid.innerHTML = Array.from(state.cardsGrouped.entries())
+            .filter(([, card]) => card.variants.some(variant => matchesFilter(variant, 'Card')))
             .map(([gameplayId, card]) => renderCardGroup(gameplayId, card))
-            .join('');
+            .join('') || '<p class="worlds-deck-subtitle">Aucune carte ne correspond à votre recherche.</p>';
 
         // Attacher les événements
         document.querySelectorAll('[data-variant-id]').forEach(btn => {
@@ -340,7 +354,7 @@
                 </div>
 
                 <div class="worlds-variants-list">
-                    ${card.variants.map((variant, idx) => {
+                    ${card.variants.filter(variant => matchesFilter(variant, 'Card')).map((variant, idx) => {
                         const qty = state.selectedCards.get(variant.cardId) || 0;
                         const total = Array.from(state.selectedCards.values()).reduce((sum, value) => sum + value, 0);
                         const canAdd = qty < variant.ownedQuantity && !isMaxed && total < 40;
@@ -349,7 +363,7 @@
                         return `
                             <div class="worlds-variant-item" data-variant-id="${variant.cardId}">
                                 <div class="worlds-variant-preview">
-                                    <div data-card-component="${variant.cardId}"></div>
+                                    <div class="worlds-deck-card-mount" data-card-component="${variant.cardId}"></div>
                                 </div>
 
                                 <div class="worlds-variant-controls">
@@ -358,7 +372,7 @@
                                     <button class="worlds-qty-btn" data-action="increase" data-variant-id="${variant.cardId}" ${!canAdd ? 'disabled' : ''}>+</button>
                                 </div>
 
-                                <small class="worlds-variant-owned">${getArtTypeBadge(variant.artType)} · Possédée: ${variant.ownedQuantity}</small>
+                                <small class="worlds-variant-owned">${escapeHtml(variant.cardNumber || '')}<br>${getArtTypeBadge(variant.artType)} · Possédée: ${variant.ownedQuantity}</small>
                             </div>
                         `;
                     }).join('')}
@@ -584,6 +598,11 @@
         DOM.deckLeaderSelect?.addEventListener('change', updateCardCount);
         DOM.deckLeaderSelect?.addEventListener('change', renderLeaderPreview);
         DOM.deckName?.addEventListener('input', updateCardCount);
+        for (const kind of ['Leader', 'Card']) {
+            const render = kind === 'Leader' ? renderLeaderPreview : renderCardGrid;
+            document.getElementById(`worldsDeck${kind}Search`)?.addEventListener('input', render);
+            document.getElementById(`worldsDeck${kind}Extension`)?.addEventListener('change', render);
+        }
         document.addEventListener('keydown', event => {
             if (DOM.deckModal.hidden) return;
             if (event.key === 'Escape' && !DOM.deckModal.hidden) closeModal();
@@ -602,15 +621,24 @@
     }
 
     function renderLeaderPreview() {
-        let preview = document.getElementById('worldsDeckLeaderPreview');
-        if (!preview) {
-            preview = document.createElement('div');
-            preview.id = 'worldsDeckLeaderPreview';
-            preview.className = 'worlds-deck-leader-preview';
-            DOM.deckLeaderSelect.parentElement.appendChild(preview);
-        }
-        preview.innerHTML = DOM.deckLeaderSelect.value ? `<div data-card-component="${Number(DOM.deckLeaderSelect.value)}"></div>` : '';
-        window.worldsCardComponents?.hydrate(preview);
+        const grid = document.getElementById('worldsDeckLeaderGrid');
+        if (!grid) return;
+        const selected = state.leaders.find(leader => String(leader.cardId) === DOM.deckLeaderSelect.value);
+        document.getElementById('worldsDeckSelectedLeader').textContent = selected
+            ? `Leader choisi : ${selected.name} · ${selected.cardNumber || ''}`
+            : 'Choisissez un leader pour ce deck.';
+        grid.innerHTML = state.leaders.filter(leader => matchesFilter(leader, 'Leader')).map(leader => `
+            <button type="button" class="worlds-deck-leader-choice" data-leader-id="${leader.cardId}"
+                aria-pressed="${String(leader.cardId) === DOM.deckLeaderSelect.value}">
+                <span class="worlds-deck-card-mount" data-card-component="${leader.cardId}"></span>
+                <strong>${escapeHtml(leader.name)}</strong><small>${escapeHtml(leader.cardNumber || '')} · ${getArtTypeBadge(leader.artType)}</small>
+            </button>`).join('') || '<p class="worlds-deck-subtitle">Aucun leader ne correspond à votre recherche.</p>';
+        grid.querySelectorAll('[data-leader-id]').forEach(button => button.addEventListener('click', () => {
+            DOM.deckLeaderSelect.value = button.dataset.leaderId;
+            renderLeaderPreview();
+            updateCardCount();
+        }));
+        window.worldsCardComponents?.hydrate(grid);
     }
 
     // Initialiser au chargement du DOM

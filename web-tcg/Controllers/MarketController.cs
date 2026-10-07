@@ -89,7 +89,9 @@ public sealed class MarketController(ApplicationDbContext context, MarketService
     {
         if (ModelState.IsValid)
         {
-            try { return RedirectToAction(nameof(Auction), new { id=await market.CreateAsync(UserId,input.CardId,input.StartingPrice,input.DurationHours) }); }
+            try { return RedirectToAction(nameof(Auction), new { id=input.DurationMinutes.HasValue
+                ? await market.CreateForMinutesAsync(UserId,input.CardId,input.StartingPrice,input.DurationMinutes.Value)
+                : await market.CreateAsync(UserId,input.CardId,input.StartingPrice,input.DurationHours) }); }
             catch (MarketRuleException ex) { ModelState.AddModelError("", ex.Message); }
         }
         return View(await CreateModelAsync(input,"",1));

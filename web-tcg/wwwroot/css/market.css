@@ -44,10 +44,13 @@
 .market-create-form fieldset { border:0; margin-top:26px; min-width:0; }
 .market-create-form legend { font-size:1.2rem; font-weight:700; margin-bottom:24px; }
 .market-choice { position:relative; cursor:pointer; display:flex; flex-direction:column; gap:14px; color:#acbad0; font-size:.8rem; padding:12px; border:1px solid #ffffff14; border-radius:14px; background:#101010; }
-.market-choice input { position:absolute; top:18px; right:18px; z-index:2; width:20px; height:20px; accent-color:#f4c430; }
-.market-choice-card { display:block; }
-.market-choice:has(input:checked) { border-color:#f4c430; box-shadow:0 0 0 2px #f4c43055; }
-.market-choice:has(input:focus-visible) { outline:2px solid #f4c430; outline-offset:4px; }
+.market-choice > input[type="radio"] { position:absolute; top:8px; right:8px; z-index:61; width:20px; height:20px; accent-color:#f4c430; }
+.market-choice-card { display:block; position:relative; width:100%; min-width:0; margin-top:22px; container-type:inline-size; }
+.market-choice-card > .tcg-card { display:block; width:100%; --card-width:100%; }
+.market-choice-card > .tcg-card:hover { transform:none; }
+.market-choice-hit-area { position:absolute; inset:0; z-index:60; border-radius:inherit; cursor:pointer; }
+.market-choice:has(> input[type="radio"]:checked) { border-color:#f4c430; box-shadow:0 0 0 2px #f4c43055; }
+.market-choice:has(> input[type="radio"]:focus-visible) { outline:2px solid #f4c430; outline-offset:4px; }
 .market-sale-settings { max-width:650px; padding:24px; background:#101010; border-radius:16px; }
 .market-sale-settings label, .market-bid-form label { display:flex; flex-direction:column; gap:10px; margin-bottom:20px; font-size:.9rem; }
 .market-sale-settings p, .market-bid-form p { color:#a8b7cb; font-size:.85rem; line-height:1.6; margin:18px 0; }

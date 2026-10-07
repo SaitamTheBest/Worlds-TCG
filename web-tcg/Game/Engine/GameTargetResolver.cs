@@ -89,7 +89,7 @@ namespace web_tcg.Game.Engine
             };
             var filtered = targets.Where(c => GameGeography.Matches(c,effect.Parameters)).ToList();
             if (targets.Count > 0 && filtered.Count == 0 && effect.Target is GameTargetType.FriendlyCharacter or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyLeader or GameTargetType.EnemyCharacterOrLeader)
-                throw new GameRuleException("Cette cible ne respecte pas le filtre de région, de pays ou de parti politique.");
+                throw new GameRuleException("Cette cible ne respecte pas le filtre de région, de pays, de parti ou d'orientation politique.");
             return filtered;
         }
 

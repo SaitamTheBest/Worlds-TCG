@@ -417,6 +417,7 @@
         slot.classList.remove(
             "is-archived"
         );
+        slot.style.setProperty("--booster-new-scale", "1");
 
         slot.classList.add(
             "is-current"
@@ -493,6 +494,12 @@
 
         const target =
             getArchiveTransform(index);
+        // Keep the badge proportional during the flight, then readable on the miniature.
+        slot.style.setProperty("--booster-new-scale", "1");
+        const completeArchive = () => {
+            slot.style.setProperty("--booster-new-scale", String(1 / Math.max(.01, target.scale)));
+            onComplete?.();
+        };
 
         slot.classList.remove(
             "is-current"
@@ -525,13 +532,13 @@
                 properties
             );
 
-            onComplete?.();
+            completeArchive();
 
             return;
         }
 
         gsap.timeline({
-            onComplete
+            onComplete: completeArchive
         })
             .to(
                 visual,

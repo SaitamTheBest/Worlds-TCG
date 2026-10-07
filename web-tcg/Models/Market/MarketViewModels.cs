@@ -44,6 +44,7 @@ public sealed class CreateAuctionInput
     [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType=typeof(MarketPriceModelBinder))]
     public decimal StartingPrice { get; set; } = 1;
     public int DurationHours { get; set; } = 24;
+    [Range(1, 2880)] public int? DurationMinutes { get; set; }
 }
 
 public sealed class CreateAuctionViewModel

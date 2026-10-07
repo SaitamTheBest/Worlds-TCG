@@ -132,6 +132,10 @@
                      data-art-type="@card.Card.ArtType">
 
                     <div class="booster-card-visual">
+                        @if (card.IsNew)
+                        {
+                            <span class="booster-new-badge" aria-label="Nouvelle carte dans votre collection">New</span>
+                        }
                         @await Component.InvokeAsync(
                             "Card",
                             new

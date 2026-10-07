@@ -18,7 +18,7 @@
     --deck-mgmt-accent: #f4c430;
 }
 
-:is(.worlds-home, .worlds-deck-management) * {
+:is(.worlds-home, .worlds-deck-management) {
     font-family: 'Roboto', sans-serif;
 }
 
@@ -611,18 +611,14 @@
 
 :is(.worlds-home, .worlds-deck-management) .worlds-variant-preview {
     position: relative;
-    width: 60px;
-    height: 84px;
+    width: 130px;
+    height: auto;
+    aspect-ratio: 63 / 88;
+    grid-row: span 2;
     border-radius: 6px;
-    overflow: hidden;
+    overflow: visible;
     background: rgba(0, 0, 0, .3);
 }
-
-    :is(.worlds-home, .worlds-deck-management) .worlds-variant-preview img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
 
 :is(.worlds-home, .worlds-deck-management) .worlds-variant-placeholder {
     display: flex;
@@ -671,11 +667,6 @@
         gap: 10px;
     }
 
-    :is(.worlds-home, .worlds-deck-management) .worlds-variant-preview {
-        width: 50px;
-        height: 70px;
-    }
-
     :is(.worlds-home, .worlds-deck-management) .worlds-variant-controls {
         grid-column: 1 / 3;
         justify-self: flex-end;
@@ -687,7 +678,7 @@
 }
 
 :is(.worlds-home, .worlds-deck-management),
-:is(.worlds-home, .worlds-deck-management) * { box-sizing: border-box; }
+:is(.worlds-home, .worlds-deck-management) :where([class^="worlds-"]) { box-sizing: border-box; }
 :is(.worlds-home, .worlds-deck-management) .worlds-deck-list { grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); }
 :is(.worlds-home, .worlds-deck-management) .worlds-deck-card-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); max-height: none; overflow: visible; }
 :is(.worlds-home, .worlds-deck-management) .worlds-deck-modal { z-index: 1200; padding: 12px; }
@@ -699,9 +690,6 @@
 :is(.worlds-home, .worlds-deck-management) .worlds-deck-error { overflow-wrap: anywhere; }
 :is(.worlds-home, .worlds-deck-management) .worlds-card-group-header h4 { overflow-wrap: anywhere; }
 :is(.worlds-home, .worlds-deck-management) .worlds-variant-item { grid-template-columns: 130px minmax(0, 1fr); gap: 12px; }
-:is(.worlds-home, .worlds-deck-management) .worlds-variant-preview { width: 130px; height: auto; aspect-ratio: 63 / 88; grid-row: span 2; overflow: visible; }
-:is(.worlds-home, .worlds-deck-management) .worlds-variant-preview .tcg-card { --card-width: 100%; width: 100%; box-shadow: none; }
-:is(.worlds-home, .worlds-deck-management) .worlds-variant-preview .tcg-card:hover { transform: none; }
 :is(.worlds-home, .worlds-deck-management) .worlds-variant-controls { grid-column: 2; grid-row: 1; justify-self: center; }
 :is(.worlds-home, .worlds-deck-management) .worlds-variant-owned { grid-column: 2; text-align: center; }
 :is(.worlds-home, .worlds-deck-management) .worlds-qty-btn { width: 32px; height: 32px; }
@@ -713,9 +701,41 @@
 
 :is(.worlds-home, .worlds-deck-management) .worlds-deck-leader-preview { width: 150px; margin: 0 auto; }
 :is(.worlds-home, .worlds-deck-management) .worlds-deck-leader-preview:empty { display: none; }
-:is(.worlds-home, .worlds-deck-management) .worlds-deck-leader-preview .tcg-card { --card-width: 100%; width: 100%; box-shadow: none; }
-:is(.worlds-home, .worlds-deck-management) .worlds-deck-leader-preview .tcg-card:hover { transform: none; }
+:is(.worlds-home, .worlds-deck-management) .worlds-deck-card-mount { display: block; width: 320px; zoom: .40625; }
+:is(.worlds-home, .worlds-deck-management) .worlds-deck-leader-preview > .worlds-deck-card-mount { zoom: .46875; }
 
 
 .worlds-home .worlds-matchmaking-activity { display: flex; flex-wrap: wrap; gap: 8px 20px; padding-top: 12px; color: #949ba7; font-size: .75rem; }
 .worlds-home .worlds-matchmaking-activity strong { color: #f4c430; margin-right: 4px; }
+
+.worlds-deck-management .worlds-deck-filters { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.worlds-deck-management select { color-scheme: dark; }
+.worlds-deck-management select option { color: #f5f5f5; background: #111214; }
+.worlds-deck-management .worlds-deck-selected-leader { margin: 8px 0; color: #f4c430; font-size: .85rem; }
+.worlds-deck-management .worlds-deck-leader-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; max-height: 330px; overflow-y: auto; padding: 4px; }
+.worlds-deck-management .worlds-deck-leader-choice { display: flex; flex-direction: column; gap: 8px; align-items: center; padding: 12px; border: 1px solid #303136; border-radius: 12px; background: #101113; color: #fff; cursor: pointer; font: inherit; text-align: center; }
+.worlds-deck-management .worlds-deck-leader-choice:hover,
+.worlds-deck-management .worlds-deck-leader-choice[aria-pressed="true"] { border-color: #f4c430; background: #201c0e; box-shadow: 0 0 0 1px #f4c430; }
+.worlds-deck-management .worlds-deck-leader-choice:focus-visible { outline: 2px solid #ffe790; outline-offset: 3px; }
+.worlds-deck-management .worlds-deck-leader-choice small { color: #a5a8af; }
+.worlds-deck-management .worlds-deck-display-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px; }
+.worlds-deck-management .worlds-deck-display-content { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 30px; }
+.worlds-deck-management .worlds-deck-display-content h2 { margin: 0 0 16px; font-size: 1rem; color: #f4c430; }
+.worlds-deck-management .worlds-deck-display-card,
+.worlds-deck-management .worlds-deck-display-leader { position: relative; display: flex; flex-direction: column; gap: 12px; padding: 16px; background: #111214; border: 1px solid #303136; border-radius: 14px; container-type: inline-size; }
+.worlds-deck-management .worlds-deck-display-leader { width: 240px; max-width: 100%; }
+.worlds-deck-management .worlds-deck-display-card > .worlds-deck-card-mount { zoom: .59375; align-self: center; }
+.worlds-deck-management .worlds-deck-display-leader > .worlds-deck-card-mount { zoom: .65; align-self: center; }
+.worlds-deck-management .worlds-deck-display-quantity { position: absolute; right: 8px; top: 8px; z-index: 50; padding: 5px 10px; border: 1px solid #f4c430; border-radius: 8px; background: #10100b; color: #f4c430; font-weight: 800; }
+@media (max-width: 600px) {
+    .worlds-deck-management .worlds-deck-filters { grid-template-columns: 1fr; }
+    .worlds-deck-management .worlds-deck-display-content { grid-template-columns: 1fr; }
+}
+/* Le composant conserve sa taille native (280 px sur mobile dans card.css).
+   Seul son conteneur est réduit pour les aperçus de deck. */
+@media (max-width: 640px) {
+    :is(.worlds-home, .worlds-deck-management) .worlds-deck-card-mount { width: 280px; zoom: .4642857143; }
+    :is(.worlds-home, .worlds-deck-management) .worlds-deck-leader-preview > .worlds-deck-card-mount { zoom: .5357142857; }
+    .worlds-deck-management .worlds-deck-display-card > .worlds-deck-card-mount { zoom: .6785714286; }
+    .worlds-deck-management .worlds-deck-display-leader > .worlds-deck-card-mount { zoom: .7428571429; }
+}

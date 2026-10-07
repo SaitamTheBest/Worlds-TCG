@@ -16,7 +16,7 @@ public static class Preview
     public static readonly Guid DeckId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     public static CardViewModel Card(int id) => new()
     {
-        Id = id, Name = id == 1 ? "Président de démonstration" : "Personnage de démonstration",
+        Id = id, Name = id == 1 ? "Président de démonstration" : "Personnage de démonstration", ImageUrl = "/worlds-tcg-logo.png",
         Type = id == 6 ? CardType.Secret : id == 1 ? CardType.Leader : CardType.Character,
         ArtType = id == 4 ? CardArtType.FullArt : id == 3 ? CardArtType.AlternateArt : CardArtType.Normal,
         Rarity = CardRarity.Rare, RegionColor = "#18467d", RegionName = "Région test",
@@ -62,6 +62,14 @@ public sealed class PreviewControllersOnly : IApplicationFeatureProvider<Control
 
 public sealed class PreviewController : Controller
 {
+    [HttpGet("/__preview/booster")]
+    public IActionResult BoosterOpening() => View("~/Views/Booster/OpenResult.cshtml",new web_tcg.Models.Booster.BoosterOpeningViewModel {
+        OpenedAt=DateTime.UtcNow,
+        Cards=Enumerable.Range(1,5).Select(id=> { var card=Preview.Card(id); card.ImageUrl="/worlds-tcg-logo.png";
+            return new web_tcg.Models.Booster.BoosterOpeningCardViewModel { Position=id,CardId=id,Card=card,Rarity="Common",IsNew=id is 1 or 2 }; }).ToList() });
+    [HttpGet("/__preview/market/create")]
+    public IActionResult MarketCreate() => View("~/Views/Market/Create.cshtml",new web_tcg.Models.Market.CreateAuctionViewModel {
+        Cards = Enumerable.Range(1,6).Select(id => { var card=Preview.Card(id); card.ImageUrl="/worlds-tcg-logo.png"; return (card,id+2); }).ToList() });
     [HttpGet("/Admin/Cards")]
     public IActionResult AdminCards(int? cardSetId, string? rarity, int page = 1)
     {
@@ -130,11 +138,14 @@ public sealed class PreviewController : Controller
         return ViewComponent("Card", new { model });
     }
     [HttpGet("/Deck/MyDecks")] public IActionResult DeckList() => Json(new[] { Summary });
+    [HttpGet("/Deck/View/{id:guid}")] public IActionResult DeckDisplay(Guid id) => View("~/Views/Deck/Display.cshtml", new DeckDisplayViewModel {
+        Name = Summary.Name, Leader = Preview.Card(1), Cards = new() { (Preview.Card(2), 1), (Preview.Card(3), 2) }
+    });
     [HttpGet("/Deck/{id:guid}")] public IActionResult Deck(Guid id) => Json(new DeckDetailDto { Id = id, Name = Summary.Name, LeaderCardId = 1, Cards = new() { new() { CardId = 2, Quantity = 1 }, new() { CardId = 3, Quantity = 2 } } });
     [HttpGet("/Deck/BuilderData")] public IActionResult Builder() => Json(new DeckBuilderDataDto
     {
-        Leaders = new() { new() { CardId = 1, GameplayCardId = 1, Name = Preview.Card(1).Name, Type = CardType.Leader, OwnedQuantity = 1, ArtType = CardArtType.Normal } },
-        PlayableCards = new() { new() { CardId = 2, GameplayCardId = 2, Name = Preview.Card(2).Name, OwnedQuantity = 1, ArtType = CardArtType.Normal }, new() { CardId = 3, GameplayCardId = 2, Name = Preview.Card(2).Name, OwnedQuantity = 4, ArtType = CardArtType.AlternateArt } }
+        Leaders = new() { new() { CardId = 1, GameplayCardId = 1, Name = Preview.Card(1).Name, Type = CardType.Leader, OwnedQuantity = 1, ArtType = CardArtType.Normal, CardSetId = 1, CardSetCode = "TEST", CardSetName = "Démonstration", CardNumber = "TEST-1" } },
+        PlayableCards = new() { new() { CardId = 2, GameplayCardId = 2, Name = Preview.Card(2).Name, OwnedQuantity = 1, ArtType = CardArtType.Normal, CardSetId = 1, CardSetCode = "TEST", CardSetName = "Démonstration", CardNumber = "TEST-2" }, new() { CardId = 3, GameplayCardId = 2, Name = Preview.Card(2).Name, OwnedQuantity = 4, ArtType = CardArtType.AlternateArt, CardSetId = 2, CardSetCode = "ALT", CardSetName = "Autre extension", CardNumber = "ALT-2-1" } }
     });
     [HttpPost("/Pvp/PlayVsIA")] public IActionResult Ai() => BadRequest("Le deck doit contenir exactement 40 cartes. Actuellement : 3.");
 }

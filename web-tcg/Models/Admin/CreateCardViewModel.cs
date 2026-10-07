@@ -92,6 +92,8 @@ namespace web_tcg.Models.Admin
 
     public class CardEffectInputModel
     {
+        public List<int> OrientationIds { get; set; } = new();
+        public List<int> CountOrientationIds { get; set; } = new();
         [EnumDataType(typeof(GameEffectType))] public GameEffectType Type { get; set; }
         [EnumDataType(typeof(GameEffectTrigger))] public GameEffectTrigger Trigger { get; set; }
         [EnumDataType(typeof(GameTargetType))] public GameTargetType Target { get; set; }
@@ -110,6 +112,9 @@ namespace web_tcg.Models.Admin
 
     public class CardConditionInputModel
     {
+        public List<int> OrientationIds { get; set; } = new();
+        [MaxLength(150)] public string? CardName { get; set; }
+        [Range(1, 3)] public int Scope { get; set; } = 1;
         [EnumDataType(typeof(GameConditionType))] public GameConditionType Type { get; set; }
         [Range(0, 100000)] public decimal Value { get; set; }
         public bool Negate { get; set; }

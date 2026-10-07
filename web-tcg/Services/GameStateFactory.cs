@@ -94,6 +94,7 @@ namespace web_tcg.Services
             var leaderGameplayCard =
                 await _context.Cards
                     .AsNoTracking()
+                    .Include(x => x.PoliticalParty)
                     .Include(x => x.Abilities)
                         .ThenInclude(x => x.Effects)
                     .Include(x => x.Abilities)
@@ -138,6 +139,7 @@ namespace web_tcg.Services
                 var gameplayCard =
                     await _context.Cards
                         .AsNoTracking()
+                        .Include(x => x.PoliticalParty)
                         .Include(x => x.Abilities)
                             .ThenInclude(x => x.Effects)
                         .Include(x => x.Abilities)
@@ -190,6 +192,7 @@ namespace web_tcg.Services
                     RegionId = gameplayCard.RegionId,
                     CountryId = gameplayCard.CountryId,
                     PoliticalPartyId = gameplayCard.PoliticalPartyId,
+                    PoliticalPartyOrientation = gameplayCard.PoliticalParty?.Orientation,
                     OwnerUserId = userId,
                     ControllerUserId = userId,
                     Name = printedCard.Name,

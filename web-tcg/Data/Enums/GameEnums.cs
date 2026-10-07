@@ -106,11 +106,15 @@
         TargetCountry = 53,
         SourceParty = 54,
         TargetParty = 55,
+        SourcePoliticalOrientation = 56,
+        TargetPoliticalOrientation = 57,
         MatchingFriendlyCharactersAtLeast = 60,
         MatchingEnemyCharactersAtLeast = 61,
         MatchingCharactersAtLeast = 62,
         RevealHandCards = 70,
-        DiscardHandCards = 71
+        DiscardHandCards = 71,
+        NamedLeaderOnBoard = 80,
+        NamedCharacterOnBoard = 81
     }
 
     public enum GameComparisonOperator

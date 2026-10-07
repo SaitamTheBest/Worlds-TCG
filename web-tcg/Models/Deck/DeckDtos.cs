@@ -58,6 +58,17 @@ namespace web_tcg.Models.Deck
         /// (limite de 4 exemplaires cumulés).
         /// </summary>
         public int GameplayCardId { get; init; }
+        public int CardSetId { get; init; }
+        public string CardSetName { get; init; } = string.Empty;
+        public string CardSetCode { get; init; } = string.Empty;
+        public string CardNumber { get; init; } = string.Empty;
+    }
+
+    public sealed class DeckDisplayViewModel
+    {
+        public string Name { get; init; } = string.Empty;
+        public web_tcg.Models.Card.CardViewModel Leader { get; init; } = null!;
+        public List<(web_tcg.Models.Card.CardViewModel Card, int Quantity)> Cards { get; init; } = new();
     }
 
     public sealed class DeckBuilderDataDto

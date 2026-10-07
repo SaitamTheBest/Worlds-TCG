@@ -15,8 +15,10 @@ public static class GameGeography
     public static bool Matches(GameCardState card, IReadOnlyDictionary<string,string> parameters, string prefix = "")
     {
         var parties = Ids(parameters,prefix + "parties");
+        var orientations = Ids(parameters,prefix + "orientations");
         var regions = Ids(parameters,prefix + "regions"); var countries = Ids(parameters,prefix + "countries");
-        return (parties.Count == 0 || card.PoliticalPartyId.HasValue && parties.Contains(card.PoliticalPartyId.Value)) && (regions.Count == 0 || regions.Contains(card.RegionId)) && (countries.Count == 0 || card.CountryId.HasValue && countries.Contains(card.CountryId.Value));
+        return (orientations.Count == 0 || card.PoliticalPartyId.HasValue && card.PoliticalPartyOrientation.HasValue && orientations.Contains((int)card.PoliticalPartyOrientation.Value))
+            && (parties.Count == 0 || card.PoliticalPartyId.HasValue && parties.Contains(card.PoliticalPartyId.Value)) && (regions.Count == 0 || regions.Contains(card.RegionId)) && (countries.Count == 0 || card.CountryId.HasValue && countries.Contains(card.CountryId.Value));
     }
     public static IEnumerable<GameCardState> Characters(GameState state, GamePlayerState player, int scope) =>
         (scope == 1 ? player.Characters : scope == 2 ? state.GetOpponent(player.UserId).Characters : player.Characters.Concat(state.GetOpponent(player.UserId).Characters))

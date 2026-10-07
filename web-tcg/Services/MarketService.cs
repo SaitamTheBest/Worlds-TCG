@@ -14,11 +14,24 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
     public const int MaxActiveSales = 10;
     public const decimal MaxPrice = 999999999m;
 
-    public async Task<Guid> CreateAsync(string userId, int cardId, decimal price, int hours)
+    public Task<Guid> CreateAsync(string userId, int cardId, decimal price, int hours)
+    {
+        if (hours is not (1 or 6 or 12 or 24 or 48)) throw new MarketRuleException("Durée de vente invalide.");
+        return CreateForMinutesAsync(userId,cardId,price,hours * 60);
+    }
+
+    public static DateTime AuctionEnd(DateTime start, int minutes)
+    {
+        if (minutes is not (10 or 30 or 60 or 360 or 720 or 1440 or 2880))
+            throw new MarketRuleException("Choisissez une durée de 10 min, 30 min, 1 h, 6 h, 12 h, 24 h ou 48 h.");
+        return start.AddMinutes(minutes);
+    }
+
+    public async Task<Guid> CreateForMinutesAsync(string userId, int cardId, decimal price, int minutes)
     {
         if (price < 1 || price > MaxPrice || decimal.Round(price,2) != price)
             throw new MarketRuleException("Le prix doit être compris entre 1 et 999 999 999, avec deux décimales maximum.");
-        if (hours is not (1 or 6 or 24 or 48)) throw new MarketRuleException("Choisissez une durée de 1 h, 6 h, 24 h ou 48 h.");
+        var endsAt = AuctionEnd(DateTime.UtcNow,minutes);
         await using var transaction = await context.Database.BeginTransactionAsync();
         await CollectionTransactionLock.AcquireAsync(context);
         var seller = await context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId && !x.IsBot);
@@ -33,7 +46,7 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
             context.UserCardCollections.Remove(owned);
             await context.UserProfileShowcaseCards.Where(x => x.UserId == userId && x.CardId == cardId).ExecuteDeleteAsync();
         }
-        var auction = new MarketAuction { SellerId=userId, CardId=cardId, StartingPrice=price, CurrentPrice=price, EndsAt=DateTime.UtcNow.AddHours(hours) };
+        var auction = new MarketAuction { SellerId=userId, CardId=cardId, StartingPrice=price, CurrentPrice=price, EndsAt=endsAt };
         context.MarketAuctions.Add(auction);
         await context.SaveChangesAsync();
         await transaction.CommitAsync();

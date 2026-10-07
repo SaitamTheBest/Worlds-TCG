@@ -180,7 +180,7 @@ namespace web_tcg.Services
                                 Id =
                                     x.Id,
                                 HandCosts = includeHand ? GameHandCosts.Requirements(player,card,x.Conditions) : Array.Empty<GameHandCostDto>(),
-                                UnavailableReason = new web_tcg.Game.Engine.GameConditionEvaluator().Failure(state,player,card,null,x.Conditions.Where(c=>includeHand || !GameHandCosts.IsCost(c)).Where(c => c.Type is not (GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty))),
+                                UnavailableReason = new GameConditionEvaluator().Failure(state,player,card,null,x.Conditions.Where(c=>includeHand || !GameHandCosts.IsCost(c)).Where(c => !GameConditionEvaluator.IsTargetCondition(c))),
                                 TargetIds = GameActionTargets.Get(state, player, card, new[] { x }, x.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent),
                                 TargetRefusalReason = includeHand ? GameActionTargets.Refusal(state,player,card,x,x.Type==AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent) : null,
                                 IsAttack = x.Effects.Any(e => e.Type == GameEffectType.Damage && e.Trigger == (x.Type == AbilityType.Skill ? GameEffectTrigger.OnSkill : GameEffectTrigger.OnTalent)),

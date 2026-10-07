@@ -146,6 +146,14 @@ namespace web_tcg.Controllers
 
                 _context.BoosterOpenings.Add(opening);
 
+                var knownCardIds = (await _context.UserCardCollections.AsNoTracking()
+                    .Where(c => c.UserId == userId && c.Quantity > 0 && c.Card.CardSetId == id)
+                    .Select(c => c.CardId).ToListAsync()).ToHashSet();
+                // Copies reserved by an active auction still belong to the seller.
+                knownCardIds.UnionWith(await _context.MarketAuctions.AsNoTracking()
+                    .Where(a => a.SellerId == userId && a.Status == AuctionStatus.Active && a.Card.CardSetId == id)
+                    .Select(a => a.CardId).ToListAsync());
+
                 foreach (var result in boosterResult.Cards)
                 {
                     var card = await _cardSelectionService
@@ -159,6 +167,7 @@ namespace web_tcg.Controllers
                             Position = result.Position,
                             CardId = card.Id,
                             Rarity = result.Rarity.ToString(),
+                            IsNew = knownCardIds.Add(card.Id),
                             IsRevealed = false
                         });
 
@@ -453,6 +462,7 @@ namespace web_tcg.Controllers
 
                     return new BoosterOpeningCardViewModel
                     {
+                        IsNew = x.IsNew,
                         Position =
                             x.Position,
 

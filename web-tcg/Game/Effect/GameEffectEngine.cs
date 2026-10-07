@@ -52,7 +52,7 @@ namespace web_tcg.Game.Effects
                     if (effect.Target is not (GameTargetType.None or GameTargetType.FriendlyPlayer or GameTargetType.EnemyPlayer))
                     {
                         if (trigger is GameEffectTrigger.OnPlay or GameEffectTrigger.OnSkill or GameEffectTrigger.OnTalent)
-                            context.Logs.Add($"L'action de {context.Source?.Name} n'a aucun bénéficiaire : aucune carte ne correspond à la cible et aux filtres de région, pays ou parti.");
+                            context.Logs.Add($"L'action de {context.Source?.Name} n'a aucun bénéficiaire : aucune carte ne correspond à la cible et aux filtres de région, pays, parti ou orientation politique.");
                         continue;
                     }
                     context.Target = null;

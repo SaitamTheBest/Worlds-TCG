@@ -1,0 +1,36 @@
+@model web_tcg.Models.Deck.DeckDisplayViewModel
+@{ ViewData["Title"] = Model.Name; }
+<link rel="stylesheet" href="~/css/deck-management.css" asp-append-version="true" />
+<main class="worlds-deck-management">
+    <div class="worlds-container">
+        <header class="worlds-deck-header">
+            <div><span class="worlds-kicker">DECK</span><h1>@Model.Name</h1>
+                <p class="worlds-deck-subtitle">@Model.Cards.Sum(x => x.Quantity) / 40 cartes · 1 leader</p>
+            </div>
+            <a class="worlds-btn worlds-btn-secondary" href="@Url.Action("Manage", "Deck")"><i data-lucide="arrow-left"></i>Mes decks</a>
+        </header>
+        <div class="worlds-deck-display-content">
+        <aside>
+        <h2>Leader</h2>
+        <div class="worlds-deck-display-leader">
+            <div class="worlds-deck-card-mount">@await Component.InvokeAsync("Card", new { model = Model.Leader })</div>
+            <strong>@Model.Leader.Name</strong>
+        </div>
+        </aside>
+        <section>
+        <h2>Cartes (@Model.Cards.Sum(x => x.Quantity))</h2>
+        <div class="worlds-deck-display-grid">
+            @foreach (var item in Model.Cards)
+            {
+                <article class="worlds-deck-display-card">
+                    <span class="worlds-deck-display-quantity">×@item.Quantity</span>
+                    <div class="worlds-deck-card-mount">@await Component.InvokeAsync("Card", new { model = item.Card })</div>
+                    <strong>@item.Card.Name</strong>
+                </article>
+            }
+        </div>
+        @if (Model.Cards.Count == 0) { <p class="worlds-deck-subtitle">Ce deck ne contient pas encore de cartes.</p> }
+        </section>
+        </div>
+    </div>
+</main>

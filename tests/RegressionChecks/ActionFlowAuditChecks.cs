@@ -10,7 +10,7 @@ public static class ActionFlowAuditChecks
     static GameCardState Unit(string owner, CardType type = CardType.Character) => new() {
         OwnerUserId=owner, ControllerUserId=owner, Name=owner, Type=type,
         Zone=type==CardType.Leader ? GameCardZone.Leader : GameCardZone.CharacterBoard,
-        RegionId=1, CountryId=1, PoliticalPartyId=1, BaseHealth=100, MaxHealth=100, CurrentHealth=40 };
+        RegionId=1, CountryId=1, PoliticalPartyId=1, PoliticalPartyOrientation=PoliticalOrientation.Left, BaseHealth=100, MaxHealth=100, CurrentHealth=40 };
     static GameState State() => new() { Status=GameMatchStatus.InProgress, ActivePlayerId="a", FirstPlayerId="a", TurnNumber=5,
         PlayerOne=new() { UserId="a", Money=100, TurnsPlayed=3, Leader=Unit("a",CardType.Leader), Characters=new() { Unit("a"),null,null,null } },
         PlayerTwo=new() { UserId="b", Money=100, TurnsPlayed=3, Leader=Unit("b",CardType.Leader), Characters=new() { Unit("b"),null,null,null }, Location=new() { Type=CardType.Location,OwnerUserId="b",ControllerUserId="b",Zone=GameCardZone.Location } } };
@@ -24,13 +24,51 @@ public static class ActionFlowAuditChecks
             var condition=new GameConditionDefinition { Type=type, Value=type switch {
                 GameConditionType.SourceHealthBelow or GameConditionType.TargetHealthBelow=>60,
                 GameConditionType.SourceHealthAbove or GameConditionType.TargetHealthAbove=>20,
-                _=>1 }, Parameters=new() { ["regions"]="1",["countries"]="1",["parties"]="1",["types"]="2" } };
+                _=>1 }, Parameters=new() { ["orientations"]="2",["regions"]="1",["countries"]="1",["parties"]="1",["types"]="2",["cardName"]="a",["scope"]="1" } };
             var evaluator=new GameConditionEvaluator();
             var accepted=evaluator.AreMet(state,state.PlayerOne,source,target,new[]{condition});
             condition.Negate=true;
             check(accepted && !evaluator.AreMet(state,state.PlayerOne,source,target,new[]{condition}) && evaluator.Failure(state,state.PlayerOne,source,target,new[]{condition})!=null,
                 $"audit conditions : {type} et sa négation sont évalués en jeu");
         }
+
+        var presence=new GameConditionDefinition { Type=GameConditionType.NamedCharacterOnBoard,Parameters=new() { ["cardName"]="allié requis",["scope"]="1" } };
+        state.PlayerOne.Characters[0]!.Name="Allié requis";
+        source.Abilities.Add(new() { Id=5,Type=AbilityType.Trait,UsageCost=10,Conditions=new() { presence },Effects=new() {
+            new() { Type=GameEffectType.GainMoney,Trigger=GameEffectTrigger.OnTalent,Target=GameTargetType.FriendlyPlayer,Value=5 } } });
+        await engine.UseAbilityAsync(state,"a",source.InstanceId,5,null);
+        check(state.PlayerOne.Money==95,"nom requis : personnage présent autorise le talent, nom insensible à la casse");
+        var required=state.PlayerOne.Characters[0]!; required.Zone=GameCardZone.Graveyard;
+        state.PlayerOne.Characters[0]=null; state.PlayerOne.Graveyard.Add(required);
+        try { await engine.UseAbilityAsync(state,"a",source.InstanceId,5,null); check(false,"nom requis : cimetière ne remplit pas la condition"); }
+        catch(GameRuleException ex) { check(state.PlayerOne.Money==95 && ex.Message.Contains("allié requis"),"nom requis : carte au cimetière refusée avant paiement avec nom dans l'erreur"); }
+        presence.Type=GameConditionType.NamedLeaderOnBoard;
+        presence.Parameters["cardName"]="b"; presence.Parameters["scope"]="2";
+        check(new GameConditionEvaluator().AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : Leader adverse reconnu dans le camp adverse");
+        presence.Type=GameConditionType.NamedCharacterOnBoard;
+        presence.Parameters["scope"]="1";
+        check(!new GameConditionEvaluator().AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : un Leader ne remplace pas un Personnage et le camp doit correspondre");
+        presence.Parameters["scope"]="3";
+        check(new GameConditionEvaluator().AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : recherche d'un Personnage dans les deux camps");
+        state.PlayerTwo.Characters[0]!.CurrentHealth=0;
+        check(!new GameConditionEvaluator().AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : personnage mort encore en résolution exclu");
+        var namedInput=new CardAbilityInputModel { Type=AbilityType.Trait,Conditions=new() { new() { Type=GameConditionType.NamedLeaderOnBoard,CardName="  Chef  ",Scope=2 } },Effects=new() {
+            new() { Type=GameEffectType.Heal,Trigger=GameEffectTrigger.OnTalent,Target=GameTargetType.Self,Value=5 } } };
+        var entity=new web_tcg.Data.Entities.CardAbility(); CardAbilityEditor.Write(entity,namedInput);
+        var restored=CardAbilityEditor.Read(entity);
+        check(restored.Conditions[0].CardName=="Chef" && restored.Conditions[0].Scope==2 && !CardAbilityEditor.Validate(CardType.Character,namedInput).Any(),
+            "nom requis : nom et camp conservés en modification");
+        namedInput.Conditions[0].CardName=" ";
+        check(CardAbilityEditor.Validate(CardType.Character,namedInput).Any(),"nom requis : nom vide refusé par l'éditeur");
+
+        state=State(); source=Unit("a"); source.Zone=GameCardZone.Hand;
+        state.PlayerOne.Leader.Name="Chef";
+        source.Abilities.Add(new() { Type=AbilityType.Effect,Conditions=new() { new() { Type=GameConditionType.NamedLeaderOnBoard,Parameters=new() { ["cardName"]="Chef",["scope"]="1" } } },Effects=new() {
+            new() { Type=GameEffectType.HealthBonus,Trigger=GameEffectTrigger.Passive,Target=GameTargetType.AllFriendlyCharacters,Value=20 } } });
+        state.PlayerOne.Hand.Add(source); await engine.PlayCardAsync(state,"a",source.InstanceId,1);
+        check(source.MaxHealth==120,"nom requis : présence du Leader active l'aura à la pose");
+        state.PlayerOne.Leader.Name="Autre"; await engine.EndTurnAsync(state,"a");
+        check(source.MaxHealth==100,"nom requis : aura retirée lorsque la condition de présence cesse d'être remplie");
 
         // Opening triggers must obey conditions, unlike a card play already validated before its payment.
         state=State(); state.PlayerOne.Money=state.PlayerTwo.Money=0;

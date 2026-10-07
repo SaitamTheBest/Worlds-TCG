@@ -137,10 +137,14 @@
                 </div>
 
                 <div class="worlds-deck-field">
-                    <label for="worldsDeckLeaderSelect">Leader</label>
-                    <select id="worldsDeckLeaderSelect">
-                        <option value="">Sélectionnez un Leader</option>
-                    </select>
+                    <label for="worldsDeckLeaderSearch">Leader</label>
+                    <div class="worlds-deck-filters">
+                        <input type="search" id="worldsDeckLeaderSearch" placeholder="Nom ou numéro du leader" />
+                        <select id="worldsDeckLeaderExtension" aria-label="Extension des leaders"></select>
+                    </div>
+                    <input type="hidden" id="worldsDeckLeaderSelect" />
+                    <p id="worldsDeckSelectedLeader" class="worlds-deck-selected-leader" aria-live="polite"></p>
+                    <div id="worldsDeckLeaderGrid" class="worlds-deck-leader-grid" aria-label="Leaders disponibles"></div>
                 </div>
 
                 <div class="worlds-deck-builder-status">
@@ -148,6 +152,13 @@
                     <span id="worldsDeckError" class="worlds-deck-error" role="alert"></span>
                 </div>
 
+                <div class="worlds-deck-field">
+                    <label for="worldsDeckCardSearch">Cartes</label>
+                    <div class="worlds-deck-filters">
+                        <input type="search" id="worldsDeckCardSearch" placeholder="Nom ou numéro de carte" />
+                        <select id="worldsDeckCardExtension" aria-label="Extension des cartes"></select>
+                    </div>
+                </div>
                 <div id="worldsDeckCardGrid"
                      class="worlds-deck-card-grid">
                 </div>

@@ -194,6 +194,14 @@ await GeographyChecks.RunAsync(Check);
 await PartyRuleChecks.RunAsync(Check);
 await EffectAuditChecks.RunAsync(Check);
 await ActionFlowAuditChecks.RunAsync(Check);
+await OrientationRuleChecks.RunAsync(Check);
+var auctionStart = new DateTime(2026,10,7,12,0,0,DateTimeKind.Utc);
+Check(MarketService.AuctionEnd(auctionStart,10) == auctionStart.AddMinutes(10)
+    && MarketService.AuctionEnd(auctionStart,30) == auctionStart.AddMinutes(30)
+    && MarketService.AuctionEnd(auctionStart,720) == auctionStart.AddHours(12),
+    "marché : durées de 10 minutes, 30 minutes et 12 heures converties sans erreur d'unité");
+try { MarketService.AuctionEnd(auctionStart,5); Check(false,"marché : durée non autorisée refusée"); }
+catch(MarketRuleException) { Check(true,"marché : durée non autorisée refusée"); }
 await HandCostChecks.RunAsync(Check);
 await CardImageChecks.RunAsync(Check);
 CardPreviewChecks.Run(Check);

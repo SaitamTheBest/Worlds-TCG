@@ -104,6 +104,7 @@ namespace web_tcg.Controllers
                         x.Quantity > 0 && x.Card.Type != CardType.Secret && x.Card.CollectionNumber != 0)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.BaseCard)
+                    .Include(x => x.Card).ThenInclude(x => x.CardSet)
                     .ToListAsync();
 
             var items =
@@ -122,6 +123,10 @@ namespace web_tcg.Controllers
                         ArtType = card.ArtType,
                         UsageCost = gameplayCard.UsageCost,
                         OwnedQuantity = x.Quantity,
+                        CardSetId = card.CardSetId,
+                        CardSetName = card.CardSet.Name,
+                        CardSetCode = card.CardSet.Code,
+                        CardNumber = $"{card.CardSet.Code}-{card.CollectionNumber}" + (card.VariantNumber.HasValue ? $"-{card.VariantNumber}" : ""),
                         GameplayCardId = gameplayCardId
                     };
                 })
@@ -406,6 +411,24 @@ namespace web_tcg.Controllers
                         IsComplete = x.Cards?.Sum(c => c.Quantity) == 40
                     })
                     .ToList());
+        }
+
+        [HttpGet("View/{id:guid}")]
+        public async Task<IActionResult> Display(Guid id)
+        {
+            var deck = await _context.Set<DeckEntity>().AsNoTracking().Include(x => x.Cards)
+                .FirstOrDefaultAsync(x => x.Id == id && x.UserId == UserId);
+            if (deck == null) return NotFound();
+            var cards = await new CardPresentationService(_context)
+                .GetAsync(deck.Cards.Select(x => x.CardId).Append(deck.LeaderCardId));
+            var leader = cards.FirstOrDefault(x => x.Id == deck.LeaderCardId);
+            if (leader == null) return NotFound();
+            return View("Display", new DeckDisplayViewModel {
+                Name = deck.Name, Leader = leader,
+                Cards = deck.Cards.Where(x => cards.Any(c => c.Id == x.CardId))
+                    .Select(x => (cards.First(c => c.Id == x.CardId), x.Quantity))
+                    .OrderBy(x => x.Item1.Name).ToList()
+            });
         }
     }
 }

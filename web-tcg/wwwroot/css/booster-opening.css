@@ -332,6 +332,24 @@ body {
     will-change: transform, opacity, filter;
 }
 
+.booster-new-badge {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    z-index: 50;
+    transform: translateX(-50%) scale(var(--booster-new-scale, 1));
+    transform-origin: center bottom;
+    padding: 4px 11px;
+    border: 1px solid #ffe697;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ffe38c, #f4c430);
+    color: #151007;
+    font: 800 12px/1.2 Arial, sans-serif;
+    box-shadow: 0 3px 14px #f4c43035;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
     /*
  * Taille du vrai composant Card.
  */

@@ -5,6 +5,7 @@
     const initial = JSON.parse(document.getElementById("abilityRulesData").textContent);
     const geography = JSON.parse(document.getElementById("abilityGeographyData").textContent);
     geography.parties ||= [];
+    const orientations = [{id:1,name:"Extrême gauche"},{id:2,name:"Gauche"},{id:3,name:"Centre"},{id:4,name:"Droite"},{id:5,name:"Extrême droite"}];
     const types = [[1,"Dégâts"],[2,"Soins"],[3,"Piocher"],[10,"Gagner de l'énergie"],[11,"Perdre de l'énergie"],[12,"Voler de l'énergie"],[20,"Provocation"],[21,"Bouclier"],[22,"Camouflage"],[23,"Prison : aucune action pendant le prochain tour"],[30,"Coup d'état : attaques supplémentaires"],[31,"Multiplier les dégâts"],[32,"Bonus de PV maximum (+PV)"],[33,"Bonus de dégâts des compétences (+attaque)"],[40,"Second souffle : revivre à 50 %"],[50,"Défausser"],[60,"Détruire le lieu adverse"]];
     const triggers = [[1,"Quand la carte est jouée"],[2,"À l'utilisation de la compétence"],[3,"À l'utilisation du talent"],[4,"Passif (états et bonus liés à la présence sur le terrain)"],[5,"À la mort — Dernier souffle"],[6,"Au début de votre tour"],[7,"À la fin de votre tour"],[8,"Quand la carte subit des dégâts"]];
     const targets = [[1,"Cette carte"],[10,"Un personnage allié"],[11,"Votre Leader"],[12,"Un personnage allié ou votre Leader"],[20,"Un personnage adverse"],[21,"Le Leader adverse"],[22,"Un personnage adverse ou son Leader"],[31,"Le lieu adverse"],[40,"Votre joueur"],[41,"Le joueur adverse"],[50,"Tous vos personnages"],[51,"Tous les personnages adverses"],[52,"Tous les personnages des deux joueurs"]];
@@ -49,10 +50,11 @@
         const valueField = field(row,"Valeur",amount); field(row,"Prochains tours du propriétaire (0 = permanent)",duration);
         row.appendChild(input(`${name}.ParametersJson`,value.parametersJson ?? "{}","hidden"));
         const filters = node("div",null,"ability-geography-panel");
-        filters.appendChild(node("p","Filtrer les bénéficiaires : plusieurs choix possibles. Aucun choix = toutes les origines. Région, pays et parti se combinent avec ET.","ability-rules-help"));
+        filters.appendChild(node("p","Filtrer les bénéficiaires : plusieurs choix possibles. Sans sélection : aucune restriction. Région, pays, parti et orientation politique se combinent avec ET ; les choix d'une même catégorie avec OU.","ability-rules-help"));
         geographicChoices(filters,"Régions des bénéficiaires",`${name}.RegionIds`,geography.regions,value.regionIds);
         geographicChoices(filters,"Pays des bénéficiaires",`${name}.CountryIds`,geography.countries,value.countryIds);
         geographicChoices(filters,"Partis des bénéficiaires",`${name}.PartyIds`,geography.parties,value.partyIds);
+        geographicChoices(filters,"Orientations politiques des bénéficiaires",`${name}.OrientationIds`,orientations,value.orientationIds);
         row.appendChild(filters);
         const scale = input(`${name}.ScaleByMatchingCharacters`,"true","checkbox"); scale.checked = !!value.scaleByMatchingCharacters;
         const scaleField = field(row,"Multiplier le bonus par le nombre de personnages correspondants",scale);
@@ -63,6 +65,7 @@
         geographicChoices(count,"Régions des personnages comptés",`${name}.CountRegionIds`,geography.regions,value.countRegionIds);
         geographicChoices(count,"Pays des personnages comptés",`${name}.CountCountryIds`,geography.countries,value.countCountryIds);
         geographicChoices(count,"Partis des personnages comptés",`${name}.CountPartyIds`,geography.parties,value.countPartyIds);
+        geographicChoices(count,"Orientations politiques des personnages comptés",`${name}.CountOrientationIds`,orientations,value.countOrientationIds);
         row.appendChild(count);
         row.appendChild(button("Retirer l'action",()=>row.remove())); list.appendChild(row);
         const update = () => {
@@ -99,14 +102,24 @@
         row.dataset.ruleKind = "condition";
         const name = `${prefix}[${key}]`;
         const type = select(`${name}.Type`,conditions,value.type ?? 20);
+        [[56,"Cette carte appartient aux orientations politiques choisies"],[57,"La cible appartient aux orientations politiques choisies"],[80,"Un Leader portant ce nom est sur le terrain"],[81,"Un Personnage portant ce nom est sur le terrain"]].forEach(([id,label]) => {
+            const option = node("option",label); option.value=id; type.appendChild(option);
+        });
+        type.value=value.type ?? 20;
         field(row,"Condition",type);
         const threshold = field(row,"Seuil",input(`${name}.Value`,value.value ?? 1));
+        const cardName = input(`${name}.CardName`,value.cardName ?? "","text"); cardName.maxLength=150; cardName.placeholder="Nom exact de la carte";
+        const nameField=field(row,"Nom de la carte requise",cardName);
+        const scopeField=field(row,"Camp de la carte requise",select(`${name}.Scope`,[[1,"Votre camp"],[2,"Camp adverse"],[3,"Les deux camps"]],value.scope ?? 1));
         const regionGroup = geographicChoices(row,"Régions de la condition",`${name}.RegionIds`,geography.regions,value.regionIds);
         const countryGroup = geographicChoices(row,"Pays de la condition",`${name}.CountryIds`,geography.countries,value.countryIds);
         const partyGroup = geographicChoices(row,"Partis de la condition",`${name}.PartyIds`,geography.parties,value.partyIds);
+        const orientationGroup = geographicChoices(row,"Orientations politiques de la condition",`${name}.OrientationIds`,orientations,value.orientationIds);
         const typesGroup = geographicChoices(row,"Types de cartes autorisées",`${name}.CardTypes`,[{id:2,name:"Personnage"},{id:3,name:"Décision politique"},{id:4,name:"Lieu"},{id:5,name:"SECRET"}],value.cardTypes);
         const update = () => { const t = Number(type.value), payment = [70,71].includes(t); typesGroup.hidden = !payment; threshold.querySelector("span").textContent = payment ? "Nombre exact de cartes à choisir" : "Seuil"; threshold.querySelector("input").min=payment ? 1 : 0; threshold.querySelector("input").max=payment ? 40 : 100000; partyGroup.hidden = ![54,55,60,61,62,70,71].includes(t); regionGroup.hidden = ![50,52,60,61,62,70,71].includes(t); countryGroup.hidden = ![51,53,60,61,62,70,71].includes(t); threshold.hidden = [50,51,52,53,54,55].includes(t); };
         type.addEventListener("change",update); update();
+        const updateName = () => { const t=Number(type.value), named=[80,81].includes(t); nameField.hidden=scopeField.hidden=!named; cardName.required=named; orientationGroup.hidden=![56,57,60,61,62,70,71].includes(t); if(named || [56,57].includes(t)) threshold.hidden=true; };
+        type.addEventListener("change",updateName); updateName();
         const negate = input(`${name}.Negate`,"true","checkbox"); negate.checked = !!value.negate;
         const inversion=field(row,"Inverser la condition",negate); const updateInversion=()=>{ inversion.hidden=[70,71].includes(Number(type.value)); if(inversion.hidden) negate.checked=false; }; type.addEventListener("change",updateInversion); updateInversion(); row.appendChild(input(`${name}.Negate`,"false","hidden"));
         row.appendChild(button("Retirer la condition",()=>row.remove())); list.appendChild(row);
@@ -148,8 +161,10 @@
             summaryConditions.replaceChildren(); summaryActions.replaceChildren();
             [...conditionList.children].forEach(row=>{
                 const condition=selected(row,"Type"), value=selected(row,"Value"), inverted=selected(row,"Negate")?.checked;
-                const ids=[50,51,52,53,54,55];
-                summaryConditions.appendChild(node("li",`${inverted ? "Ne doit PAS remplir : " : "Requis : "}${optionText(condition)}${ids.includes(Number(condition.value)) ? "" : ` ${value.value}`}${filtersText(row) ? ` · ${filtersText(row)}` : ""}`));
+                const ids=[50,51,52,53,54,55,56,57,80,81];
+                const named=[80,81].includes(Number(condition.value));
+                const extra=named ? ` « ${selected(row,"CardName").value || "nom à renseigner"} » · ${optionText(selected(row,"Scope"))}` : "";
+                summaryConditions.appendChild(node("li",`${inverted ? "Ne doit PAS remplir : " : "Requis : "}${optionText(condition)}${extra}${ids.includes(Number(condition.value)) ? "" : ` ${value.value}`}${!named && filtersText(row) ? ` · ${filtersText(row)}` : ""}`));
             });
             [...list.children].forEach(row=>{
                 const type=selected(row,"Type"), trigger=selected(row,"Trigger"), target=selected(row,"Target"), value=selected(row,"Value"), duration=selected(row,"DurationTurns");

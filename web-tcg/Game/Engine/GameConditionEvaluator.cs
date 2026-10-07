@@ -32,7 +32,7 @@ namespace web_tcg.Game.Engine
             return true;
         }
 
-        public static bool IsTargetCondition(GameConditionDefinition condition) => condition.Type is GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty;
+        public static bool IsTargetCondition(GameConditionDefinition condition) => condition.Type is GameConditionType.TargetHealthBelow or GameConditionType.TargetHealthAbove or GameConditionType.TargetRegion or GameConditionType.TargetCountry or GameConditionType.TargetParty or GameConditionType.TargetPoliticalOrientation;
 
         public string? Failure(GameState state, GamePlayerState player, GameCardState source, GameCardState? target, IEnumerable<GameConditionDefinition> conditions)
         {
@@ -40,6 +40,8 @@ namespace web_tcg.Game.Engine
             if (failed == null) return null;
             var requirement = failed.Type switch
             {
+                GameConditionType.NamedLeaderOnBoard or GameConditionType.NamedCharacterOnBoard =>
+                    $"présence sur le terrain d'un {(failed.Type == GameConditionType.NamedLeaderOnBoard ? "Leader" : "Personnage")} nommé « {failed.Parameters.GetValueOrDefault("cardName")} » ({failed.Parameters.GetValueOrDefault("scope") switch { "2" => "camp adverse", "3" => "l'un des deux camps", _ => "votre camp" }})",
                 GameConditionType.RevealHandCards or GameConditionType.DiscardHandCards => $"{failed.Value} carte(s) de main autorisée(s) à {(failed.Type == GameConditionType.DiscardHandCards ? "défausser" : "dévoiler")} (disponibles : {GameHandCosts.Eligible(player,source,failed).Count()})",
                 GameConditionType.SourceHealthBelow => $"PV de {source.Name} inférieurs à {failed.Value} (actuellement {source.CurrentHealth})",
                 GameConditionType.SourceHealthAbove => $"PV de {source.Name} supérieurs à {failed.Value} (actuellement {source.CurrentHealth})",
@@ -51,6 +53,8 @@ namespace web_tcg.Game.Engine
                 GameConditionType.FriendlyCharacterCountAtLeast => $"au moins {failed.Value} personnages alliés sur le terrain",
                 GameConditionType.EnemyCharacterCountAtLeast => $"au moins {failed.Value} personnages adverses sur le terrain",
                 GameConditionType.SourceParty => "parti de la carte parmi les partis autorisés",
+                GameConditionType.SourcePoliticalOrientation => "orientation politique de cette carte parmi les orientations autorisées",
+                GameConditionType.TargetPoliticalOrientation => "orientation politique de la cible parmi les orientations autorisées",
                 GameConditionType.TargetParty => "parti de la cible parmi les partis autorisés",
                 GameConditionType.SourceRegion => "région de la carte parmi les régions autorisées",
                 GameConditionType.SourceCountry => "pays de la carte parmi les pays autorisés",
@@ -75,7 +79,10 @@ namespace web_tcg.Game.Engine
 
             return condition.Type switch
             {
+                GameConditionType.NamedLeaderOnBoard or GameConditionType.NamedCharacterOnBoard => NamedCardIsPresent(state,player,condition),
                 GameConditionType.None => true,
+                GameConditionType.SourcePoliticalOrientation => MatchesOrientation(source,condition),
+                GameConditionType.TargetPoliticalOrientation => target != null && MatchesOrientation(target,condition),
                 GameConditionType.RevealHandCards or GameConditionType.DiscardHandCards => GameHandCosts.Eligible(player,source,condition).Count() >= condition.Value,
                 GameConditionType.SourceParty => source.PoliticalPartyId.HasValue && GameGeography.Ids(condition.Parameters,"parties").Contains(source.PoliticalPartyId.Value),
                 GameConditionType.TargetParty => target?.PoliticalPartyId.HasValue == true && GameGeography.Ids(condition.Parameters,"parties").Contains(target.PoliticalPartyId.Value),
@@ -120,6 +127,25 @@ namespace web_tcg.Game.Engine
 
                 _ => false
             };
+        }
+
+        private static bool MatchesOrientation(GameCardState card, GameConditionDefinition condition) =>
+            card.PoliticalPartyId.HasValue && card.PoliticalPartyOrientation.HasValue
+            && GameGeography.Ids(condition.Parameters,"orientations").Contains((int)card.PoliticalPartyOrientation.Value);
+
+        private static bool NamedCardIsPresent(GameState state, GamePlayerState player, GameConditionDefinition condition)
+        {
+            var name = condition.Parameters.GetValueOrDefault("cardName")?.Trim();
+            if (string.IsNullOrEmpty(name)) return false;
+            var scope = condition.Parameters.GetValueOrDefault("scope", "1");
+            var owners = scope switch {
+                "1" => new[] { player }, "2" => new[] { state.GetOpponent(player.UserId) },
+                "3" => new[] { player, state.GetOpponent(player.UserId) }, _ => Array.Empty<GamePlayerState>() };
+            return owners.SelectMany(owner => condition.Type == GameConditionType.NamedLeaderOnBoard
+                    ? new[] { owner.Leader } : owner.Characters.OfType<GameCardState>())
+                .Any(card => card.Type == (condition.Type == GameConditionType.NamedLeaderOnBoard ? CardType.Leader : CardType.Character)
+                    && card.Zone == (condition.Type == GameConditionType.NamedLeaderOnBoard ? GameCardZone.Leader : GameCardZone.CharacterBoard)
+                    && card.CurrentHealth > 0 && string.Equals(card.Name.Trim(),name,StringComparison.OrdinalIgnoreCase));
         }
     }
 }
