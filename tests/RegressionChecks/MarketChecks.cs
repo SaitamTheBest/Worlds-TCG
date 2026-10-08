@@ -14,6 +14,7 @@ public static class MarketChecks
         services.AddLogging(); services.AddSignalR();
         services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
         services.AddScoped<CardBalanceRealtimeService>(); services.AddScoped<MarketService>();
+        services.AddScoped<NotificationService>();
         await using var provider=services.BuildServiceProvider();
         var prefix=Guid.NewGuid().ToString("N")[..8];
         var seller="seller-"+prefix; var alice="alice-"+prefix; var bob="bob-"+prefix;
@@ -39,15 +40,29 @@ public static class MarketChecks
         }
         async Task<decimal> Balance(string id) => await Read(db=>db.Users.Where(x=>x.Id==id).Select(x=>x.CardBalance).SingleAsync());
         async Task<int> Quantity(string id,int card) => await Read(db=>db.UserCardCollections.Where(x=>x.UserId==id&&x.CardId==card).SumAsync(x=>x.Quantity));
+        async Task<web_tcg.Models.Market.MarketIndexViewModel> Purchases(string userId)
+        {
+            await using var scope=provider.CreateAsyncScope();
+            var db=scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            var controller=new web_tcg.Controllers.MarketController(db,scope.ServiceProvider.GetRequiredService<MarketService>(),new CardPresentationService(db)) {
+                ControllerContext=new Microsoft.AspNetCore.Mvc.ControllerContext { HttpContext=new DefaultHttpContext {
+                    User=new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(new[] {
+                        new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier,userId) },"test")) } }
+            };
+            return (web_tcg.Models.Market.MarketIndexViewModel)((Microsoft.AspNetCore.Mvc.ViewResult)await controller.Purchases()).Model!;
+        }
         var auction=await Act(service=>service.CreateAsync(seller,cardId,10,1));
         Check(await Quantity(seller,cardId)==19,"marché : une seule copie retirée de l’inventaire à la création");
         Check(await Reject(service=>service.BidAsync(auction,seller,10)),"marché : enchère sur sa propre vente refusée");
         await Mutate(service=>service.BidAsync(auction,alice,20));
         Check(await Balance(alice)==80,"marché : montant de l’enchère réservé");
+        Check((await Purchases(alice)).Total==0,"marché : enchère active absente de l'historique des achats");
         await Mutate(service=>service.BidAsync(auction,alice,25));
+        Check(await Read(db=>db.Notifications.CountAsync(x=>x.UserId==alice))==0,"marché : surenchère personnelle sans fausse notification");
         Check(await Balance(alice)==75,"marché : surenchère personnelle réserve uniquement la différence");
         await Mutate(service=>service.BidAsync(auction,bob,30));
         Check(await Balance(alice)==100&&await Balance(bob)==70,"marché : remboursement du précédent enchérisseur");
+        Check(await Read(db=>db.Notifications.AnyAsync(x=>x.UserId==alice&&x.Title=="Votre enchère a été dépassée"&&x.Message.Contains("25")&&x.ActionUrl=="/Market/Auction/"+auction)),"marché : surenchère notifiée et remboursement indiqué");
         Check(await Reject(service=>service.BidAsync(auction,alice,101))&&await Balance(alice)==100,"marché : solde insuffisant refusé sans débit");
         Check(await Reject(service=>service.BidAsync(auction,alice,30)),"marché : enchère insuffisante ou obsolète refusée");
         Check(await Reject(service=>service.CancelAsync(auction,seller))&&await Reject(service=>service.CancelAsync(auction,alice)),"marché : annulation avec enchère ou par un autre joueur refusée");
@@ -59,6 +74,14 @@ public static class MarketChecks
         await Task.WhenAll(Mutate(service=>service.CloseExpiredAsync()),Mutate(service=>service.CloseExpiredAsync()));
         var sold=await Read(db=>db.MarketAuctions.AsNoTracking().SingleAsync(x=>x.Id==auction));
         Check(sold.Status==AuctionStatus.Sold&&await Balance(seller)==31&&await Quantity(sold.HighestBidderId!,cardId)==1,"marché : double clôture transfère la carte et paie le vendeur une seule fois");
+        Check(await Read(db=>db.Notifications.CountAsync(x=>x.UserId==seller&&x.Title=="Carte vendue"&&x.ActionUrl=="/Market/Auction/"+auction))==1
+            && await Read(db=>db.Notifications.CountAsync(x=>x.UserId==sold.HighestBidderId&&x.Title=="Carte achetée"&&x.ActionUrl=="/Market/Auction/"+auction))==1,"marché : double clôture notifie achat et vente une seule fois");
+        var loser = sold.HighestBidderId == alice ? bob : alice;
+        var purchases=await Purchases(sold.HighestBidderId!);
+        Check(purchases.Mode=="purchases"&&purchases.Total==1&&purchases.Listings.Single().Auction.Id==auction,
+            "marché : carte remportée présente dans l'historique de l'acheteur");
+        Check((await Purchases(loser)).Total==0&&(await Purchases(seller)).Total==0,"marché : historique des achats limité au gagnant connecté");
+        Check(await Read(db=>db.Notifications.CountAsync(x=>x.UserId==loser&&x.Title=="Enchère perdue"&&x.ActionUrl=="/Market/Auction/"+auction))==1,"marché : enchère perdue notifiée une fois à la clôture");
         Check(await Balance(alice)+await Balance(bob)+await Balance(seller)==200,"marché : total des crédits conservé après le paiement");
         var cancelled=await Act(service=>service.CreateAsync(seller,cardId,5,1));
         await Mutate(service=>service.CancelAsync(cancelled,seller));
@@ -67,6 +90,7 @@ public static class MarketChecks
         await Read(async db=>await db.MarketAuctions.Where(x=>x.Id==unsold).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.EndsAt,DateTime.UtcNow.AddSeconds(-1))));
         await Mutate(service=>service.CloseExpiredAsync());
         Check(await Quantity(seller,cardId)==19&&await Read(db=>db.MarketAuctions.AnyAsync(x=>x.Id==unsold&&x.Status==AuctionStatus.Unsold)),"marché : vente sans enchère terminée rend la carte");
+        Check(await Read(db=>db.Notifications.CountAsync(x=>x.UserId==seller&&x.Title=="Carte vendue"))==1,"marché : annulation et invendu sans fausse notification de vente");
         var variants=await Task.WhenAll(Enumerable.Range(0,2).Select(async _=>{try{return await Act(service=>service.CreateAsync(seller,variantId,10,1));}catch(MarketRuleException){return Guid.Empty;}}));
         Check(variants.Count(x=>x!=Guid.Empty)==1&&await Quantity(seller,variantId)==0,"marché : dernier exemplaire ne peut pas être mis en vente deux fois");
         await Mutate(service=>service.CancelAsync(variants.Single(x=>x!=Guid.Empty),seller));

@@ -52,6 +52,21 @@ public static class ActionFlowAuditChecks
         check(new GameConditionEvaluator().AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : recherche d'un Personnage dans les deux camps");
         state.PlayerTwo.Characters[0]!.CurrentHealth=0;
         check(!new GameConditionEvaluator().AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : personnage mort encore en résolution exclu");
+        presence.Parameters["cardName"]="Mairie de Paris";
+        state.PlayerTwo.Location!.Name="mairie de paris";
+        var evaluatorPresence=new GameConditionEvaluator();
+        check(evaluatorPresence.AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : lieu posé sans PV reconnu dans les deux camps");
+        presence.Parameters["scope"]="1";
+        check(!evaluatorPresence.AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : lieu adverse exclu du camp allié");
+        presence.Parameters["scope"]="2";
+        check(evaluatorPresence.AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : lieu adverse reconnu dans le camp adverse");
+        state.PlayerTwo.Location.Zone=GameCardZone.Graveyard;
+        check(!evaluatorPresence.AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : lieu détruit encore en résolution exclu");
+        state.PlayerTwo.Location.Zone=GameCardZone.Hand;
+        check(!evaluatorPresence.AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : lieu en main exclu");
+        state.PlayerTwo.Location.Zone=GameCardZone.Location;
+        presence.Type=GameConditionType.NamedLeaderOnBoard;
+        check(!evaluatorPresence.AreMet(state,state.PlayerOne,source,null,new[]{presence}),"nom requis : lieu ne remplace pas le Leader requis");
         var namedInput=new CardAbilityInputModel { Type=AbilityType.Trait,Conditions=new() { new() { Type=GameConditionType.NamedLeaderOnBoard,CardName="  Chef  ",Scope=2 } },Effects=new() {
             new() { Type=GameEffectType.Heal,Trigger=GameEffectTrigger.OnTalent,Target=GameTargetType.Self,Value=5 } } };
         var entity=new web_tcg.Data.Entities.CardAbility(); CardAbilityEditor.Write(entity,namedInput);

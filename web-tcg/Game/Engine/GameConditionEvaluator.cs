@@ -41,7 +41,7 @@ namespace web_tcg.Game.Engine
             var requirement = failed.Type switch
             {
                 GameConditionType.NamedLeaderOnBoard or GameConditionType.NamedCharacterOnBoard =>
-                    $"présence sur le terrain d'un {(failed.Type == GameConditionType.NamedLeaderOnBoard ? "Leader" : "Personnage")} nommé « {failed.Parameters.GetValueOrDefault("cardName")} » ({failed.Parameters.GetValueOrDefault("scope") switch { "2" => "camp adverse", "3" => "l'un des deux camps", _ => "votre camp" }})",
+                    $"présence sur le terrain d'un {(failed.Type == GameConditionType.NamedLeaderOnBoard ? "Leader" : "Personnage ou Lieu")} nommé « {failed.Parameters.GetValueOrDefault("cardName")} » ({failed.Parameters.GetValueOrDefault("scope") switch { "2" => "camp adverse", "3" => "l'un des deux camps", _ => "votre camp" }})",
                 GameConditionType.RevealHandCards or GameConditionType.DiscardHandCards => $"{failed.Value} carte(s) de main autorisée(s) à {(failed.Type == GameConditionType.DiscardHandCards ? "défausser" : "dévoiler")} (disponibles : {GameHandCosts.Eligible(player,source,failed).Count()})",
                 GameConditionType.SourceHealthBelow => $"PV de {source.Name} inférieurs à {failed.Value} (actuellement {source.CurrentHealth})",
                 GameConditionType.SourceHealthAbove => $"PV de {source.Name} supérieurs à {failed.Value} (actuellement {source.CurrentHealth})",
@@ -144,10 +144,12 @@ namespace web_tcg.Game.Engine
                 "1" => new[] { player }, "2" => new[] { state.GetOpponent(player.UserId) },
                 "3" => new[] { player, state.GetOpponent(player.UserId) }, _ => Array.Empty<GamePlayerState>() };
             return owners.SelectMany(owner => condition.Type == GameConditionType.NamedLeaderOnBoard
-                    ? new[] { owner.Leader } : owner.Characters.OfType<GameCardState>())
-                .Any(card => card.Type == (condition.Type == GameConditionType.NamedLeaderOnBoard ? CardType.Leader : CardType.Character)
-                    && card.Zone == (condition.Type == GameConditionType.NamedLeaderOnBoard ? GameCardZone.Leader : GameCardZone.CharacterBoard)
-                    && card.CurrentHealth > 0 && string.Equals(card.Name.Trim(),name,StringComparison.OrdinalIgnoreCase));
+                    ? new[] { owner.Leader } : owner.Characters.OfType<GameCardState>().Concat(new[] { owner.Location }.OfType<GameCardState>()))
+                .Any(card => (condition.Type == GameConditionType.NamedLeaderOnBoard
+                        ? card.Type == CardType.Leader && card.Zone == GameCardZone.Leader && card.CurrentHealth > 0
+                        : (card.Type == CardType.Character && card.Zone == GameCardZone.CharacterBoard && card.CurrentHealth > 0)
+                          || (card.Type == CardType.Location && card.Zone == GameCardZone.Location))
+                    && string.Equals(card.Name.Trim(),name,StringComparison.OrdinalIgnoreCase));
         }
     }
 }

@@ -102,7 +102,7 @@
         row.dataset.ruleKind = "condition";
         const name = `${prefix}[${key}]`;
         const type = select(`${name}.Type`,conditions,value.type ?? 20);
-        [[56,"Cette carte appartient aux orientations politiques choisies"],[57,"La cible appartient aux orientations politiques choisies"],[58,"Votre Leader appartient aux orientations politiques choisies"],[80,"Un Leader portant ce nom est sur le terrain"],[81,"Un Personnage portant ce nom est sur le terrain"]].forEach(([id,label]) => {
+        [[56,"Cette carte appartient aux orientations politiques choisies"],[57,"La cible appartient aux orientations politiques choisies"],[58,"Votre Leader appartient aux orientations politiques choisies"],[80,"Un Leader portant ce nom est sur le terrain"],[81,"Un Personnage ou un Lieu portant ce nom est sur le terrain"]].forEach(([id,label]) => {
             const option = node("option",label); option.value=id; type.appendChild(option);
         });
         type.value=value.type ?? 20;

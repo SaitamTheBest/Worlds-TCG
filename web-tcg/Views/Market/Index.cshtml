@@ -10,6 +10,7 @@
         <a class="@(Model.Mode == "market" ? "active" : "")" asp-action="Index">Marché en cours</a>
         <a class="@(Model.Mode == "sales" ? "active" : "")" asp-action="MySales">Mes ventes en cours</a>
         <a class="@(Model.Mode == "history" ? "active" : "")" asp-action="History">Historique de mes ventes</a>
+        <a class="@(Model.Mode == "purchases" ? "active" : "")" asp-action="Purchases">Historique de mes achats</a>
     </nav>
     <div class="market-toolbar">
         @if (Model.Mode == "market")

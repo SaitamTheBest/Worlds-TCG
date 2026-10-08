@@ -115,7 +115,7 @@
         RevealHandCards = 70,
         DiscardHandCards = 71,
         NamedLeaderOnBoard = 80,
-        NamedCharacterOnBoard = 81
+        NamedCharacterOnBoard = 81 // Personnage ou lieu ; valeur conservée pour les capacités existantes.
     }
 
     public enum GameComparisonOperator

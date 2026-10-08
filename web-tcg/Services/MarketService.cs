@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using web_tcg.Data;
 using web_tcg.Data.Entities;
+using web_tcg.Data.Enums;
 using web_tcg.Hubs;
 
 namespace web_tcg.Services;
@@ -9,7 +10,7 @@ namespace web_tcg.Services;
 public sealed class MarketRuleException(string message) : Exception(message);
 
 public sealed class MarketService(ApplicationDbContext context, IHubContext<MarketHub> hub,
-    CardBalanceRealtimeService balances, ILogger<MarketService> logger)
+    CardBalanceRealtimeService balances, ILogger<MarketService> logger, NotificationService notifications)
 {
     public const int MaxActiveSales = 10;
     public const decimal MaxPrice = 999999999m;
@@ -60,7 +61,7 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
             throw new MarketRuleException("Le montant doit être compris entre 1 et 999 999 999, avec deux décimales maximum.");
         await using var transaction = await context.Database.BeginTransactionAsync();
         await CollectionTransactionLock.AcquireAsync(context);
-        var auction = await context.MarketAuctions.FirstOrDefaultAsync(x => x.Id == id);
+        var auction = await context.MarketAuctions.Include(x => x.Card).ThenInclude(x => x.CardSet).FirstOrDefaultAsync(x => x.Id == id);
         if (auction == null) throw new MarketRuleException("Cette vente est introuvable.");
         if (auction.Status != AuctionStatus.Active || auction.EndsAt <= DateTime.UtcNow)
             throw new MarketRuleException("Cette enchère est terminée.");
@@ -68,6 +69,7 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
         var minimum = auction.HighestBidderId == null ? auction.StartingPrice : auction.CurrentPrice + 1;
         if (amount < minimum) throw new MarketRuleException($"Une autre enchère vous précède. Le montant minimum est maintenant de {minimum:0.##} ¤.");
         var previousBidder = auction.HighestBidderId;
+        var previousAmount = auction.CurrentPrice;
         var debit = previousBidder == userId ? amount - auction.CurrentPrice : amount;
         var debited = await context.Users.Where(x => x.Id == userId && !x.IsBot && x.CardBalance >= debit)
             .ExecuteUpdateAsync(s => s.SetProperty(x => x.CardBalance, x => x.CardBalance - debit));
@@ -77,8 +79,14 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
         auction.HighestBidderId = userId;
         auction.CurrentPrice = amount;
         context.MarketBids.Add(new MarketBid { AuctionId=id, BidderId=userId, Amount=amount });
+        Notification? outbid = null;
+        if (previousBidder != null && previousBidder != userId)
+            outbid = notifications.AddPending(previousBidder, "Votre enchère a été dépassée",
+                $"Une autre personne a surenchéri sur {CardLabel(auction)}. Votre mise de {previousAmount:0.##} ¤ a été remboursée. Nouvelle enchère : {amount:0.##} ¤.",
+                NotificationType.Warning, $"/Market/Auction/{id}");
         await context.SaveChangesAsync();
         await transaction.CommitAsync();
+        if (outbid != null) await PublishNotificationsAsync(new[] { outbid });
         await PublishAsync(id, previousBidder, userId);
     }
 
@@ -108,14 +116,27 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
             context.ChangeTracker.Clear();
             await using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
             await CollectionTransactionLock.AcquireAsync(context, cancellationToken);
-            var auction = await context.MarketAuctions.FirstAsync(x => x.Id == id, cancellationToken);
+            var auction = await context.MarketAuctions.Include(x => x.Card).ThenInclude(x => x.CardSet).FirstAsync(x => x.Id == id, cancellationToken);
             if (auction.Status != AuctionStatus.Active || auction.EndsAt > DateTime.UtcNow) continue;
+            var pending = new List<Notification>();
             if (auction.HighestBidderId != null)
             {
                 await ReturnCardAsync(auction.HighestBidderId, auction.CardId);
                 await context.Users.Where(x => x.Id == auction.SellerId)
                     .ExecuteUpdateAsync(s => s.SetProperty(x => x.CardBalance, x => x.CardBalance + auction.CurrentPrice), cancellationToken);
                 auction.Status = AuctionStatus.Sold;
+                pending.Add(notifications.AddPending(auction.SellerId, "Carte vendue",
+                    $"Vous avez vendu {CardLabel(auction)} pour {auction.CurrentPrice:0.##} ¤. Le montant a été ajouté à votre solde marché.",
+                    NotificationType.Success, $"/Market/Auction/{id}"));
+                pending.Add(notifications.AddPending(auction.HighestBidderId, "Carte achetée",
+                    $"Vous avez remporté {CardLabel(auction)} pour {auction.CurrentPrice:0.##} ¤. La carte a été ajoutée à votre collection.",
+                    NotificationType.Success, $"/Market/Auction/{id}"));
+                var losers = await context.MarketBids.Where(x => x.AuctionId == id && x.BidderId != auction.HighestBidderId)
+                    .Select(x => x.BidderId).Distinct().ToListAsync(cancellationToken);
+                foreach (var loser in losers)
+                    pending.Add(notifications.AddPending(loser, "Enchère perdue",
+                        $"L'enchère pour {CardLabel(auction)} est terminée. Un autre joueur a remporté la carte pour {auction.CurrentPrice:0.##} ¤. Votre mise a déjà été remboursée lors de la surenchère.",
+                        NotificationType.Info, $"/Market/Auction/{id}"));
             }
             else
             {
@@ -125,6 +146,7 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
             auction.ClosedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
+            await PublishNotificationsAsync(pending);
             await PublishAsync(id, auction.SellerId, auction.HighestBidderId);
         }
     }
@@ -134,6 +156,19 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
         var owned = await context.UserCardCollections.FirstOrDefaultAsync(x => x.UserId == userId && x.CardId == cardId);
         if (owned == null) context.UserCardCollections.Add(new UserCardCollection { UserId=userId, CardId=cardId, Quantity=1 });
         else owned.Quantity++;
+    }
+
+    private static string CardLabel(MarketAuction auction) =>
+        $"{auction.Card.Name} ({auction.Card.CardSet.Code}-{auction.Card.CollectionNumber}" +
+        (auction.Card.VariantNumber.HasValue ? $"-{auction.Card.VariantNumber}" : "") + ")";
+
+    private async Task PublishNotificationsAsync(IEnumerable<Notification> pending)
+    {
+        foreach (var notification in pending)
+        {
+            try { await notifications.PublishAsync(notification); }
+            catch (Exception ex) { logger.LogWarning(ex, "Notification marché {NotificationId} enregistrée, mais diffusion indisponible", notification.Id); }
+        }
     }
 
     private async Task PublishAsync(Guid id, params string?[] userIds)

@@ -29,6 +29,16 @@ namespace web_tcg.Services
             string? actionUrl = null,
             CancellationToken cancellationToken = default)
         {
+            var notification = AddPending(userId, title, message, type, actionUrl);
+            await _context.SaveChangesAsync(cancellationToken);
+            await PublishAsync(notification, cancellationToken);
+            return ToDto(notification);
+        }
+
+        // Permet aux opérations métier de sauvegarder la notification dans leur transaction.
+        public Notification AddPending(string userId, string title, string message,
+            NotificationType type = NotificationType.Info, string? actionUrl = null)
+        {
             if (string.IsNullOrWhiteSpace(userId))
                 throw new ArgumentException("L'identifiant utilisateur est requis.", nameof(userId));
 
@@ -50,19 +60,16 @@ namespace web_tcg.Services
             };
 
             _context.Notifications.Add(notification);
-            await _context.SaveChangesAsync(cancellationToken);
+            return notification;
+        }
 
-            var dto = ToDto(notification);
-
-            await _hubContext.Clients
-                .User(userId)
+        public Task PublishAsync(Notification notification, CancellationToken cancellationToken = default)
+            => _hubContext.Clients
+                .User(notification.UserId)
                 .SendAsync(
                     "NotificationCreated",
-                    dto,
+                    ToDto(notification),
                     cancellationToken);
-
-            return dto;
-        }
 
         public async Task<IReadOnlyList<NotificationDto>> GetLatestAsync(
             string userId,

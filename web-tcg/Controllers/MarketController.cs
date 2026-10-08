@@ -21,19 +21,22 @@ public sealed class MarketController(ApplicationDbContext context, MarketService
     public async Task<IActionResult> MySales(int page = 1) => View("Index", await ListAsync("sales","",page));
     [HttpGet("History")]
     public async Task<IActionResult> History(int page = 1) => View("Index", await ListAsync("history","",page));
+    [HttpGet("Purchases")]
+    public async Task<IActionResult> Purchases(int page = 1) => View("Index", await ListAsync("purchases","",page));
     [HttpGet("Listings")]
     public async Task<IActionResult> Listings(string mode = "market", string search = "", int page = 1)
         => PartialView("_Listings", await ListAsync(mode,search,page));
 
     private async Task<MarketIndexViewModel> ListAsync(string mode, string search, int page)
     {
-        mode = mode is "sales" or "history" ? mode : "market";
+        mode = mode is "sales" or "history" or "purchases" ? mode : "market";
         page = Math.Clamp(page,1,100000);
         search = (search ?? "").Trim();
         if (search.Length > 100) search = search[..100];
         var now = DateTime.UtcNow;
         var query = context.MarketAuctions.AsNoTracking().AsQueryable();
-        if (mode == "history") query = query.Where(x => x.SellerId == UserId && x.Status != AuctionStatus.Active);
+        if (mode == "purchases") query = query.Where(x => x.HighestBidderId == UserId && x.Status == AuctionStatus.Sold);
+        else if (mode == "history") query = query.Where(x => x.SellerId == UserId && x.Status != AuctionStatus.Active);
         else
         {
             query = query.Where(x => x.Status == AuctionStatus.Active);
@@ -42,7 +45,7 @@ public sealed class MarketController(ApplicationDbContext context, MarketService
         if (search.Length > 0) { var lower = search.ToLower(); query = query.Where(x => x.Card.Name.ToLower().Contains(lower)); }
         var total = await query.CountAsync();
         var rows = await query.Include(x => x.Seller).Include(x => x.HighestBidder)
-            .OrderByDescending(x => mode == "history" ? x.ClosedAt : null).ThenBy(x => x.EndsAt)
+            .OrderByDescending(x => mode == "history" || mode == "purchases" ? x.ClosedAt : null).ThenBy(x => x.EndsAt).ThenBy(x => x.Id)
             .Skip((page-1)*20).Take(20).Select(x => new { Auction=x, Count=x.Bids.Count }).ToListAsync();
         var cards = (await presentation.GetAsync(rows.Select(x => x.Auction.CardId))).ToDictionary(x => x.Id);
         return new MarketIndexViewModel

@@ -12,7 +12,7 @@ public sealed class MarketIndexViewModel
     public int Total { get; init; }
     public int ActiveSales { get; init; }
     public List<MarketListingViewModel> Listings { get; init; } = new();
-    public string Title => Mode == "sales" ? "Mes ventes en cours" : Mode == "history" ? "Historique de mes ventes" : "Marché des joueurs";
+    public string Title => Mode == "sales" ? "Mes ventes en cours" : Mode == "history" ? "Historique de mes ventes" : Mode == "purchases" ? "Historique de mes achats" : "Marché des joueurs";
 }
 
 public sealed class MarketListingViewModel
