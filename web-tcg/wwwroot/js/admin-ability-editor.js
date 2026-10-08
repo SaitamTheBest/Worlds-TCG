@@ -102,7 +102,7 @@
         row.dataset.ruleKind = "condition";
         const name = `${prefix}[${key}]`;
         const type = select(`${name}.Type`,conditions,value.type ?? 20);
-        [[56,"Cette carte appartient aux orientations politiques choisies"],[57,"La cible appartient aux orientations politiques choisies"],[80,"Un Leader portant ce nom est sur le terrain"],[81,"Un Personnage portant ce nom est sur le terrain"]].forEach(([id,label]) => {
+        [[56,"Cette carte appartient aux orientations politiques choisies"],[57,"La cible appartient aux orientations politiques choisies"],[58,"Votre Leader appartient aux orientations politiques choisies"],[80,"Un Leader portant ce nom est sur le terrain"],[81,"Un Personnage portant ce nom est sur le terrain"]].forEach(([id,label]) => {
             const option = node("option",label); option.value=id; type.appendChild(option);
         });
         type.value=value.type ?? 20;
@@ -118,7 +118,7 @@
         const typesGroup = geographicChoices(row,"Types de cartes autorisées",`${name}.CardTypes`,[{id:2,name:"Personnage"},{id:3,name:"Décision politique"},{id:4,name:"Lieu"},{id:5,name:"SECRET"}],value.cardTypes);
         const update = () => { const t = Number(type.value), payment = [70,71].includes(t); typesGroup.hidden = !payment; threshold.querySelector("span").textContent = payment ? "Nombre exact de cartes à choisir" : "Seuil"; threshold.querySelector("input").min=payment ? 1 : 0; threshold.querySelector("input").max=payment ? 40 : 100000; partyGroup.hidden = ![54,55,60,61,62,70,71].includes(t); regionGroup.hidden = ![50,52,60,61,62,70,71].includes(t); countryGroup.hidden = ![51,53,60,61,62,70,71].includes(t); threshold.hidden = [50,51,52,53,54,55].includes(t); };
         type.addEventListener("change",update); update();
-        const updateName = () => { const t=Number(type.value), named=[80,81].includes(t); nameField.hidden=scopeField.hidden=!named; cardName.required=named; orientationGroup.hidden=![56,57,60,61,62,70,71].includes(t); if(named || [56,57].includes(t)) threshold.hidden=true; };
+        const updateName = () => { const t=Number(type.value), named=[80,81].includes(t); nameField.hidden=scopeField.hidden=!named; cardName.required=named; orientationGroup.hidden=![56,57,58,60,61,62,70,71].includes(t); if(named || [56,57,58].includes(t)) threshold.hidden=true; };
         type.addEventListener("change",updateName); updateName();
         const negate = input(`${name}.Negate`,"true","checkbox"); negate.checked = !!value.negate;
         const inversion=field(row,"Inverser la condition",negate); const updateInversion=()=>{ inversion.hidden=[70,71].includes(Number(type.value)); if(inversion.hidden) negate.checked=false; }; type.addEventListener("change",updateInversion); updateInversion(); row.appendChild(input(`${name}.Negate`,"false","hidden"));
@@ -161,7 +161,7 @@
             summaryConditions.replaceChildren(); summaryActions.replaceChildren();
             [...conditionList.children].forEach(row=>{
                 const condition=selected(row,"Type"), value=selected(row,"Value"), inverted=selected(row,"Negate")?.checked;
-                const ids=[50,51,52,53,54,55,56,57,80,81];
+                const ids=[50,51,52,53,54,55,56,57,58,80,81];
                 const named=[80,81].includes(Number(condition.value));
                 const extra=named ? ` « ${selected(row,"CardName").value || "nom à renseigner"} » · ${optionText(selected(row,"Scope"))}` : "";
                 summaryConditions.appendChild(node("li",`${inverted ? "Ne doit PAS remplir : " : "Requis : "}${optionText(condition)}${extra}${ids.includes(Number(condition.value)) ? "" : ` ${value.value}`}${!named && filtersText(row) ? ` · ${filtersText(row)}` : ""}`));

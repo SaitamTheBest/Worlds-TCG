@@ -108,6 +108,7 @@
         TargetParty = 55,
         SourcePoliticalOrientation = 56,
         TargetPoliticalOrientation = 57,
+        LeaderPoliticalOrientation = 58,
         MatchingFriendlyCharactersAtLeast = 60,
         MatchingEnemyCharactersAtLeast = 61,
         MatchingCharactersAtLeast = 62,

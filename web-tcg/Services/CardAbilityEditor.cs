@@ -129,7 +129,7 @@ public static class CardAbilityEditor
         }
         foreach (var condition in ability.Conditions)
         {
-            if (condition.Type is GameConditionType.SourcePoliticalOrientation or GameConditionType.TargetPoliticalOrientation && condition.OrientationIds.Count == 0)
+            if (condition.Type is GameConditionType.SourcePoliticalOrientation or GameConditionType.TargetPoliticalOrientation or GameConditionType.LeaderPoliticalOrientation && condition.OrientationIds.Count == 0)
                 yield return "Choisissez au moins une orientation politique pour cette condition.";
             if (condition.Type is GameConditionType.NamedLeaderOnBoard or GameConditionType.NamedCharacterOnBoard)
             {

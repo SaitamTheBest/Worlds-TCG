@@ -57,5 +57,31 @@ public static class OrientationRuleChecks
         check(CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientations : condition sans orientation refusée");
         input.Conditions[0].OrientationIds.Add(99);
         check(CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientations : orientation inconnue refusée");
+        var leaderCondition = new GameConditionDefinition { Type = GameConditionType.LeaderPoliticalOrientation, Parameters = new() { ["orientations"] = "2" } };
+        check(evaluator.AreMet(state,state.PlayerOne,centre,enemy,new[]{leaderCondition}),
+            "orientation du Leader : utilise le Leader allié même si la source est du centre");
+        check(!evaluator.AreMet(state,state.PlayerTwo,enemy,first,new[]{leaderCondition}) && !GameConditionEvaluator.IsTargetCondition(leaderCondition),
+            "orientation du Leader : condition immédiate indépendante de la cible et du Leader adverse");
+        leaderCondition.Parameters["orientations"] = "3,2";
+        check(evaluator.AreMet(state,state.PlayerTwo,enemy,null,new[]{leaderCondition}),"orientation du Leader : plusieurs orientations acceptées avec OU");
+        state.PlayerOne.Leader.PoliticalPartyId = null;
+        check(!evaluator.AreMet(state,state.PlayerOne,centre,null,new[]{leaderCondition}),"orientation du Leader : Leader sans parti refusé");
+        state.PlayerOne.Leader.PoliticalPartyId = 1;
+        state.PlayerOne.Leader.CurrentHealth = 0;
+        check(!evaluator.AreMet(state,state.PlayerOne,centre,null,new[]{leaderCondition}),"orientation du Leader : Leader mort refusé");
+        state.PlayerOne.Leader.CurrentHealth = 100;
+        leaderCondition.Parameters["orientations"] = "3";
+        leaderCondition.Negate = true;
+        check(evaluator.AreMet(state,state.PlayerOne,centre,null,new[]{leaderCondition}),"orientation du Leader : inversion de condition prise en compte");
+        leaderCondition.Negate = false;
+        check(evaluator.Failure(state,state.PlayerOne,centre,null,new[]{leaderCondition})?.Contains("votre Leader") == true,
+            "orientation du Leader : erreur précise affichable en jeu");
+        input.Conditions[0].Type = GameConditionType.LeaderPoliticalOrientation;
+        input.Conditions[0].OrientationIds = new() { 2 };
+        CardAbilityEditor.Write(stored,input); restored = CardAbilityEditor.Read(stored);
+        check(restored.Conditions[0].Type == GameConditionType.LeaderPoliticalOrientation && restored.Conditions[0].OrientationIds.SequenceEqual(new[]{2})
+            && !CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientation du Leader : création et modification conservent la condition");
+        input.Conditions[0].OrientationIds.Clear();
+        check(CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientation du Leader : sélection d'une orientation obligatoire");
     }
 }
