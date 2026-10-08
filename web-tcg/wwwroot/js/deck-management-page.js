@@ -317,6 +317,7 @@
 
         DOM.deckCardGrid.innerHTML = Array.from(state.cardsGrouped.entries())
             .filter(([, card]) => card.variants.some(variant => matchesFilter(variant, 'Card')))
+            .sort(([, a], [, b]) => compareCards(visibleVariants(a)[0], visibleVariants(b)[0]))
             .map(([gameplayId, card]) => renderCardGroup(gameplayId, card))
             .join('') || '<p class="worlds-deck-subtitle">Aucune carte ne correspond à votre recherche.</p>';
 
@@ -339,6 +340,24 @@
         }
     }
 
+    const cardCollator = new Intl.Collator('fr', { numeric: true, sensitivity: 'base' });
+    function compareCards(a, b) {
+        const mode = document.getElementById('worldsDeckCardSort')?.value || 'name';
+        const byName = () => cardCollator.compare(a.name || '', b.name || '');
+        const byNumber = () => cardCollator.compare(a.cardNumber || '', b.cardNumber || '');
+        if (mode === 'number') return byNumber() || byName();
+        if (mode === 'party') {
+            const missing = Number(!a.politicalPartyName) - Number(!b.politicalPartyName);
+            return missing || cardCollator.compare(a.politicalPartyName || '', b.politicalPartyName || '') || byName() || byNumber();
+        }
+        if (mode === 'orientation') return (a.politicalOrientation ?? 99) - (b.politicalOrientation ?? 99) ||
+            cardCollator.compare(a.politicalPartyName || '', b.politicalPartyName || '') || byName() || byNumber();
+        return byName() || byNumber();
+    }
+    function visibleVariants(card) {
+        return card.variants.filter(variant => matchesFilter(variant, 'Card')).sort(compareCards);
+    }
+
     /**
      * Rendre un groupe de variantes pour une carte
      */
@@ -354,7 +373,7 @@
                 </div>
 
                 <div class="worlds-variants-list">
-                    ${card.variants.filter(variant => matchesFilter(variant, 'Card')).map((variant, idx) => {
+                    ${visibleVariants(card).map((variant, idx) => {
                         const qty = state.selectedCards.get(variant.cardId) || 0;
                         const total = Array.from(state.selectedCards.values()).reduce((sum, value) => sum + value, 0);
                         const canAdd = qty < variant.ownedQuantity && !isMaxed && total < 40;
@@ -598,6 +617,7 @@
         DOM.deckLeaderSelect?.addEventListener('change', updateCardCount);
         DOM.deckLeaderSelect?.addEventListener('change', renderLeaderPreview);
         DOM.deckName?.addEventListener('input', updateCardCount);
+        document.getElementById('worldsDeckCardSort')?.addEventListener('change', renderCardGrid);
         for (const kind of ['Leader', 'Card']) {
             const render = kind === 'Leader' ? renderLeaderPreview : renderCardGrid;
             document.getElementById(`worldsDeck${kind}Search`)?.addEventListener('input', render);

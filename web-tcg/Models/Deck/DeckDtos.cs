@@ -62,6 +62,8 @@ namespace web_tcg.Models.Deck
         public string CardSetName { get; init; } = string.Empty;
         public string CardSetCode { get; init; } = string.Empty;
         public string CardNumber { get; init; } = string.Empty;
+        public string? PoliticalPartyName { get; init; }
+        public PoliticalOrientation? PoliticalOrientation { get; init; }
     }
 
     public sealed class DeckDisplayViewModel

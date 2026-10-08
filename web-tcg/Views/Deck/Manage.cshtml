@@ -154,9 +154,15 @@
 
                 <div class="worlds-deck-field">
                     <label for="worldsDeckCardSearch">Cartes</label>
-                    <div class="worlds-deck-filters">
+                    <div class="worlds-deck-filters worlds-deck-card-filters">
                         <input type="search" id="worldsDeckCardSearch" placeholder="Nom ou numéro de carte" />
                         <select id="worldsDeckCardExtension" aria-label="Extension des cartes"></select>
+                        <select id="worldsDeckCardSort" aria-label="Trier les cartes">
+                            <option value="name">Nom (A–Z)</option>
+                            <option value="number">Numéro de collection</option>
+                            <option value="party">Parti politique (A–Z)</option>
+                            <option value="orientation">Orientation politique</option>
+                        </select>
                     </div>
                 </div>
                 <div id="worldsDeckCardGrid"

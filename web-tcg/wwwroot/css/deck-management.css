@@ -709,6 +709,7 @@
 .worlds-home .worlds-matchmaking-activity strong { color: #f4c430; margin-right: 4px; }
 
 .worlds-deck-management .worlds-deck-filters { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.worlds-deck-management .worlds-deck-card-filters { grid-template-columns: 2fr 1fr 1fr; }
 .worlds-deck-management select { color-scheme: dark; }
 .worlds-deck-management select option { color: #f5f5f5; background: #111214; }
 .worlds-deck-management .worlds-deck-selected-leader { margin: 8px 0; color: #f4c430; font-size: .85rem; }

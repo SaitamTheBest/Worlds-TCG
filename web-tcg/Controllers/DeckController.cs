@@ -105,6 +105,8 @@ namespace web_tcg.Controllers
                     .Include(x => x.Card)
                         .ThenInclude(x => x.BaseCard)
                     .Include(x => x.Card).ThenInclude(x => x.CardSet)
+                    .Include(x => x.Card).ThenInclude(x => x.PoliticalParty)
+                    .Include(x => x.Card).ThenInclude(x => x.BaseCard).ThenInclude(x => x!.PoliticalParty)
                     .ToListAsync();
 
             var items =
@@ -127,6 +129,8 @@ namespace web_tcg.Controllers
                         CardSetName = card.CardSet.Name,
                         CardSetCode = card.CardSet.Code,
                         CardNumber = $"{card.CardSet.Code}-{card.CollectionNumber}" + (card.VariantNumber.HasValue ? $"-{card.VariantNumber}" : ""),
+                        PoliticalPartyName = (card.PoliticalParty ?? gameplayCard.PoliticalParty)?.Name,
+                        PoliticalOrientation = (card.PoliticalParty ?? gameplayCard.PoliticalParty)?.Orientation,
                         GameplayCardId = gameplayCardId
                     };
                 })
