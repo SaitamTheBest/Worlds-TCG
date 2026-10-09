@@ -110,6 +110,7 @@
         SourcePoliticalOrientation = 56,
         TargetPoliticalOrientation = 57,
         LeaderPoliticalOrientation = 58,
+        EnemyLeaderPoliticalOrientation = 59,
         MatchingFriendlyCharactersAtLeast = 60,
         MatchingEnemyCharactersAtLeast = 61,
         MatchingCharactersAtLeast = 62,

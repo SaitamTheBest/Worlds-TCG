@@ -83,5 +83,50 @@ public static class OrientationRuleChecks
             && !CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientation du Leader : création et modification conservent la condition");
         input.Conditions[0].OrientationIds.Clear();
         check(CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientation du Leader : sélection d'une orientation obligatoire");
+        var enemyCondition = new GameConditionDefinition { Type = GameConditionType.EnemyLeaderPoliticalOrientation,
+            Parameters = new() { ["orientations"] = "3" } };
+        check(evaluator.AreMet(state,state.PlayerOne,first,null,new[]{enemyCondition})
+            && !evaluator.AreMet(state,state.PlayerTwo,enemy,null,new[]{enemyCondition}),
+            "orientation du Leader adverse : le camp adverse est évalué indépendamment de la cible");
+        enemyCondition.Parameters["orientations"] = "5";
+        enemyCondition.Negate = true;
+        check(evaluator.AreMet(state,state.PlayerOne,first,null,new[]{enemyCondition}),
+            "orientation du Leader adverse : condition non extrême droite acceptée");
+        state.PlayerTwo.Leader.PoliticalPartyOrientation = PoliticalOrientation.FarRight;
+        check(!evaluator.AreMet(state,state.PlayerOne,first,null,new[]{enemyCondition})
+            && evaluator.Failure(state,state.PlayerOne,first,null,new[]{enemyCondition})?.Contains("Leader adverse") == true,
+            "orientation du Leader adverse : inversion exclut extrême droite avec explication");
+        input.Conditions[0].Type = GameConditionType.EnemyLeaderPoliticalOrientation;
+        input.Conditions[0].OrientationIds = new() { 5 };
+        input.Conditions[0].Negate = true;
+        CardAbilityEditor.Write(stored,input); restored = CardAbilityEditor.Read(stored);
+        check(restored.Conditions[0].Type == GameConditionType.EnemyLeaderPoliticalOrientation && restored.Conditions[0].Negate
+            && restored.Conditions[0].OrientationIds.SequenceEqual(new[]{5}) && !CardAbilityEditor.Validate(CardType.Character,input).Any(),
+            "orientation du Leader adverse : édition conserve orientation et négation");
+        input.Conditions[0].OrientationIds.Clear();
+        check(CardAbilityEditor.Validate(CardType.Character,input).Any(),"orientation du Leader adverse : sélection obligatoire");
+
+        var attacker = Unit("a",1,PoliticalOrientation.Left); attacker.Zone = GameCardZone.Hand;
+        attacker.Abilities.Add(new() { Id=90,Type=AbilityType.Effect,Conditions=new() { enemyCondition },Effects=new() {
+            new() { Type=GameEffectType.DamageBonus,Trigger=GameEffectTrigger.Passive,Target=GameTargetType.Self,Value=40 } } });
+        attacker.Abilities.Add(new() { Id=91,Type=AbilityType.Skill,Effects=new() {
+            new() { Type=GameEffectType.Damage,Trigger=GameEffectTrigger.OnSkill,Target=GameTargetType.EnemyCharacter,Value=10 } } });
+        var victim = Unit("b",2,PoliticalOrientation.Right);
+        var bonusState = new GameState { Status=GameMatchStatus.InProgress,ActivePlayerId="a",TurnNumber=5,
+            PlayerOne=new() { UserId="a",TurnsPlayed=3,Money=100,Leader=Unit("a",1,PoliticalOrientation.FarRight,CardType.Leader),Hand=new() { attacker } },
+            PlayerTwo=new() { UserId="b",TurnsPlayed=3,Leader=Unit("b",3,PoliticalOrientation.Centre,CardType.Leader),Characters=new() { victim,null,null,null } } };
+        var game = new GameEngine(effectEngine,evaluator);
+        await game.PlayCardAsync(bonusState,"a",attacker.InstanceId,0);
+        attacker.IsExhausted=false;
+        await game.UseAbilityAsync(bonusState,"a",attacker.InstanceId,91,victim.InstanceId);
+        check(attacker.DamageBonus==40 && victim.CurrentHealth==50,
+            "orientation du Leader adverse : bonus passif de 40 ajouté aux dégâts de la compétence");
+        bonusState.PlayerTwo.Leader.PoliticalPartyOrientation=PoliticalOrientation.FarRight;
+        await game.EndTurnAsync(bonusState,"a");
+        await game.EndTurnAsync(bonusState,"b");
+        victim.CurrentHealth=100;
+        await game.UseAbilityAsync(bonusState,"a",attacker.InstanceId,91,victim.InstanceId);
+        check(attacker.DamageBonus==0 && victim.CurrentHealth==90,
+            "orientation du Leader adverse : bonus retiré quand l'orientation devient extrême droite");
     }
 }
