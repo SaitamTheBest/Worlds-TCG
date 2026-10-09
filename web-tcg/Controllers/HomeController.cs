@@ -33,23 +33,23 @@ namespace web_tcg.Controllers
                 User.FindFirstValue(
                     ClaimTypes.NameIdentifier);
 
+            var now = DateTime.UtcNow;
+            var releasedSets = _context.CardSets.AsNoTracking()
+                .Where(x => x.ReleaseDate <= now);
+            var catalogCards = _context.Cards.AsNoTracking()
+                .Where(x => x.IsActive && x.CardSet.ReleaseDate <= now);
+
             var availableCards =
-                await _context.Cards
-                    .AsNoTracking()
-                    .CountAsync(x => x.IsActive);
+                await catalogCards.CountAsync();
 
             var baseCards =
-                await _context.Cards
-                    .AsNoTracking()
+                await catalogCards
                     .CountAsync(x =>
-                        x.IsActive &&
                         x.BaseCardId == null);
 
             var variants =
-                await _context.Cards
-                    .AsNoTracking()
+                await catalogCards
                     .CountAsync(x =>
-                        x.IsActive &&
                         x.BaseCardId != null);
 
             var registeredPlayers =
@@ -58,9 +58,7 @@ namespace web_tcg.Controllers
                     .CountAsync();
 
             var cardSets =
-                await _context.CardSets
-                    .AsNoTracking()
-                    .CountAsync();
+                await releasedSets.CountAsync();
 
             var boosterOpenings =
                 await _context.BoosterOpenings
@@ -68,10 +66,8 @@ namespace web_tcg.Controllers
                     .CountAsync();
 
             var typeCounts =
-                await _context.Cards
-                    .AsNoTracking()
+                await catalogCards
                     .Where(x =>
-                        x.IsActive &&
                         x.BaseCardId == null)
                     .GroupBy(x => x.Type)
                     .Select(x => new
@@ -90,19 +86,15 @@ namespace web_tcg.Controllers
 
             if (!string.IsNullOrWhiteSpace(userId))
             {
+                // Use the same catalogue for the collection numerator and denominator.
+                var catalogCollection = _context.UserCardCollections.AsNoTracking()
+                    .Where(x => x.UserId == userId && x.Quantity > 0
+                        && catalogCards.Select(card => card.Id).Contains(x.CardId));
                 userUniqueCards =
-                    await _context.UserCardCollections
-                        .AsNoTracking()
-                        .CountAsync(x =>
-                            x.UserId == userId &&
-                            x.Quantity > 0);
+                    await catalogCollection.CountAsync();
 
                 userTotalCards =
-                    await _context.UserCardCollections
-                        .AsNoTracking()
-                        .Where(x =>
-                            x.UserId == userId &&
-                            x.Quantity > 0)
+                    await catalogCollection
                         .SumAsync(
                             x => (int?)x.Quantity)
                     ?? 0;
