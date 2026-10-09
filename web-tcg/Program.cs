@@ -144,6 +144,7 @@ builder.Services.AddScoped<IGameEffectHandler, HealthBonusEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, DamageBonusEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, ReviveEffectHandler>();
 builder.Services.AddScoped<IGameEffectHandler, DestroyLocationEffectHandler>();
+builder.Services.AddScoped<IGameEffectHandler, KnockOutEffectHandler>();
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();

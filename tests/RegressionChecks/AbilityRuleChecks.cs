@@ -28,6 +28,13 @@ public static class AbilityRuleChecks
         CardAbilityEditor.Write(freeEffect,new CardAbilityInputModel { Type = AbilityType.Effect, UsageCost = 30 });
         check(freeEffect.UsageCost == 0,"éditeur : un effet ne conserve jamais un coût même si une valeur est envoyée");
         check(!CardAbilityEditor.Validate(CardType.Character,input).Any(), "éditeur : talent de soin valide");
+        var koInput = new CardAbilityInputModel { Type = AbilityType.Trait, Name = "KO", Description = "Envoie la cible au cimetière",
+            Effects = new() { new() { Type = GameEffectType.KnockOut, Trigger = GameEffectTrigger.OnTalent, Target = GameTargetType.EnemyCharacter } } };
+        check(!CardAbilityEditor.Validate(CardType.Character,koInput).Any(),"éditeur : action KO sur personnage adverse valide");
+        koInput.Effects[0].Target = GameTargetType.FriendlyLocation;
+        check(!CardAbilityEditor.Validate(CardType.Character,koInput).Any(),"éditeur : action KO sur lieu allié valide");
+        koInput.Effects[0].Target = GameTargetType.EnemyLeader;
+        check(CardAbilityEditor.Validate(CardType.Character,koInput).Any(),"éditeur : KO refuse de supprimer un Leader");
         var forbidden = new CardAbilityInputModel { Type = AbilityType.Effect, Effects = new() { new() { Type = GameEffectType.Block, Trigger = GameEffectTrigger.Passive, Target = GameTargetType.Self } } };
         check(CardAbilityEditor.Validate(CardType.Leader,forbidden).Any() && CardAbilityEditor.Validate(CardType.Location,forbidden).Any(),
             "éditeur : refus du blocage du Leader et des états donnés par un lieu");

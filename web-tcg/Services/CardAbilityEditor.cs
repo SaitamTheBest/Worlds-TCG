@@ -100,8 +100,10 @@ public static class CardAbilityEditor
                 yield return "Le vol d'énergie cible le joueur adverse.";
             if (e.Type != GameEffectType.DamageMultiplier && e.Value != decimal.Truncate(e.Value))
                 yield return "Les dégâts, PV, ressources et nombres d'attaques doivent être des nombres entiers.";
-            if (!playerEffect && e.Type != GameEffectType.DestroyLocation && e.Target is not (GameTargetType.Self or GameTargetType.FriendlyCharacter or GameTargetType.FriendlyLeader or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyLeader or GameTargetType.EnemyCharacterOrLeader or GameTargetType.AllFriendlyCharacters or GameTargetType.AllEnemyCharacters or GameTargetType.AllCharacters))
+            if (!playerEffect && e.Type is not (GameEffectType.DestroyLocation or GameEffectType.KnockOut) && e.Target is not (GameTargetType.Self or GameTargetType.FriendlyCharacter or GameTargetType.FriendlyLeader or GameTargetType.FriendlyCharacterOrLeader or GameTargetType.EnemyCharacter or GameTargetType.EnemyLeader or GameTargetType.EnemyCharacterOrLeader or GameTargetType.AllFriendlyCharacters or GameTargetType.AllEnemyCharacters or GameTargetType.AllCharacters))
                 yield return "Cette action doit cibler une carte ou un groupe de personnages.";
+            if (e.Type == GameEffectType.KnockOut && (e.Target is not (GameTargetType.Self or GameTargetType.FriendlyCharacter or GameTargetType.EnemyCharacter or GameTargetType.FriendlyLocation or GameTargetType.EnemyLocation or GameTargetType.AllFriendlyCharacters or GameTargetType.AllEnemyCharacters or GameTargetType.AllCharacters) || e.Target == GameTargetType.Self && cardType is not (CardType.Character or CardType.Location)))
+                yield return "KO doit cibler un personnage ou un lieu allié ou adverse sur le terrain.";
             if (e.Type == GameEffectType.DestroyLocation && e.Target != GameTargetType.EnemyLocation)
                 yield return "La destruction doit cibler le lieu adverse.";
             if (e.Type == GameEffectType.Revive && (cardType != CardType.Character || e.Target != GameTargetType.Self || e.Trigger != GameEffectTrigger.OnDeath))

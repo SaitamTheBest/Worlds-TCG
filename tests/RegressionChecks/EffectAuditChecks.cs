@@ -55,8 +55,45 @@ public static class EffectAuditChecks
                 GameEffectType.Revive => source.CurrentHealth == 50 && source.HasRevived,
                 GameEffectType.DiscardCards => state.PlayerTwo.Hand.Count == 0 && state.PlayerTwo.Graveyard.Count == 1,
                 GameEffectType.DestroyLocation => state.PlayerTwo.Location == null && state.PlayerTwo.Graveyard.Count == 1,
+                GameEffectType.KnockOut => target.CurrentHealth == 0 && target.IsKnockedOut,
                 _ => false };
             check(applied, $"audit : {type} produit son résultat sur sa cible");
+        }
+        foreach (var allied in new[] { true, false })
+        {
+            var koState = State(); var actor = koState.PlayerOne.Leader;
+            var victimOwner = allied ? koState.PlayerOne : koState.PlayerTwo;
+            var victim = victimOwner.Characters[0]!;
+            victim.RegionId = 1;
+            victim.HasShield = true;
+            victim.Abilities.Add(new() { Type = AbilityType.Effect, Effects = new() { new() {
+                Type = GameEffectType.Revive, Trigger = GameEffectTrigger.OnDeath, Target = GameTargetType.Self } } });
+            actor.Abilities.Add(new() { Id = 99, Type = AbilityType.Trait, Effects = new() { new() {
+                Type = GameEffectType.KnockOut, Trigger = GameEffectTrigger.OnTalent,
+                Target = allied ? GameTargetType.FriendlyCharacter : GameTargetType.EnemyCharacter } } });
+            actor.Abilities[0].Conditions.Add(new() { Type = GameConditionType.TargetRegion,
+                Parameters = new() { ["regions"] = "2" } });
+            try { await engine.UseAbilityAsync(koState,"a",actor.InstanceId,99,victim.InstanceId); check(false,"KO : condition de région refusée"); }
+            catch (GameRuleException) { check(victim.CurrentHealth == 40 && !victim.IsKnockedOut,"KO : condition non remplie conserve la cible sur le terrain"); }
+            actor.Abilities[0].Conditions.Clear();
+            if (!allied)
+            {
+                victim.IsStealthed = true;
+                try { await engine.UseAbilityAsync(koState,"a",actor.InstanceId,99,victim.InstanceId); check(false,"KO : camouflage respecté"); }
+                catch (GameRuleException) { check(!victim.IsKnockedOut,"KO : cible adverse camouflée refusée"); }
+                victim.IsStealthed = false;
+            }
+            await engine.UseAbilityAsync(koState,"a",actor.InstanceId,99,victim.InstanceId);
+            check(victimOwner.Characters[0] == null && victimOwner.Graveyard.Contains(victim)
+                && victim.Zone == GameCardZone.Graveyard && victim.BoardSlot == null,
+                $"KO : personnage {(allied ? "allié" : "adverse")} au cimetière malgré bouclier et second souffle");
+            var location = new GameCardState { Type = CardType.Location, OwnerUserId = victimOwner.UserId,
+                ControllerUserId = victimOwner.UserId, Zone = GameCardZone.Location };
+            victimOwner.Location = location;
+            actor.Abilities[0].Effects[0].Target = allied ? GameTargetType.FriendlyLocation : GameTargetType.EnemyLocation;
+            await engine.UseAbilityAsync(koState,"a",actor.InstanceId,99,null);
+            check(victimOwner.Location == null && victimOwner.Graveyard.Contains(location),
+                $"KO : lieu {(allied ? "allié" : "adverse")} retiré du plateau");
         }
         var healState = State(); var healer = healState.PlayerOne.Leader;
         healer.Abilities.Add(new() { Id = 1, Type = AbilityType.Trait, CooldownTurns = 2, Effects = new() {

@@ -21,7 +21,7 @@ namespace web_tcg.Game.Effects
             if (!target.MaxHealth.HasValue)
                 return Task.CompletedTask;
 
-            if (target.Type != CardType.Character || target.HasRevived)
+            if (target.Type != CardType.Character || target.HasRevived || target.IsKnockedOut)
                 return Task.CompletedTask;
 
             var player =

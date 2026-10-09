@@ -49,7 +49,8 @@
 
         DiscardCards = 50,
 
-        DestroyLocation = 60
+        DestroyLocation = 60,
+        KnockOut = 61
     }
 
     public enum GameEffectTrigger

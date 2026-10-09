@@ -642,8 +642,8 @@ namespace web_tcg.Game.Engine
                     var card =
                         player.Characters[slot];
 
-                    if (card?.CurrentHealth is null ||
-                        card.CurrentHealth > 0)
+                    if (card == null || (!card.IsKnockedOut && (card.CurrentHealth is null ||
+                        card.CurrentHealth > 0)))
                     {
                         continue;
                     }
@@ -657,8 +657,10 @@ namespace web_tcg.Game.Engine
                         logs,
                         cancellationToken);
 
-                    if (card.CurrentHealth > 0)
+                    if (card.CurrentHealth > 0 && !card.IsKnockedOut)
                         continue;
+
+                    if (card.IsKnockedOut) card.CurrentHealth = 0;
 
                     player.Characters[slot] =
                         null;

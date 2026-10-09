@@ -152,6 +152,7 @@ namespace web_tcg.Game.Runtime
         public decimal DamageMultiplier { get; set; } = 1m;
         public int DamageBonus { get; set; }
         public bool HasRevived { get; set; }
+        public bool IsKnockedOut { get; set; }
 
         public Dictionary<int, int> AbilityCooldowns { get; set; } = new();
 
