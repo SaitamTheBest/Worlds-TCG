@@ -3,7 +3,8 @@
     const page=document.querySelector('.friends-page'); if(!page) return;
     const stylesheet=[...document.querySelectorAll('link[rel="stylesheet"]')].find(link=>new URL(link.href,document.baseURI).pathname.endsWith('/css/card.css'));
     if(stylesheet&&stylesheet.parentElement!==document.head) document.head.appendChild(stylesheet);
-    window.worldsCardComponents?.hydrate(page);
+    if(page.hasAttribute('data-trade-builder')) window.worldsTradePagination?.init(page);
+    else window.worldsCardComponents?.hydrate(page);
     const thread=page.querySelector('[data-friends-thread]');
     let refreshRequest;
     async function refresh() {
