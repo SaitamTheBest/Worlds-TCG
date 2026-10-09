@@ -178,6 +178,10 @@
                 <i data-lucide="gavel"></i>
                 <span class="sidebar-label">Marché</span>
             </a>
+            <a href="@Url.Action("Index", "Friends")"
+               class="sidebar-nav-item @(ViewContext.RouteData.Values["Controller"]?.ToString() == "Friends" ? "active" : "")" title="Amis">
+                <i data-lucide="users-round"></i><span class="sidebar-label">Amis</span>
+            </a>
 
             @if (User.IsInRole("Admin"))
             {

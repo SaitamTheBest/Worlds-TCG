@@ -1,0 +1,34 @@
+@using web_tcg.Data.Entities
+@using web_tcg.Models.Balance
+@model web_tcg.Models.Friends.FriendTradeViewModel
+@{ViewData["Title"]="Proposition d'échange";var trade=Model.Trade;var status=trade.Status switch {FriendTradeStatus.Pending=>"En attente",FriendTradeStatus.Completed=>"Confirmé",FriendTradeStatus.Declined=>"Refusé",_=>"Annulé"};}
+<link rel="stylesheet" href="~/css/friends.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
+<main class="friends-page" data-friends-page>
+    <a class="friends-back" asp-action="Conversation" asp-route-id="@trade.FriendshipId">← Conversation</a>
+    <header class="friends-header"><h1>Échange : @Model.ProposerName ↔ @Model.RecipientName</h1><strong>@status</strong></header>
+    @await Html.PartialAsync("_Feedback")
+    <p class="friends-refresh" data-friends-refresh hidden>Le statut de l'échange a changé. <button onclick="location.reload()" type="button">Actualiser</button></p>
+    <div class="friends-trade-columns">
+    @foreach(var offered in new[]{true,false}) {
+        <section class="friends-panel"><h2>@(offered?Model.ProposerName:Model.RecipientName) donne</h2>
+            @await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml",new MarketCurrencyViewModel {Amount=offered?trade.OfferedMoney:trade.RequestedMoney})
+            <div class="friends-card-grid">
+            @foreach(var item in Model.Cards.Where(x=>x.IsOffered==offered)) {
+                <article class="friends-card-choice"><div class="friends-card-slot"><div class="friends-card-mount" data-card-component="@item.Card.Id"></div></div><strong>@item.Card.Name</strong><small>@item.Card.CardSetCode-@item.Card.CollectionNumber</small><strong>×@item.Quantity</strong></article>
+            }
+            </div>
+        </section>
+    }
+    </div>
+    @if(trade.Status==FriendTradeStatus.Pending) {
+        <p class="friends-muted">Vérifiez les deux côtés avant d'accepter. Les cartes et la monnaie seront transférées ensemble ; aucun transfert n'est effectué si l'un des biens n'est plus disponible.</p>
+        <form method="post" asp-action="Resolve" asp-route-id="@trade.Id" class="friends-actions">
+            @if(trade.RecipientId==Model.UserId) {<button class="friends-button" name="action" value="accept">Confirmer et accepter l'échange</button><button class="friends-button secondary" name="action" value="decline">Refuser</button>}
+            else {<button class="friends-button secondary" name="action" value="cancel">Annuler ma proposition</button>}
+        </form>
+    }
+    else {<p class="friends-muted">Terminé le @trade.ClosedAt?.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>}
+    @foreach(var card in Model.Cards.Select(x=>x.Card).DistinctBy(x=>x.Id)) {<template id="card-template-@card.Id">@await Component.InvokeAsync("Card",new {model=card})</template>}
+</main>
+@section Scripts {<script src="~/js/card-components.js" asp-append-version="true"></script><script src="~/js/friends.js" asp-append-version="true"></script>}

@@ -1,0 +1,14 @@
+@model web_tcg.Models.Friends.FriendConversationViewModel
+@{ViewData["Title"]="Messages · "+Model.Friend.UserName;}
+<link rel="stylesheet" href="~/css/friends.css" asp-append-version="true" />
+<main class="friends-page" data-friends-page data-conversation-url="@Url.Action("Messages",new {id=Model.Friendship.Id})">
+    <a class="friends-back" asp-action="Index">← Mes amis</a>
+    <header class="friends-header"><h1>@Model.Friend.UserName</h1><a asp-action="CreateTrade" asp-route-id="@Model.Friendship.Id" class="friends-button">Proposer un échange</a></header>
+    @await Html.PartialAsync("_Feedback")
+    <div data-friends-thread>@await Html.PartialAsync("_Messages",Model)</div>
+    <form method="post" asp-action="Message" asp-route-id="@Model.Friendship.Id" class="friends-panel friends-message-form" data-friend-message>
+        <label for="friend-message">Votre message</label><textarea id="friend-message" name="text" maxlength="2000" rows="3" required placeholder="Écrivez un message…"></textarea>
+        <p class="friends-feedback error" data-message-error role="alert" hidden></p><button class="friends-button" type="submit">Envoyer</button>
+    </form>
+</main>
+@section Scripts {<script src="~/js/friends.js" asp-append-version="true"></script>}

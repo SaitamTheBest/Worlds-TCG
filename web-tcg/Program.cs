@@ -94,6 +94,7 @@ builder.Services.AddRateLimiter(o =>
 });
 builder.Services.AddSignalR();
 builder.Services.AddScoped<MarketService>();
+builder.Services.AddScoped<FriendsService>();
 builder.Services.AddHostedService<MarketSettlementWorker>();
 
 builder.Services.AddScoped<BoosterRarityGenerator>();
@@ -297,6 +298,7 @@ app.MapHub<web_tcg.Hubs.BalanceHub>("/hubs/balance");
 app.MapHub<NotificationHub>("/hubs/notifications");
 app.MapHub<CardBalanceHub>("/hubs/card-balance");
 app.MapHub<MarketHub>("/hubs/market");
+app.MapHub<web_tcg.Hubs.FriendsHub>("/hubs/friends");
 app.MapHub<GameHub>("/hubs/game");
 app.MapHub<LobbyHub>("/hubs/lobby");
 

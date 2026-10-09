@@ -1,0 +1,18 @@
+@using web_tcg.Data.Entities
+@model web_tcg.Models.Friends.FriendConversationViewModel
+<section class="friends-panel"><h2>Messages</h2><p class="friends-muted">Les 100 derniers messages de votre conversation.</p>
+    <div class="friends-messages" data-message-list>
+        @if(Model.Messages.Count==0) {<p>Commencez la conversation.</p>}
+        @foreach(var message in Model.Messages) {
+            <article class="friends-message @(message.SenderId==Model.UserId?"mine":"")"><strong>@(message.SenderId==Model.UserId?"Vous":Model.Friend.UserName)</strong>
+                <p>@message.Text</p><time datetime="@message.CreatedAt.ToString("O")">@message.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</time></article>
+        }
+    </div>
+</section>
+<section class="friends-panel"><h2>Échanges avec @Model.Friend.UserName</h2>
+    @if(Model.Trades.Count==0) {<p>Aucune proposition pour le moment.</p>}
+    @foreach(var trade in Model.Trades) {
+        var status=trade.Status switch {FriendTradeStatus.Pending=>"En attente",FriendTradeStatus.Completed=>"Confirmé",FriendTradeStatus.Declined=>"Refusé",_=>"Annulé"};
+        <a class="friends-trade-row" asp-action="Trade" asp-route-id="@trade.Id"><span>@(trade.ProposerId==Model.UserId?"Votre proposition":"Proposition reçue") · @trade.CreatedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</span><strong>@status →</strong></a>
+    }
+</section>

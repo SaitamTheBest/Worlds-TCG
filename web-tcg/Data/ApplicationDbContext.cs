@@ -12,6 +12,10 @@ namespace web_tcg.Data
         {
         }
         public DbSet<CardSet> CardSets { get; set; }
+        public DbSet<Friendship> Friendships { get; set; }
+        public DbSet<FriendMessage> FriendMessages { get; set; }
+        public DbSet<FriendTrade> FriendTrades { get; set; }
+        public DbSet<FriendTradeCard> FriendTradeCards { get; set; }
         public DbSet<MarketAuction> MarketAuctions { get; set; }
         public DbSet<MarketBid> MarketBids { get; set; }
         public DbSet<Card> Cards { get; set; }
@@ -45,6 +49,28 @@ namespace web_tcg.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<Friendship>(e => {
+                e.HasOne(x=>x.FirstUser).WithMany().HasForeignKey(x=>x.FirstUserId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne(x=>x.SecondUser).WithMany().HasForeignKey(x=>x.SecondUserId).OnDelete(DeleteBehavior.Restrict);
+                e.HasIndex(x=>new {x.FirstUserId,x.SecondUserId}).IsUnique();
+                e.ToTable(t=>t.HasCheckConstraint("CK_Friendship_Pair", "\"FirstUserId\" <> \"SecondUserId\" AND (\"RequesterId\" = \"FirstUserId\" OR \"RequesterId\" = \"SecondUserId\")"));
+            });
+            modelBuilder.Entity<FriendMessage>(e => {
+                e.HasOne(x=>x.Friendship).WithMany().HasForeignKey(x=>x.FriendshipId).OnDelete(DeleteBehavior.Restrict);
+                e.HasIndex(x=>new {x.FriendshipId,x.CreatedAt,x.Id});
+            });
+            modelBuilder.Entity<FriendTrade>(e => {
+                e.HasOne(x=>x.Friendship).WithMany().HasForeignKey(x=>x.FriendshipId).OnDelete(DeleteBehavior.Restrict);
+                e.Property(x=>x.OfferedMoney).HasPrecision(18,2); e.Property(x=>x.RequestedMoney).HasPrecision(18,2);
+                e.HasIndex(x=>new {x.FriendshipId,x.CreatedAt});
+                e.ToTable(t=>t.HasCheckConstraint("CK_FriendTrade_Money", "\"OfferedMoney\" >= 0 AND \"RequestedMoney\" >= 0"));
+            });
+            modelBuilder.Entity<FriendTradeCard>(e => {
+                e.HasOne(x=>x.Trade).WithMany(x=>x.Cards).HasForeignKey(x=>x.TradeId).OnDelete(DeleteBehavior.Cascade);
+                e.HasOne(x=>x.Card).WithMany().HasForeignKey(x=>x.CardId).OnDelete(DeleteBehavior.Restrict);
+                e.HasIndex(x=>new {x.TradeId,x.CardId,x.IsOffered}).IsUnique();
+                e.ToTable(t=>t.HasCheckConstraint("CK_FriendTradeCard_Quantity", "\"Quantity\" > 0"));
+            });
             modelBuilder.Entity<PoliticalParty>().HasOne(p => p.Country).WithMany()
                 .HasForeignKey(p => p.CountryId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<PoliticalParty>().HasIndex(p => new { p.CountryId, p.Name }).IsUnique();

@@ -1,0 +1,2 @@
+@if(TempData["FriendsSuccess"] is string success) {<p class="friends-feedback" role="status">@success</p>}
+@if(TempData["FriendsError"] is string error) {<p class="friends-feedback error" role="alert">@error</p>}

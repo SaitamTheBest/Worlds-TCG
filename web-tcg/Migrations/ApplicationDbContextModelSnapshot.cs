@@ -647,6 +647,150 @@ namespace web_tcg.Migrations
                     b.ToTable("DeckCard");
                 });
 
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendMessage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FriendshipId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SenderId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendshipId", "CreatedAt", "Id");
+
+                    b.ToTable("FriendMessages");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendTrade", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FriendshipId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("OfferedMoney")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ProposerId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RecipientId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<decimal>("RequestedMoney")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendshipId", "CreatedAt");
+
+                    b.ToTable("FriendTrades", t =>
+                        {
+                            t.HasCheckConstraint("CK_FriendTrade_Money", "\"OfferedMoney\" >= 0 AND \"RequestedMoney\" >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendTradeCard", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("CardId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsOffered")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TradeId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CardId");
+
+                    b.HasIndex("TradeId", "CardId", "IsOffered")
+                        .IsUnique();
+
+                    b.ToTable("FriendTradeCards", t =>
+                        {
+                            t.HasCheckConstraint("CK_FriendTradeCard_Quantity", "\"Quantity\" > 0");
+                        });
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.Friendship", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("FirstUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequesterId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SecondUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SecondUserId");
+
+                    b.HasIndex("FirstUserId", "SecondUserId")
+                        .IsUnique();
+
+                    b.ToTable("Friendships", t =>
+                        {
+                            t.HasCheckConstraint("CK_Friendship_Pair", "\"FirstUserId\" <> \"SecondUserId\" AND (\"RequesterId\" = \"FirstUserId\" OR \"RequesterId\" = \"SecondUserId\")");
+                        });
+                });
+
             modelBuilder.Entity("web_tcg.Data.Entities.GameChatMessage", b =>
                 {
                     b.Property<long>("Id")
@@ -1314,6 +1458,66 @@ namespace web_tcg.Migrations
                     b.Navigation("Deck");
                 });
 
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendMessage", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.Friendship", "Friendship")
+                        .WithMany()
+                        .HasForeignKey("FriendshipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Friendship");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendTrade", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.Friendship", "Friendship")
+                        .WithMany()
+                        .HasForeignKey("FriendshipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Friendship");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendTradeCard", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.Card", "Card")
+                        .WithMany()
+                        .HasForeignKey("CardId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("web_tcg.Data.Entities.FriendTrade", "Trade")
+                        .WithMany("Cards")
+                        .HasForeignKey("TradeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Card");
+
+                    b.Navigation("Trade");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.Friendship", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", "FirstUser")
+                        .WithMany()
+                        .HasForeignKey("FirstUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", "SecondUser")
+                        .WithMany()
+                        .HasForeignKey("SecondUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FirstUser");
+
+                    b.Navigation("SecondUser");
+                });
+
             modelBuilder.Entity("web_tcg.Data.Entities.GameChatMessage", b =>
                 {
                     b.HasOne("web_tcg.Data.Entities.GameMatch", "GameMatch")
@@ -1509,6 +1713,11 @@ namespace web_tcg.Migrations
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.Deck", b =>
+                {
+                    b.Navigation("Cards");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendTrade", b =>
                 {
                     b.Navigation("Cards");
                 });

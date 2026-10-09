@@ -6,6 +6,7 @@ using web_tcg.Data;
 using web_tcg.Data.Entities;
 
 if (args.Contains("--parties")) { await PoliticalPartyChecks.RunAsync(); return; }
+if (args.Contains("--friends")) { await FriendsChecks.RunAsync(); return; }
 
 if (args.Contains("--market"))
 {

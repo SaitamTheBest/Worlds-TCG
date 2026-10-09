@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+const base=process.env.FRIENDS_TEST_URL||'http://127.0.0.1:18097';
+const container=process.env.FRIENDS_TEST_CONTAINER||'tcg-market-checks-friends';
+assert.match(container,/^tcg-market-checks(?:-[a-z0-9-]+)?$/);
+const sql=text=>execFileSync('docker',['exec','-i',container,'psql','-U','checks','-d','market_checks','-v','ON_ERROR_STOP=1','-tA'],{input:text,encoding:'utf8'}).trim();
+function client(){const cookies=new Map();return async(path,options={})=>{
+    const response=await fetch(base+path,{...options,redirect:'manual',headers:{Cookie:[...cookies].map(([k,v])=>`${k}=${v}`).join('; '),...options.headers}});
+    for(const cookie of response.headers.getSetCookie()){const entry=cookie.split(';')[0],i=entry.indexOf('=');cookies.set(entry.slice(0,i),entry.slice(i+1));}return response;
+};}
+const token=html=>html.match(/name="__RequestVerificationToken"[^>]*value="([^"]+)"/)?.[1];
+const name='friends'+Date.now();const a=client(),b=client(),third=client();
+async function signup(request,user){const html=await(await request('/Auth')).text();const res=await request('/Auth/Register',{method:'POST',headers:{'Content-Type':'application/json',RequestVerificationToken:token(html)},body:JSON.stringify({Username:user,Email:user+'@example.test',Password:'test123',ConfirmPassword:'test123'})});assert.equal(res.status,200);assert.equal((await res.json()).success,true);}
+assert.equal((await client()('/Friends')).status,302);
+await signup(a,name);await signup(b,name+'b');await signup(third,name+'c');
+const aid=sql(`SELECT "Id" FROM "AspNetUsers" WHERE "UserName"='${name}'`);const bid=sql(`SELECT "Id" FROM "AspNetUsers" WHERE "UserName"='${name}b'`);
+const card=Number(sql('SELECT MIN("Id") FROM "Cards" WHERE "BaseCardId" IS NULL'));const variant=Number(sql('SELECT MIN("Id") FROM "Cards" WHERE "BaseCardId" IS NOT NULL'));
+sql(`UPDATE "AspNetUsers" SET "CardBalance"=100 WHERE "Id" IN ('${aid}','${bid}'); INSERT INTO "UserCardCollections" ("UserId","CardId","Quantity","AcquiredDate","Condition","IsForSale") VALUES ('${aid}',${card},2,NOW(),'Mint',FALSE),('${bid}',${variant},1,NOW(),'Mint',FALSE);`);
+const search=await(await a('/Friends?search='+name+'b')).text();assert.match(search,new RegExp(name+'b'));assert.match(search,/sidebar-label">Amis/);
+assert.equal((await a('/Friends/Request',{method:'POST',body:new URLSearchParams({targetId:bid})})).status,400);
+assert.equal((await a('/Friends/Request',{method:'POST',body:new URLSearchParams({targetId:bid,__RequestVerificationToken:token(search)})})).status,302);
+const relation=sql(`SELECT "Id" FROM "Friendships" WHERE "RequesterId"='${aid}'`);
+assert.equal((await third('/Friends/Conversation/'+relation)).status,404);
+const incoming=await(await b('/Friends')).text();assert.match(incoming,/Invitations reçues/);
+assert.equal((await b('/Friends/Invitation/'+relation,{method:'POST',body:new URLSearchParams({accept:'true',__RequestVerificationToken:token(incoming)})})).status,302);
+const conversation=await(await a('/Friends/Conversation/'+relation)).text();assert.match(conversation,/data-friend-message/);
+const message=await a('/Friends/Conversation/'+relation+'/Message',{method:'POST',body:new URLSearchParams({text:'Bonjour <script>danger</script>',__RequestVerificationToken:token(conversation)})});assert.equal(message.status,200);
+const messages=await(await b('/Friends/Conversation/'+relation+'/Messages')).text();assert.match(messages,/&lt;script&gt;/);assert.doesNotMatch(messages,/<script>danger/);
+assert.equal((await third('/Friends/Conversation/'+relation+'/Messages')).status,404);
+const create=await(await a('/Friends/Trade/Create/'+relation)).text();assert.match(create,/card-template-/);assert.match(create,/Input\.FriendshipId/);
+const fields={'Input.FriendshipId':relation,'Input.OfferedMoney':'10.50','Input.RequestedMoney':'2.25','Input.Cards[0].CardId':String(card),'Input.Cards[0].Quantity':'1','Input.Cards[0].IsOffered':'true','Input.Cards[1].CardId':String(variant),'Input.Cards[1].Quantity':'1','Input.Cards[1].IsOffered':'false',__RequestVerificationToken:token(create)};
+const proposed=await a('/Friends/Trade/Create',{method:'POST',body:new URLSearchParams(fields)});assert.equal(proposed.status,302);
+const location=proposed.headers.get('location');assert.match(location,/Friends\/Trade\/[0-9a-f-]+/);assert.equal((await third(location)).status,404);
+const detail=await(await b(location)).text();assert.match(detail,/Confirmer et accepter/);assert.match(detail,/10[,.]5/);assert.match(detail,/2[,.]25/);
+assert.equal((await b(location+'/Resolve',{method:'POST',body:new URLSearchParams({action:'accept',__RequestVerificationToken:token(detail)})})).status,302);
+const completed=await(await b(location)).text();assert.match(completed,/Confirm(?:é|&#xE9;)/);assert.doesNotMatch(completed,/Confirmer et accepter/);
+assert.equal(Number(sql(`SELECT "CardBalance" FROM "AspNetUsers" WHERE "Id"='${aid}'`)),91.75);assert.equal(Number(sql(`SELECT "CardBalance" FROM "AspNetUsers" WHERE "Id"='${bid}'`)),108.25);
+const notifications=await(await b('/api/notifications')).json();assert.ok(notifications.notifications.some(x=>x.title.startsWith('Message de')));assert.ok(notifications.notifications.some(x=>x.title==="Demande d'échange"));assert.ok(notifications.notifications.some(x=>x.title==='Échange confirmé'));
+assert.equal((await b('/hubs/friends/negotiate?negotiateVersion=1',{method:'POST'})).status,200);
+console.log('PASS: invitations, recherche, messagerie privée et texte échappé, proposition, confirmation, monnaie décimale, notifications et connexion SignalR sur les vraies routes HTTP.');

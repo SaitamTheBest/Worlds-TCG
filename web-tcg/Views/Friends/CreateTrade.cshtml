@@ -1,0 +1,39 @@
+@using web_tcg.Models.Balance
+@model web_tcg.Models.Friends.FriendTradeCreateViewModel
+@{ViewData["Title"]="Échanger avec "+Model.Friend.UserName;var index=0;}
+<link rel="stylesheet" href="~/css/friends.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
+<main class="friends-page">
+    <a class="friends-back" asp-action="Conversation" asp-route-id="@Model.Input.FriendshipId">← Conversation</a>
+    <header class="friends-header"><div><span class="friends-kicker">ÉCHANGE ENTRE AMIS</span><h1>Échanger avec @Model.Friend.UserName</h1></div>@await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml",new MarketCurrencyViewModel {Amount=Model.Balance})</header>
+    <div asp-validation-summary="All" class="friends-feedback error"></div>
+    <p class="friends-muted">Votre ami verra cette proposition et pourra l'accepter ou la refuser. Les cartes et la monnaie restent disponibles jusqu'à l'acceptation ; les deux collections et soldes sont vérifiés à ce moment-là.</p>
+    <form method="get" asp-action="CreateTrade" asp-route-id="@Model.Input.FriendshipId" class="friends-search"><input name="search" placeholder="Rechercher une carte par nom" aria-label="Rechercher une carte" /><button class="friends-button secondary">Rechercher</button></form>
+    <form method="post" asp-action="Propose">
+        <input type="hidden" asp-for="Input.FriendshipId" />
+        <div class="friends-trade-columns">
+        @foreach(var offered in new[]{true,false}) {
+            var cards=offered?Model.OfferedCards:Model.RequestedCards;
+            <section class="friends-panel"><h2>@(offered?"Vous donnez":"Vous recevez")</h2>
+                <label>Monnaie marché (¤)<input name="@(offered?"Input.OfferedMoney":"Input.RequestedMoney")" value="@((offered?Model.Input.OfferedMoney:Model.Input.RequestedMoney).ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" min="0" max="999999999" step="0.01" /></label>
+                @if(cards.Count==0) {<p>Aucune carte disponible pour cette recherche.</p>}
+                <div class="friends-card-grid">
+                @foreach(var owned in cards) {
+                    var key=index++; var qty=Model.Input.Cards?.FirstOrDefault(x=>x.CardId==owned.Card.Id&&x.IsOffered==offered)?.Quantity??0;
+                    <article class="friends-card-choice"><div class="friends-card-slot"><div class="friends-card-mount" data-card-component="@owned.Card.Id"></div></div><strong>@owned.Card.Name</strong><small>@owned.Card.CardSetCode-@owned.Card.CollectionNumber · @owned.Quantity disponible(s)</small>
+                        <input type="hidden" name="Input.Cards[@key].CardId" value="@owned.Card.Id" /><input type="hidden" name="Input.Cards[@key].IsOffered" value="@offered.ToString().ToLowerInvariant()" />
+                        <label>Quantité<input name="Input.Cards[@key].Quantity" type="number" value="@qty" min="0" max="@Math.Min(owned.Quantity,1000000)" aria-label="Quantité de @owned.Card.Name @(offered?"à donner":"à recevoir")" /></label>
+                    </article>
+                }
+                </div>
+            </section>
+        }
+        </div>
+        <p class="friends-muted">Seuls les exemplaires disponibles sont affichés. Les cartes déjà en vente restent réservées au marché. Donner votre dernier exemplaire peut rendre un deck incomplet.</p>
+        <button type="submit" class="friends-button">Envoyer la proposition</button>
+    </form>
+    @foreach(var card in Model.OfferedCards.Select(x=>x.Card).Concat(Model.RequestedCards.Select(x=>x.Card)).DistinctBy(x=>x.Id)) {
+        <template id="card-template-@card.Id">@await Component.InvokeAsync("Card",new {model=card})</template>
+    }
+</main>
+@section Scripts {<script src="~/js/card-components.js" asp-append-version="true"></script><script src="~/js/friends.js" asp-append-version="true"></script>}

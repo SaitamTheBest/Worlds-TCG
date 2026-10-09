@@ -1,0 +1,54 @@
+@using web_tcg.Data.Entities
+@model web_tcg.Models.Friends.FriendsIndexViewModel
+@{ ViewData["Title"]="Amis"; }
+<link rel="stylesheet" href="~/css/friends.css" asp-append-version="true" />
+<main class="friends-page" data-friends-page>
+    <header class="friends-header"><div><span class="friends-kicker">COMMUNAUTÉ</span><h1>Amis</h1><p>Retrouvez vos amis, discutez et échangez vos cartes.</p></div></header>
+    @await Html.PartialAsync("_Feedback")
+    <p class="friends-refresh" data-friends-refresh hidden>Votre liste d'amis a changé. <button type="button" onclick="location.reload()">Actualiser</button></p>
+    <section class="friends-panel"><h2>Rechercher des joueurs</h2>
+        <form method="get" class="friends-search"><input name="search" value="@Model.Search" placeholder="Pseudo du joueur" maxlength="100" aria-label="Rechercher un joueur" /><button class="friends-button">Rechercher</button></form>
+        @if(Model.Search.Length>0) {
+            @if(Model.Results.Count==0) {<p>Aucun joueur trouvé.</p>}
+            <div class="friends-list">
+            @foreach(var player in Model.Results) {
+                var relation=Model.Relations.FirstOrDefault(x=>x.FirstUserId==player.Id||x.SecondUserId==player.Id);
+                <article class="friends-person"><div class="friends-person-name">
+                    @if(player.AvatarUrl!=null) {<img src="@player.AvatarUrl" alt="" />}<strong>@player.UserName</strong></div>
+                    @if(relation==null) {<form method="post" asp-action="SendInvitation"><input type="hidden" name="targetId" value="@player.Id" /><button class="friends-button">Ajouter en ami</button></form>}
+                    else {<span>@(relation.Status==FriendshipStatus.Accepted?"Déjà amis":"Invitation en attente")</span>}
+                </article>
+            }
+            </div>
+        }
+    </section>
+    <section class="friends-panel"><h2>Invitations reçues</h2>
+        @{var incoming=Model.Relations.Where(x=>x.Status==FriendshipStatus.Pending&&x.RequesterId!=Model.UserId).ToList();}
+        @if(incoming.Count==0) {<p>Aucune invitation en attente.</p>}
+        @foreach(var relation in incoming) {
+            var player=relation.FirstUserId==Model.UserId?relation.SecondUser:relation.FirstUser;
+            <article class="friends-person"><strong>@player.UserName</strong><form method="post" asp-action="Invitation" asp-route-id="@relation.Id" class="friends-actions">
+                <button name="accept" value="true" class="friends-button">Accepter</button><button name="accept" value="false" class="friends-button secondary">Refuser</button>
+            </form></article>
+        }
+    </section>
+    <section class="friends-panel"><h2>Mes amis</h2>
+        @{var accepted=Model.Relations.Where(x=>x.Status==FriendshipStatus.Accepted).ToList();}
+        @if(accepted.Count==0) {<p>Recherchez un joueur pour envoyer votre première invitation.</p>}
+        <div class="friends-list">
+        @foreach(var relation in accepted) {
+            var player=relation.FirstUserId==Model.UserId?relation.SecondUser:relation.FirstUser;
+            <article class="friends-person"><div class="friends-person-name">@if(player.AvatarUrl!=null){<img src="@player.AvatarUrl" alt="" />}<strong>@player.UserName</strong></div>
+                <div class="friends-actions"><a asp-action="Conversation" asp-route-id="@relation.Id" class="friends-button secondary"><i data-lucide="message-circle"></i>Messages</a>
+                <a asp-action="CreateTrade" asp-route-id="@relation.Id" class="friends-button"><i data-lucide="arrow-left-right"></i>Échanger</a></div>
+            </article>
+        }
+        </div>
+    </section>
+    <section class="friends-panel"><h2>Invitations envoyées</h2>
+        @{var outgoing=Model.Relations.Where(x=>x.Status==FriendshipStatus.Pending&&x.RequesterId==Model.UserId).ToList();}
+        @if(outgoing.Count==0) {<p>Aucune invitation envoyée en attente.</p>}
+        @foreach(var relation in outgoing) {<p>@(relation.FirstUserId==Model.UserId?relation.SecondUser.UserName:relation.FirstUser.UserName) · En attente de réponse</p>}
+    </section>
+</main>
+@section Scripts {<script src="~/js/friends.js" asp-append-version="true"></script>}
