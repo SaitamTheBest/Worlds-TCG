@@ -1,0 +1,56 @@
+@using System.Globalization
+@model web_tcg.Models.Market.MarketPriceViewModel
+@{
+    var fr = CultureInfo.GetCultureInfo("fr-FR");
+    var max = Model.Points.Count > 0 ? Model.Points.Max(p => p.AveragePrice) * 1.15m : 1m;
+    var span = Model.Points.Count > 1 ? (Model.Points.Last().Date - Model.Points.First().Date).TotalDays : 0;
+    double X(web_tcg.Models.Market.MarketPricePoint p) => span == 0 ? 340 : 65 + (p.Date - Model.Points.First().Date).TotalDays / span * 550;
+    double Y(web_tcg.Models.Market.MarketPricePoint p) => 195 - (double)(p.AveragePrice / max) * 165;
+    string Svg(double n) => n.ToString("0.##", CultureInfo.InvariantCulture);
+    string Tick(decimal n) => n >= 1000000 ? (n / 1000000).ToString("0.#", fr) + " M ¤"
+        : n >= 1000 ? (n / 1000).ToString("0.#", fr) + " k ¤" : n.ToString("0.##", fr) + " ¤";
+    var line = string.Join(" ", Model.Points.Select(p => $"{Svg(X(p))},{Svg(Y(p))}"));
+}
+<section class="market-price-panel" aria-label="Prix du marché">
+    <header class="market-price-header">
+        <div><span class="market-price-kicker">VENTES CONCLUES</span><h2>Prix du marché</h2></div>
+        @if (Model.CanSell)
+        {
+            <a class="market-price-sell" asp-controller="Market" asp-action="Create" asp-route-cardId="@Model.CardId"><i data-lucide="gavel"></i>Vendre cette carte</a>
+        }
+    </header>
+    @if (Model.AveragePrice.HasValue)
+    {
+        <div class="market-price-average">
+            <div><strong>Prix moyen de vente</strong><p>@Model.SaleCount vente(s) conclue(s) · toutes les dates</p></div>
+            @await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount = decimal.Round(Model.AveragePrice.Value, 2) })
+        </div>
+    }
+    else { <p class="market-price-empty">Aucune vente conclue pour cette carte. Le prix moyen n’est pas encore disponible.</p> }
+    @if (Model.Points.Count > 0)
+    {
+        <figure class="market-price-chart">
+            <svg viewBox="0 0 640 240" role="img" aria-label="Évolution du prix moyen quotidien des ventes sur les 90 derniers jours">
+                <title>Évolution du prix de vente de la carte</title>
+                <path d="M65 30H615 M65 112.5H615 M65 195H615" class="market-price-grid" />
+                <text x="57" y="34" text-anchor="end">@Tick(max)</text>
+                <text x="57" y="116" text-anchor="end">@Tick(max / 2)</text>
+                <text x="57" y="199" text-anchor="end">0 ¤</text>
+                <polyline points="@line" class="market-price-line" />
+                @foreach (var point in Model.Points)
+                {
+                    <circle cx="@Svg(X(point))" cy="@Svg(Y(point))" r="4" class="market-price-point">
+                        <title>@point.Date.ToString("dd/MM/yyyy") : @point.AveragePrice.ToString("0.##",fr) ¤ · @point.SaleCount vente(s)</title>
+                    </circle>
+                }
+                <text x="65" y="223">@Model.Points.First().Date.ToString("dd/MM/yyyy")</text>
+                @if (Model.Points.Count > 1)
+                {
+                    <g><text x="615" y="223" text-anchor="end">@Model.Points.Last().Date.ToString("dd/MM/yyyy")</text></g>
+                }
+            </svg>
+            <figcaption>Moyenne quotidienne · 90 derniers jours (UTC). Survolez un point pour voir le prix et le nombre de ventes.</figcaption>
+        </figure>
+    }
+    else if (Model.SaleCount > 0) { <p class="market-price-empty">Aucune vente sur les 90 derniers jours.</p> }
+</section>

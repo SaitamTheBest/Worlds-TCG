@@ -98,6 +98,23 @@ public static class MarketChecks
         var limits=await Task.WhenAll(Enumerable.Range(0,12).Select(async _=>{try{return await Act(service=>service.CreateAsync(seller,cardId,10,1));}catch(MarketRuleException){return Guid.Empty;}}));
         Check(limits.Count(x=>x!=Guid.Empty)==10&&await Quantity(seller,cardId)==9,"marché : limite de dix ventes respectée même en création concurrente");
         Check(await Reject(service=>service.CreateAsync(seller,cardId,0,1))&&await Reject(service=>service.CreateAsync(seller,cardId,1,2)),"marché : prix et durée invalides refusés");
+        var priceBefore=await Read(db=>new MarketPriceService(db).GetAsync(cardId));
+        Check(priceBefore.SaleCount==1&&priceBefore.AveragePrice==31,"prix marché : seules les ventes conclues comptent, pas les enchères actives, invendues ou annulées");
+        await Read(async db=> {
+            foreach(var (card,price,date) in new[] { (cardId,10m,DateTime.UtcNow.Date.AddDays(-2)),(cardId,30m,DateTime.UtcNow.Date.AddDays(-2)),
+                (cardId,50m,DateTime.UtcNow.Date.AddDays(-100)),(variantId,999m,DateTime.UtcNow.Date) })
+                db.MarketAuctions.Add(new() { CardId=card,SellerId=seller,HighestBidderId=alice,StartingPrice=price,CurrentPrice=price,
+                    Status=AuctionStatus.Sold,EndsAt=date,ClosedAt=date });
+            await db.SaveChangesAsync(); return true;
+        });
+        var prices=await Read(db=>new MarketPriceService(db).GetAsync(cardId));
+        Check(prices.SaleCount==4&&prices.AveragePrice==30.25m,"prix marché : moyenne pondérée par vente sur tout l'historique, variante exclue");
+        Check(prices.Points.Count==2&&prices.Points.First().AveragePrice==20&&prices.Points.First().SaleCount==2&&prices.Points.Last().AveragePrice==31,
+            "prix marché : courbe quotidienne chronologique limitée aux 90 derniers jours");
+        var variantPrices=await Read(db=>new MarketPriceService(db).GetAsync(variantId));
+        Check(variantPrices.SaleCount==1&&variantPrices.AveragePrice==999,"prix marché : historique indépendant de la variante");
+        var emptyPrices=await Read(db=>new MarketPriceService(db).GetAsync(int.MaxValue));
+        Check(emptyPrices.AveragePrice==null&&emptyPrices.Points.Count==0,"prix marché : absence de ventes sans faux prix à zéro");
         Console.WriteLine($"{passed} vérifications marché réussies sur PostgreSQL.");
     }
 }

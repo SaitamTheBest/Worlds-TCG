@@ -62,6 +62,20 @@ public sealed class PreviewControllersOnly : IApplicationFeatureProvider<Control
 
 public sealed class PreviewController : Controller
 {
+    private static web_tcg.Models.Market.MarketPriceViewModel Price(int cardId) => new() {
+        CardId=cardId, AveragePrice=125.5m, SaleCount=12, Points=new() {
+            new() {Date=DateTime.UtcNow.Date.AddDays(-20),AveragePrice=90,SaleCount=3},
+            new() {Date=DateTime.UtcNow.Date.AddDays(-10),AveragePrice=150,SaleCount=5},
+            new() {Date=DateTime.UtcNow.Date,AveragePrice=121.75m,SaleCount=4} } };
+    [HttpGet("/__preview/inventory/detail")]
+    public IActionResult InventoryPrice() {
+        var price=Price(2); price.CanSell=true;
+        return View("~/Views/Inventory/Detail.cshtml",new web_tcg.Models.Inventory.InventoryDetailViewModel {
+            Card=Preview.Card(2),CardId=2,Quantity=3,AcquiredDate=DateTime.UtcNow,CardSetName="Démonstration",
+            CardSetReleaseDate=DateTime.UtcNow,MarketPrice=price });
+    }
+    [HttpGet("/Market/PriceHistory/{cardId:int}")]
+    public IActionResult MarketPrice(int cardId) => PartialView("~/Views/Shared/_MarketPrice.cshtml",Price(cardId));
     [HttpGet("/__preview/booster")]
     public IActionResult BoosterOpening() => View("~/Views/Booster/OpenResult.cshtml",new web_tcg.Models.Booster.BoosterOpeningViewModel {
         OpenedAt=DateTime.UtcNow,

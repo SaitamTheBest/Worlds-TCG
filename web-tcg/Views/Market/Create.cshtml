@@ -2,6 +2,7 @@
 @{ ViewData["Title"]="Mettre une carte en vente"; Layout="_Layout"; }
 <link rel="stylesheet" href="~/css/market.css" asp-append-version="true" />
 <link rel="stylesheet" href="~/css/card.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/market-price.css" asp-append-version="true" />
 <div class="market-page">
     <a asp-action="MySales" class="market-back">← Mes ventes</a>
     <header class="market-header"><div><span class="market-kicker">NOUVELLE ENCHÈRE</span><h1>Mettre une carte en vente</h1><p>@Model.ActiveSales / 10 ventes en cours. Une copie sera réservée pendant toute la vente.</p></div></header>
@@ -17,7 +18,7 @@
                 {
                     <div class="market-choice">
                         <input type="radio" id="market-card-@owned.Card.Id" name="Input.CardId" value="@owned.Card.Id" checked="@(Model.Input.CardId == owned.Card.Id)" aria-label="Choisir @owned.Card.Name — @owned.Card.CardSetCode-@owned.Card.CollectionNumber" required />
-                        <div class="market-choice-card">@await Component.InvokeAsync("Card",new {model=owned.Card})</div>
+                        <div class="market-choice-card"><div class="market-choice-mount" data-card-component="@owned.Card.Id"></div></div>
                         <span>@owned.Quantity exemplaire(s) disponible(s)</span>
                         <label class="market-choice-hit-area" for="market-card-@owned.Card.Id" aria-label="Sélectionner @owned.Card.Name"></label>
                     </div>
@@ -30,6 +31,7 @@
             @if (Model.HasNext) { <a asp-action="Create" asp-route-page="@(Model.Page+1)" asp-route-search="@Model.Search">Suivant →</a> }
         </nav>
         <fieldset class="market-sale-settings"><legend>2. Paramétrer la vente</legend>
+            <div data-market-price-target aria-live="polite"><p>Choisissez une carte pour consulter son prix moyen de vente.</p></div>
             <label>Prix de départ — monnaie MARCHÉ (¤)<input asp-for="Input.StartingPrice" type="number" min="1" max="999999999" step="0.01" required /></label>
             <label>Durée<select asp-for="Input.DurationMinutes"><option value="10">10 minutes</option><option value="30">30 minutes</option><option value="60">1 heure</option><option value="360">6 heures</option><option value="720">12 heures</option><option value="1440" selected="@(Model.Input.DurationMinutes == null)">24 heures</option><option value="2880">48 heures</option></select></label>
             <p>Chaque surenchère doit ajouter au moins 1 ¤. Vous pouvez annuler la vente tant qu’aucune enchère n’a été déposée. Sans enchère, la carte vous est rendue automatiquement. Vendre votre dernier exemplaire peut rendre un deck incomplet.</p>
@@ -37,3 +39,12 @@
         </fieldset>
     </form>
 </div>
+@foreach (var owned in Model.Cards)
+{
+    <template id="card-template-@owned.Card.Id">@await Component.InvokeAsync("Card",new {model=owned.Card})</template>
+}
+@section Scripts {
+    <script src="~/js/card-components.js" asp-append-version="true"></script>
+    <script src="~/js/market-card-selection.js" asp-append-version="true"></script>
+    <script src="~/js/market-price.js" asp-append-version="true"></script>
+}

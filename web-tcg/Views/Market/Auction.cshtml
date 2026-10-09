@@ -2,12 +2,14 @@
 @model web_tcg.Models.Market.MarketDetailViewModel
 @{ ViewData["Title"]="Enchère · " + Model.Listing.Card.Name; Layout="_Layout"; var auction=Model.Listing.Auction; }
 <link rel="stylesheet" href="~/css/market.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/market-price.css" asp-append-version="true" />
 <div class="market-page" data-market-auction="@auction.Id" data-state-url="@Url.Action("State",new {id=auction.Id})">
     <a asp-action="Index" class="market-back">← Marché des joueurs</a>
     <header class="market-header"><div><span class="market-kicker">ENCHÈRE EN DIRECT</span><h1>@Model.Listing.Card.Name</h1><p>Une copie de cette carte sera attribuée au meilleur enchérisseur.</p></div><span class="market-connection" data-market-connection role="status">Connexion…</span></header>
     <div class="market-detail">
         <div class="market-detail-card">@await Component.InvokeAsync("Card",new {model=Model.Listing.Card})</div>
         <div>
+            @await Html.PartialAsync("~/Views/Shared/_MarketPrice.cshtml", Model.MarketPrice)
             <div data-market-state>@await Html.PartialAsync("_AuctionState",Model)</div>
             <p class="market-feedback" data-market-feedback role="status" hidden></p>
             @if (!Model.Listing.IsSeller)

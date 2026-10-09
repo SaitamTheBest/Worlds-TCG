@@ -1,0 +1,18 @@
+.market-price-panel { margin: 24px 0; padding: clamp(16px, 3vw, 24px); border: 1px solid #f4c43033; border-radius: 16px; background: #0d0e10; color: #f4f4f5; min-width: 0; }
+.market-price-header, .market-price-average { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.market-price-kicker { font-size: .65rem; color: #f4c430; font-weight: 800; letter-spacing: .12em; }
+.market-price-header h2 { margin: 5px 0 0; font-size: 1.25rem; color: #fff; }
+.market-price-sell { display: inline-flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 9px; background: #f4c430; color: #161204; text-decoration: none; font-weight: 800; }
+.market-price-sell:hover { background: #ffe48b; color: #161204; }
+.market-price-sell svg { width: 18px; height: 18px; }
+.market-price-average { margin-top: 24px; }
+.market-price-average p, .market-price-empty, .market-price-chart figcaption { color: #a2a6ae; font-size: .8rem; line-height: 1.5; }
+.market-price-average p { margin: 6px 0 0; }
+.market-price-chart { margin: 22px 0 0; }
+.market-price-chart > svg { width: 100%; height: auto; overflow: visible; display: block; }
+.market-price-chart text { fill: #a2a6ae; font: 10px system-ui, sans-serif; }
+.market-price-grid { stroke: #ffffff15; fill: none; }
+.market-price-line { fill: none; stroke: #f4c430; stroke-width: 2.5; stroke-linejoin: round; }
+.market-price-point { fill: #f4c430; stroke: #0d0e10; stroke-width: 2; }
+.market-price-panel > h2 { font-size: 1.1rem; margin: 0; color: #fff; }
+.market-price-average > a { color: #f4c430; }

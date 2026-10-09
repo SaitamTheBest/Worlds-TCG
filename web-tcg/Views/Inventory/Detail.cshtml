@@ -44,6 +44,7 @@
 <link rel="stylesheet"
       href="~/css/card-detail.css"
       asp-append-version="true" />
+<link rel="stylesheet" href="~/css/market-price.css" asp-append-version="true" />
 
 <div class="card-detail-page">
 
@@ -171,7 +172,7 @@
                             <span>CARTE À VENDRE</span>
 
                             <strong>
-                                @Model.SalePrice?.ToString("N2") ◈
+                                @if (Model.SalePrice.HasValue) { @await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount = Model.SalePrice.Value }) }
                             </strong>
                         </div>
 
@@ -213,6 +214,20 @@
                 </div>
             </div>
 
+            @await Html.PartialAsync("~/Views/Shared/_MarketPrice.cshtml", Model.MarketPrice)
+            @if (Model.ActiveSales.Count > 0)
+            {
+                <section class="market-price-panel" aria-label="Mes prix de vente">
+                    <h2>Mes ventes en cours</h2>
+                    @foreach (var sale in Model.ActiveSales)
+                    {
+                        <div class="market-price-average">
+                            <a asp-controller="Market" asp-action="Auction" asp-route-id="@sale.Id">Voir ma vente</a>
+                            @await Html.PartialAsync("~/Views/Shared/_MarketCurrency.cshtml", new web_tcg.Models.Balance.MarketCurrencyViewModel { Amount = sale.CurrentPrice })
+                        </div>
+                    }
+                </section>
+            }
             <section class="detail-section">
 
                 <div class="detail-section-heading">

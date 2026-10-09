@@ -69,6 +69,9 @@ public sealed class MarketController(ApplicationDbContext context, MarketService
         var model = await DetailAsync(id);
         return model == null ? NotFound() : PartialView("_AuctionState",model);
     }
+    [HttpGet("PriceHistory/{cardId:int}")]
+    public async Task<IActionResult> PriceHistory(int cardId) => PartialView("~/Views/Shared/_MarketPrice.cshtml",
+        await new MarketPriceService(context).GetAsync(cardId));
     private async Task<MarketDetailViewModel?> DetailAsync(Guid id)
     {
         var auction = await context.MarketAuctions.AsNoTracking().Include(x => x.Seller).Include(x => x.HighestBidder).FirstOrDefaultAsync(x => x.Id == id);
@@ -79,13 +82,14 @@ public sealed class MarketController(ApplicationDbContext context, MarketService
             Listing=new MarketListingViewModel { Auction=auction, Card=card, IsSeller=auction.SellerId == UserId,
                 IsHighestBidder=auction.HighestBidderId == UserId, BidCount=await context.MarketBids.CountAsync(x => x.AuctionId == id) },
             AvailableBalance=await context.Users.Where(x => x.Id == UserId).Select(x => x.CardBalance).SingleAsync(),
+            MarketPrice=await new MarketPriceService(context).GetAsync(auction.CardId),
             Bids=await context.MarketBids.AsNoTracking().Where(x => x.AuctionId == id).Include(x => x.Bidder)
                 .OrderByDescending(x => x.CreatedAt).ThenByDescending(x => x.Id).Take(30).ToListAsync()
         };
     }
 
     [HttpGet("Create")]
-    public async Task<IActionResult> Create(string search = "", int page = 1) => View(await CreateModelAsync(new(),search,page));
+    public async Task<IActionResult> Create(string search = "", int page = 1, int? cardId = null) => View(await CreateModelAsync(new() { CardId = cardId ?? 0 },search,page));
     [HttpPost("Create")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateAuctionInput input)
@@ -104,6 +108,7 @@ public sealed class MarketController(ApplicationDbContext context, MarketService
         page=Math.Clamp(page,1,100000); search=(search ?? "").Trim();
         if (search.Length > 100) search=search[..100];
         var query=context.UserCardCollections.AsNoTracking().Where(x => x.UserId == UserId && x.Quantity > 0);
+        if (input.CardId > 0) query=query.Where(x => x.CardId == input.CardId);
         if (search.Length > 0) { var lower=search.ToLower(); query=query.Where(x => x.Card.Name.ToLower().Contains(lower)); }
         var owned=await query.OrderBy(x => x.Card.Name).ThenBy(x => x.CardId).Skip((page-1)*40).Take(41)
             .Select(x => new {x.CardId,x.Quantity}).ToListAsync();

@@ -385,8 +385,13 @@ namespace web_tcg.Controllers
                     CardSetName = card.CardSet?.Name ?? string.Empty,
                     CardSetReleaseDate = card.CardSet?.ReleaseDate ?? DateTime.MinValue,
                     VariantNumber = card.VariantNumber,
-                    Card = cardViewModel
+                    Card = cardViewModel,
+                    MarketPrice = await new MarketPriceService(_context).GetAsync(card.Id),
+                    ActiveSales = await _context.MarketAuctions.AsNoTracking()
+                        .Where(x => x.CardId == card.Id && x.SellerId == user.Id && x.Status == AuctionStatus.Active)
+                        .OrderBy(x => x.EndsAt).ToListAsync()
                 };
+                viewModel.MarketPrice.CanSell = inventoryItem.Quantity > 0;
 
                 _logger.LogInformation(
                     "Détails de la carte {CardId} affichés pour {UserId}",

@@ -32,6 +32,7 @@ public sealed class MarketListingViewModel
 
 public sealed class MarketDetailViewModel
 {
+    public MarketPriceViewModel MarketPrice { get; init; } = new();
     public MarketListingViewModel Listing { get; init; } = null!;
     public decimal AvailableBalance { get; init; }
     public List<MarketBid> Bids { get; init; } = new();

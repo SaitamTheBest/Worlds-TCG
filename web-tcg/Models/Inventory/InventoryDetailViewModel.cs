@@ -26,5 +26,7 @@ namespace web_tcg.Models.Inventory
 
         // Carte utilisée directement par le ViewComponent Card
         public CardViewModel Card { get; set; } = null!;
+        public web_tcg.Models.Market.MarketPriceViewModel MarketPrice { get; set; } = new();
+        public List<web_tcg.Data.Entities.MarketAuction> ActiveSales { get; set; } = new();
     }
 }
