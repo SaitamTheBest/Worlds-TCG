@@ -28,13 +28,13 @@ const message=await a('/Friends/Conversation/'+relation+'/Message',{method:'POST
 const messages=await(await b('/Friends/Conversation/'+relation+'/Messages')).text();assert.match(messages,/&lt;script&gt;/);assert.doesNotMatch(messages,/<script>danger/);
 assert.equal((await third('/Friends/Conversation/'+relation+'/Messages')).status,404);
 const create=await(await a('/Friends/Trade/Create/'+relation)).text();assert.match(create,/card-template-/);assert.match(create,/Input\.FriendshipId/);
-const fields={'Input.FriendshipId':relation,'Input.OfferedMoney':'10.50','Input.RequestedMoney':'2.25','Input.Cards[0].CardId':String(card),'Input.Cards[0].Quantity':'1','Input.Cards[0].IsOffered':'true','Input.Cards[1].CardId':String(variant),'Input.Cards[1].Quantity':'1','Input.Cards[1].IsOffered':'false',__RequestVerificationToken:token(create)};
+const fields={'Input.FriendshipId':relation,'Input.OfferedMoney':'10','Input.RequestedMoney':'2','Input.Cards[0].CardId':String(card),'Input.Cards[0].Quantity':'1','Input.Cards[0].IsOffered':'true','Input.Cards[1].CardId':String(variant),'Input.Cards[1].Quantity':'1','Input.Cards[1].IsOffered':'false',__RequestVerificationToken:token(create)};
 const proposed=await a('/Friends/Trade/Create',{method:'POST',body:new URLSearchParams(fields)});assert.equal(proposed.status,302);
 const location=proposed.headers.get('location');assert.match(location,/Friends\/Trade\/[0-9a-f-]+/);assert.equal((await third(location)).status,404);
-const detail=await(await b(location)).text();assert.match(detail,/Confirmer et accepter/);assert.match(detail,/10[,.]5/);assert.match(detail,/2[,.]25/);
+const detail=await(await b(location)).text();assert.match(detail,/Confirmer et accepter/);assert.match(detail,/>10<\/strong>/);assert.match(detail,/2[,.]25/);
 assert.equal((await b(location+'/Resolve',{method:'POST',body:new URLSearchParams({action:'accept',__RequestVerificationToken:token(detail)})})).status,302);
 const completed=await(await b(location)).text();assert.match(completed,/Confirm(?:é|&#xE9;)/);assert.doesNotMatch(completed,/Confirmer et accepter/);
-assert.equal(Number(sql(`SELECT "CardBalance" FROM "AspNetUsers" WHERE "Id"='${aid}'`)),91.75);assert.equal(Number(sql(`SELECT "CardBalance" FROM "AspNetUsers" WHERE "Id"='${bid}'`)),108.25);
+assert.equal(Number(sql(`SELECT "CardBalance" FROM "AspNetUsers" WHERE "Id"='${aid}'`)),92);assert.equal(Number(sql(`SELECT "CardBalance" FROM "AspNetUsers" WHERE "Id"='${bid}'`)),108);
 const notifications=await(await b('/api/notifications')).json();assert.ok(notifications.notifications.some(x=>x.title.startsWith('Message de')));assert.ok(notifications.notifications.some(x=>x.title==="Demande d'échange"));assert.ok(notifications.notifications.some(x=>x.title==='Échange confirmé'));
 assert.equal((await b('/hubs/friends/negotiate?negotiateVersion=1',{method:'POST'})).status,200);
 console.log('PASS: invitations, recherche, messagerie privée et texte échappé, proposition, confirmation, monnaie décimale, notifications et connexion SignalR sur les vraies routes HTTP.');

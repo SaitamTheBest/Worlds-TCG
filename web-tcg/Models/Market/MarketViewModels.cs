@@ -43,6 +43,7 @@ public sealed class CreateAuctionInput
     [Range(1, int.MaxValue)] public int CardId { get; set; }
     [Range(typeof(decimal), "1", "999999999", ErrorMessage="Le prix de départ doit être compris entre 1 et 999 999 999.")]
     [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType=typeof(MarketPriceModelBinder))]
+    [web_tcg.Models.Balance.WholeCurrency]
     public decimal StartingPrice { get; set; } = 1;
     public int DurationHours { get; set; } = 24;
     [Range(1, 2880)] public int? DurationMinutes { get; set; }

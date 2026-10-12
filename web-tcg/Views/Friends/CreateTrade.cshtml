@@ -14,7 +14,7 @@
         @foreach(var offered in new[]{true,false}) {
             var cards=offered?Model.OfferedCards:Model.RequestedCards;
             <section class="friends-panel" data-trade-side><div class="friends-trade-side-heading"><h2>@(offered?"Vous donnez":"Vous recevez")</h2><span data-selected-count>0 carte sélectionnée</span></div>
-                <label>Monnaie marché (¤)<input name="@(offered?"Input.OfferedMoney":"Input.RequestedMoney")" value="@((offered?Model.Input.OfferedMoney:Model.Input.RequestedMoney).ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" min="0" max="999999999" step="0.01" /></label>
+                <label>Monnaie marché (¤)<input name="@(offered?"Input.OfferedMoney":"Input.RequestedMoney")" value="@((offered?Model.Input.OfferedMoney:Model.Input.RequestedMoney).ToString(System.Globalization.CultureInfo.InvariantCulture))" type="number" min="0" max="999999999" step="1" /></label>
                 <div class="friends-trade-filters"><input type="search" data-trade-search placeholder="Nom ou numéro de carte" aria-label="Rechercher les cartes @(offered?"à donner":"à recevoir")" />
                     <select data-trade-extension aria-label="Extension des cartes @(offered?"à donner":"à recevoir")"><option value="">Toutes les extensions</option></select>
                 </div>

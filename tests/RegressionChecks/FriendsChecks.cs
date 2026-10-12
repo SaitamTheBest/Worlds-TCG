@@ -51,8 +51,8 @@ public static class FriendsChecks
         Check(await Reject(async s=>{await s.ProposeAsync(c,Offer());}),"échanges : tiers exclu d'une relation d'amis");
         var invalid=Offer();invalid.OfferedMoney=-1;
         Check(await Reject(async s=>{await s.ProposeAsync(a,invalid);}),"échanges : montant négatif refusé");
-        invalid=Offer();invalid.OfferedMoney=1.001m;
-        Check(await Reject(async s=>{await s.ProposeAsync(a,invalid);}),"échanges : plus de deux décimales refusées");
+        invalid=Offer();invalid.OfferedMoney=1.5m;
+        Check(await Reject(async s=>{await s.ProposeAsync(a,invalid);}),"échanges : monnaie décimale refusée");
         invalid=Offer();invalid.Cards[0].Quantity=6;
         Check(await Reject(async s=>{await s.ProposeAsync(a,invalid);}),"échanges : exemplaires non possédés refusés");
         invalid=new() {FriendshipId=relation.Id};

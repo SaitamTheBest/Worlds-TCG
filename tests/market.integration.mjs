@@ -34,14 +34,14 @@ assert.equal((await buyer('/Inventory/AddCard',{method:'POST'})).status,302,'ajo
 const create=await (await seller('/Market/Create')).text();
 assert.match(create,/tcg-card/,'sélection avec le composant Card');
 const cardId=Number(create.match(/name="Input.CardId" value="(\d+)"/)?.[1]); assert.ok(cardId);
-const fields={'Input.CardId':cardId,'Input.StartingPrice':'10.50','Input.DurationHours':'1'};
+const fields={'Input.CardId':cardId,'Input.StartingPrice':'10','Input.DurationHours':'1'};
 assert.equal((await seller('/Market/Create',{method:'POST',body:new URLSearchParams(fields)})).status,400,'création protégée contre le CSRF');
 const published=await seller('/Market/Create',{method:'POST',body:new URLSearchParams({...fields,__RequestVerificationToken:token(create)})});
 if(published.status!==302) console.log((await published.text()).match(/<div[^>]*validation-summary[^>]*>[\s\S]*?<\/div>/)?.[0]);
 assert.equal(published.status,302,'vente créée par le vrai formulaire MVC');
 const path=published.headers.get('location'); assert.match(path,/^\/Market\/Auction\/[a-f0-9-]+$/);
 const id=path.split('/').at(-1);
-const detail=await (await buyer(path)).text(); assert.match(detail,/tcg-card/); assert.match(detail,/10[,.]5/); assert.match(detail,/tcg-market-currency/); assert.match(detail,/tcg-card-balance-unit/);
+const detail=await (await buyer(path)).text(); assert.match(detail,/tcg-card/); assert.match(detail,/>10<\/strong>/); assert.match(detail,/tcg-market-currency/); assert.match(detail,/tcg-card-balance-unit/);
 const buyerToken=token(detail);
 const negotiate=await buyer('/hubs/market/negotiate?negotiateVersion=1',{method:'POST'});
 assert.equal(negotiate.status,200);
@@ -54,7 +54,7 @@ const consume=(async()=>{try {while(true){const {value,done}=await reader.read()
 await buyer('/hubs/market?id='+encodeURIComponent(connectionToken),{method:'POST',headers:{'Content-Type':'text/plain'},body:'{"protocol":"json","version":1}\u001e'});
 const bid=await buyer(path+'/Bid',{method:'POST',headers:{'Content-Type':'application/json',RequestVerificationToken:buyerToken},body:JSON.stringify({amount:20})});
 assert.equal(bid.status,200,'enchère enregistrée');
-const updated=await (await buyer(path+'/State')).text(); assert.match(updated,/data-minimum="21.00"/); assert.match(updated,/>80<\/strong>/); assert.doesNotMatch(updated,/id="userCardBalance"|id="cardBalanceWidget"/,'la vue marché ne duplique pas les identifiants de la topbar');
+const updated=await (await buyer(path+'/State')).text(); assert.match(updated,/data-minimum="21"/); assert.match(updated,/>80<\/strong>/); assert.doesNotMatch(updated,/id="userCardBalance"|id="cardBalanceWidget"/,'la vue marché ne duplique pas les identifiants de la topbar');
 for(let i=0;i<30&&!events.includes('MarketChanged');i++)await new Promise(resolve=>setTimeout(resolve,100));
 assert.ok(events.includes('MarketChanged'),'mise à jour reçue sur une vraie connexion SignalR');
 sql(`UPDATE "MarketAuctions" SET "EndsAt"=NOW()-INTERVAL '1 second' WHERE "Id"='${id}';`);

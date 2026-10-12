@@ -5,7 +5,7 @@
      data-next-reward="@Model.NextRewardAt?.ToString("O")">
 
     <div class="tcg-balance-icon">
-        <i data-lucide="coins"></i>
+        <partial name="_BalanceCurrencySymbol" />
     </div>
 
     <div class="tcg-balance-content">
@@ -55,7 +55,7 @@
             if (data.balance !== undefined && data.balance !== null) {
                 balanceElement.querySelector('[data-current-balance]').textContent =
                     Number(data.balance)
-                        .toLocaleString("fr-FR");
+                        .toLocaleString("fr-FR", { maximumFractionDigits: 0 });
             }
 
             if (

@@ -237,7 +237,10 @@ namespace web_tcg.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AspNetUsers", (string)null);
+                    b.ToTable("AspNetUsers", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_User_WholeBalances", "\"Balance\" = trunc(\"Balance\") AND \"CardBalance\" = trunc(\"CardBalance\")");
+                        });
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.BoosterOpening", b =>
@@ -532,7 +535,10 @@ namespace web_tcg.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("CardSets");
+                    b.ToTable("CardSets", t =>
+                        {
+                            t.HasCheckConstraint("CK_CardSet_WholePrice", "\"BoosterPrice\" = trunc(\"BoosterPrice\")");
+                        });
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.CharacterCard", b =>
@@ -718,6 +724,8 @@ namespace web_tcg.Migrations
                     b.ToTable("FriendTrades", t =>
                         {
                             t.HasCheckConstraint("CK_FriendTrade_Money", "\"OfferedMoney\" >= 0 AND \"RequestedMoney\" >= 0");
+
+                            t.HasCheckConstraint("CK_FriendTrade_WholeMoney", "\"OfferedMoney\" = trunc(\"OfferedMoney\") AND \"RequestedMoney\" = trunc(\"RequestedMoney\")");
                         });
                 });
 
@@ -995,6 +1003,8 @@ namespace web_tcg.Migrations
                     b.ToTable("MarketAuctions", t =>
                         {
                             t.HasCheckConstraint("CK_MarketAuction_Prices", "\"StartingPrice\" >= 1 AND \"CurrentPrice\" >= \"StartingPrice\"");
+
+                            t.HasCheckConstraint("CK_MarketAuction_WholePrices", "\"StartingPrice\" = trunc(\"StartingPrice\") AND \"CurrentPrice\" = trunc(\"CurrentPrice\")");
                         });
                 });
 
@@ -1026,7 +1036,10 @@ namespace web_tcg.Migrations
 
                     b.HasIndex("AuctionId", "CreatedAt");
 
-                    b.ToTable("MarketBids");
+                    b.ToTable("MarketBids", t =>
+                        {
+                            t.HasCheckConstraint("CK_MarketBid_WholeAmount", "\"Amount\" = trunc(\"Amount\")");
+                        });
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.Notification", b =>

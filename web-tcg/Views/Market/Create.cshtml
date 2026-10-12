@@ -32,7 +32,7 @@
         </nav>
         <fieldset class="market-sale-settings"><legend>2. Paramétrer la vente</legend>
             <div data-market-price-target aria-live="polite"><p>Choisissez une carte pour consulter son prix moyen de vente.</p></div>
-            <label>Prix de départ — monnaie MARCHÉ (¤)<input asp-for="Input.StartingPrice" type="number" min="1" max="999999999" step="0.01" required /></label>
+            <label>Prix de départ — monnaie MARCHÉ (¤)<input asp-for="Input.StartingPrice" type="number" min="1" max="999999999" step="1" required /></label>
             <label>Durée<select asp-for="Input.DurationMinutes"><option value="10">10 minutes</option><option value="30">30 minutes</option><option value="60">1 heure</option><option value="360">6 heures</option><option value="720">12 heures</option><option value="1440" selected="@(Model.Input.DurationMinutes == null)">24 heures</option><option value="2880">48 heures</option></select></label>
             <p>Chaque surenchère doit ajouter au moins 1 ¤. Vous pouvez annuler la vente tant qu’aucune enchère n’a été déposée. Sans enchère, la carte vous est rendue automatiquement. Vendre votre dernier exemplaire peut rendre un deck incomplet.</p>
             <button class="market-button" type="submit" disabled="@(Model.ActiveSales>=10 || Model.Cards.Count==0)">Publier la vente</button>

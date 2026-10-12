@@ -3,7 +3,7 @@
 @{ var item=Model.Listing; var auction=item.Auction; var active=auction.Status == AuctionStatus.Active && auction.EndsAt > DateTime.UtcNow; }
 <section class="market-auction-state" data-active="@active.ToString().ToLowerInvariant()"
          data-can-cancel="@((active && auction.HighestBidderId == null).ToString().ToLowerInvariant())"
-         data-minimum="@item.MinimumBid.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)"
+         data-minimum="@item.MinimumBid.ToString("0",System.Globalization.CultureInfo.InvariantCulture)"
          data-server-utc="@DateTime.UtcNow.ToString("O")">
     <div class="market-auction-stats">
         <div><span>Statut</span><strong>@item.Status</strong></div>

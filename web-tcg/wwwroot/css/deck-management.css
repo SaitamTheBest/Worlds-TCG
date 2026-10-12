@@ -719,6 +719,74 @@
 .worlds-deck-management .worlds-deck-leader-choice[aria-pressed="true"] { border-color: #f4c430; background: #201c0e; box-shadow: 0 0 0 1px #f4c430; }
 .worlds-deck-management .worlds-deck-leader-choice:focus-visible { outline: 2px solid #ffe790; outline-offset: 3px; }
 .worlds-deck-management .worlds-deck-leader-choice small { color: #a5a8af; }
+
+/* Compact builder; only surrounding containers scale the shared Card component. */
+.worlds-deck-management .worlds-deck-modal-panel { width: min(1600px, 100%); height: min(880px, calc(100dvh - 24px)); }
+.worlds-deck-management .worlds-deck-modal-header,
+.worlds-deck-management .worlds-deck-modal-footer { padding: 10px 16px; }
+.worlds-deck-management .worlds-deck-modal-header h3 { font-size: 1rem; }
+.worlds-deck-management .worlds-deck-modal-footer .worlds-btn { padding: 8px 14px; min-height: 32px; font-size: .72rem; }
+.worlds-deck-management .worlds-deck-builder-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 12px; padding: 10px 14px; flex: 1; overflow: hidden; }
+.worlds-deck-builder-collection { min-width: 0; min-height: 0; display: grid; grid-template-columns: 180px minmax(0, 1fr); grid-template-rows: auto auto auto minmax(100px, 1fr) auto; gap: 7px; }
+.worlds-deck-builder-collection > * { grid-column: 1 / -1; }
+.worlds-deck-builder-collection > .worlds-deck-field:has(#worldsDeckName) { grid-column: 1; grid-row: 1; align-self: start; }
+.worlds-deck-builder-collection > .worlds-deck-field:has(#worldsDeckLeaderSearch) { grid-column: 2; grid-row: 1; }
+.worlds-deck-builder-preview { min-width: 0; min-height: 0; padding: 10px; display: flex; flex-direction: column; gap: 7px; background: #111214; border: 1px solid #303136; border-radius: 10px; }
+.worlds-deck-builder-preview > h4 { color: #f4c430; margin: 0; font-size: .8rem; }
+.worlds-deck-builder-preview > strong { font-size: .8rem; overflow-wrap: anywhere; }
+.worlds-deck-builder-preview > p { font-size: .75rem; color: #f4c430; margin: 0; }
+.worlds-deck-builder-preview .worlds-deck-subtitle { font-size: .7rem; margin: 0; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-deck-field { gap: 4px; flex-shrink: 0; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-deck-field label { font-size: .62rem; }
+.worlds-deck-management .worlds-deck-builder-collection input,
+.worlds-deck-management .worlds-deck-builder-collection select { min-height: 30px; padding: 4px 8px; font-size: .72rem; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-deck-filters { gap: 6px; }
+.worlds-deck-management .worlds-deck-selected-leader { margin: 0; font-size: .68rem; }
+.worlds-deck-management .worlds-deck-leader-grid { display: flex; gap: 6px; max-height: 84px; overflow-x: auto; overflow-y: hidden; padding: 3px; }
+.worlds-deck-management .worlds-deck-leader-choice { display: grid; grid-template-columns: 42px minmax(0, 1fr); grid-template-rows: 1fr 1fr; text-align: left; align-items: center; gap: 3px 6px; padding: 5px; flex: 0 0 152px; border-radius: 7px; }
+.worlds-deck-management .worlds-deck-leader-choice > .worlds-deck-card-mount { zoom: .13125; grid-row: span 2; }
+.worlds-deck-management .worlds-deck-leader-choice > strong { font-size: .65rem; line-height: 1.15; }
+.worlds-deck-management .worlds-deck-leader-choice > small { font-size: .55rem; }
+.worlds-deck-management .worlds-deck-builder-status { margin: 0; min-height: 18px; font-size: .7rem; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-deck-card-grid { grid-template-columns: repeat(auto-fill, minmax(114px, 1fr)); align-content: start; gap: 5px; min-height: 100px; flex: 1; overflow-y: auto; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-card-group { padding: 5px; gap: 3px; border-radius: 7px; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-card-group-header { gap: 3px; margin-bottom: 4px; padding-bottom: 3px; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-card-group-header h4 { font-size: .6rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-card-group-total { font-size: .55rem; padding: 2px 3px; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-variants-list { gap: 0; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-variant-item { grid-template-columns: 42px minmax(0, 1fr); gap: 3px; padding: 0; border: 0; background: transparent; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-variant-preview { width: 42px; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-variant-preview > .worlds-deck-card-mount { zoom: .13125; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-variant-controls { gap: 3px; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-qty-btn { width: 20px; height: 22px; font-size: .8rem; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-qty-value { font-size: .68rem; min-width: 10px; }
+.worlds-deck-management .worlds-deck-builder-collection .worlds-variant-owned { font-size: .5rem; line-height: 1.2; overflow-wrap: anywhere; }
+.worlds-deck-pagination { display: flex; justify-content: center; align-items: center; gap: 12px; font-size: .68rem; color: #aaa; flex-shrink: 0; }
+.worlds-deck-pagination button { background: #1c1c1f; color: #f4c430; border: 1px solid #303136; border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+.worlds-deck-pagination button:disabled { opacity: .4; cursor: default; }
+.worlds-deck-preview-leader-slot { width: 88px; margin: 0 auto 5px; }
+.worlds-deck-management .worlds-deck-preview-leader-slot > .worlds-deck-card-mount { zoom: .275; }
+#worldsDeckPreviewLeader > strong { display: block; text-align: center; font-size: .7rem; }
+.worlds-deck-preview-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 5px; overflow-y: auto; min-height: 0; align-content: start; flex: 1; }
+.worlds-deck-preview-card { position: relative; padding: 4px; border: 1px solid #303136; border-radius: 6px; text-align: center; min-width: 0; }
+.worlds-deck-preview-card-slot { width: 42px; margin: auto; }
+.worlds-deck-management .worlds-deck-preview-card-slot > .worlds-deck-card-mount { zoom: .13125; }
+.worlds-deck-preview-card > strong { display: block; font-size: .5rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.worlds-deck-preview-card > small { display: block; font-size: .5rem; color: #aaa; }
+.worlds-deck-preview-card > span { position: absolute; top: 2px; right: 2px; border-radius: 4px; padding: 1px 3px; background: #f4c430; color: #111; font-size: .6rem; font-weight: 800; }
+@media (max-width: 800px) {
+    .worlds-deck-management .worlds-deck-builder-layout { display: flex; flex-direction: column; overflow-y: auto; }
+    .worlds-deck-builder-collection { display: flex; flex-direction: column; }
+    .worlds-deck-management .worlds-deck-builder-collection .worlds-deck-card-grid { flex: none; max-height: 52dvh; min-height: 100px; }
+    .worlds-deck-builder-preview { flex-shrink: 0; max-height: 350px; min-height: 250px; }
+    .worlds-deck-preview-cards { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); }
+}
+@media (max-width: 640px) {
+    .worlds-deck-management .worlds-deck-builder-collection .worlds-variant-preview > .worlds-deck-card-mount,
+    .worlds-deck-management .worlds-deck-leader-choice > .worlds-deck-card-mount,
+    .worlds-deck-management .worlds-deck-preview-card-slot > .worlds-deck-card-mount { zoom: .15; }
+    .worlds-deck-management .worlds-deck-preview-leader-slot > .worlds-deck-card-mount { zoom: .3142857143; }
+}
 .worlds-deck-management .worlds-deck-display-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 20px; }
 .worlds-deck-management .worlds-deck-display-content { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 30px; }
 .worlds-deck-management .worlds-deck-display-content h2 { margin: 0 0 16px; font-size: 1rem; color: #f4c430; }

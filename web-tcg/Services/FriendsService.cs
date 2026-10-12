@@ -127,7 +127,7 @@ public sealed class FriendsService(ApplicationDbContext db, NotificationService 
     }
 
     private static void ValidateMoney(decimal amount) {
-        if(amount<0||amount>999999999m||decimal.Round(amount,2)!=amount) throw new FriendRuleException("La monnaie doit être comprise entre 0 et 999 999 999, avec deux décimales maximum.");
+        if(amount<0||amount>999999999m||decimal.Truncate(amount)!=amount) throw new FriendRuleException("La monnaie doit être un entier compris entre 0 et 999 999 999.");
     }
     private async Task CheckAssetsAsync(FriendTrade trade) {
         foreach(var (owner,money,offered) in new[]{(trade.ProposerId,trade.OfferedMoney,true),(trade.RecipientId,trade.RequestedMoney,false)}) {

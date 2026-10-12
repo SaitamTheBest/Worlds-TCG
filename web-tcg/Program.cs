@@ -108,8 +108,11 @@ builder.Services.AddScoped<CardBalanceRealtimeService>();
 builder.Services.AddHostedService<BalanceRewardService>();
 
 // Moteur de jeu
-builder.Services.Configure<GameRewardOptions>(
-    builder.Configuration.GetSection("GameRewards"));
+builder.Services.AddOptions<GameRewardOptions>()
+    .Bind(builder.Configuration.GetSection("GameRewards"))
+    .Validate(options => options.WinCardBalance >= 0 && options.WinCardBalance == decimal.Truncate(options.WinCardBalance),
+        "La récompense de monnaie marché doit être un entier positif ou nul.")
+    .ValidateOnStart();
 
 builder.Services.AddScoped<DeckValidationService>();
 builder.Services.AddScoped<CardPresentationService>();

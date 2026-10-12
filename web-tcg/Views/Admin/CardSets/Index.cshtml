@@ -1,4 +1,4 @@
-﻿@using web_tcg.Data.Entities
+@using web_tcg.Data.Entities
 @model List<CardSet>
 
 @{
@@ -298,7 +298,7 @@
                                         <div class="admin-cardsets-price">
 
                                             <strong>
-                                                @cardSet.BoosterPrice.ToString("0.00")
+                                                @cardSet.BoosterPrice.ToString("0")
                                             </strong>
 
                                             <span>
@@ -432,7 +432,7 @@
                                     <span>Prix booster</span>
 
                                     <strong>
-                                        @cardSet.BoosterPrice.ToString("0.00")
+                                        @cardSet.BoosterPrice.ToString("0")
                                     </strong>
                                 </div>
 

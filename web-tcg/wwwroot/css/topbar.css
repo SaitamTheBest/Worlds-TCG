@@ -109,6 +109,16 @@
     font-weight: 400;
 }
 
+.tcg-balance-unit {
+    color: #f4c430;
+    font-weight: 700;
+}
+
+.tcg-balance-icon > .tcg-balance-unit {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
 .tcg-topbar .tcg-balance-timer {
     display: flex;
     align-items: center;

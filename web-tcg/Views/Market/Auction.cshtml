@@ -16,7 +16,7 @@
             {
                 <form data-market-bid action="@Url.Action("Bid",new {id=auction.Id})" method="post" class="market-bid-form">
                     @Html.AntiForgeryToken()
-                    <label>Votre enchère — monnaie MARCHÉ (¤)<input name="amount" type="number" min="@Model.Listing.MinimumBid.ToString("0.00",System.Globalization.CultureInfo.InvariantCulture)" max="999999999" step="0.01" required /></label>
+                    <label>Votre enchère — monnaie MARCHÉ (¤)<input name="amount" type="number" min="@Model.Listing.MinimumBid.ToString("0",System.Globalization.CultureInfo.InvariantCulture)" max="999999999" step="1" required /></label>
                     <p>Le montant est réservé immédiatement. Si vous êtes déjà en tête, seule la différence est réservée.</p>
                     <button type="submit" class="market-button">Enchérir</button>
                 </form>

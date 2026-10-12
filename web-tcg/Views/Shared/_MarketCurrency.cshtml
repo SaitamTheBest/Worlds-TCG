@@ -6,7 +6,7 @@
     <div class="tcg-balance-content">
         <span class="tcg-balance-label tcg-card-balance-label">MARCHÉ</span>
         <div class="tcg-card-balance-value">
-            <strong id="@(Model.IsLiveBalance ? "userCardBalance" : null)">@Model.Amount.ToString("#,0.##", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</strong>
+            <strong id="@(Model.IsLiveBalance ? "userCardBalance" : null)">@Model.Amount.ToString("#,0", System.Globalization.CultureInfo.GetCultureInfo("fr-FR"))</strong>
             <span class="tcg-card-balance-unit">¤</span>
         </div>
     </div>

@@ -28,8 +28,10 @@ public sealed class FriendTradeInput
 {
     public Guid FriendshipId { get; set; }
     [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType=typeof(web_tcg.Models.Market.MarketPriceModelBinder))]
+    [web_tcg.Models.Balance.WholeCurrency]
     [Range(typeof(decimal),"0","999999999")] public decimal OfferedMoney { get; set; }
     [Microsoft.AspNetCore.Mvc.ModelBinder(BinderType=typeof(web_tcg.Models.Market.MarketPriceModelBinder))]
+    [web_tcg.Models.Balance.WholeCurrency]
     [Range(typeof(decimal),"0","999999999")] public decimal RequestedMoney { get; set; }
     public List<TradeCardInput> Cards { get; set; } = new();
 }

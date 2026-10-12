@@ -49,6 +49,16 @@ namespace web_tcg.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<ApplicationUser>().ToTable(t => t.HasCheckConstraint("CK_User_WholeBalances",
+                "\"Balance\" = trunc(\"Balance\") AND \"CardBalance\" = trunc(\"CardBalance\")"));
+            modelBuilder.Entity<CardSet>().ToTable(t => t.HasCheckConstraint("CK_CardSet_WholePrice",
+                "\"BoosterPrice\" = trunc(\"BoosterPrice\")"));
+            modelBuilder.Entity<MarketAuction>().ToTable(t => t.HasCheckConstraint("CK_MarketAuction_WholePrices",
+                "\"StartingPrice\" = trunc(\"StartingPrice\") AND \"CurrentPrice\" = trunc(\"CurrentPrice\")"));
+            modelBuilder.Entity<MarketBid>().ToTable(t => t.HasCheckConstraint("CK_MarketBid_WholeAmount",
+                "\"Amount\" = trunc(\"Amount\")"));
+            modelBuilder.Entity<FriendTrade>().ToTable(t => t.HasCheckConstraint("CK_FriendTrade_WholeMoney",
+                "\"OfferedMoney\" = trunc(\"OfferedMoney\") AND \"RequestedMoney\" = trunc(\"RequestedMoney\")"));
             modelBuilder.Entity<Friendship>(e => {
                 e.HasOne(x=>x.FirstUser).WithMany().HasForeignKey(x=>x.FirstUserId).OnDelete(DeleteBehavior.Restrict);
                 e.HasOne(x=>x.SecondUser).WithMany().HasForeignKey(x=>x.SecondUserId).OnDelete(DeleteBehavior.Restrict);

@@ -522,7 +522,7 @@
             : reason === "TimeExpired" ? "La partie s’est terminée au temps." : reason === "Inactivity" ? "La partie s’est terminée pour inactivité." : "La partie est terminée.";
         const known = state.xpEarned != null && state.cardBalanceEarned != null;
         document.getElementById("gameResultXp").textContent = known ? `+${state.xpEarned} XP` : "—";
-        document.getElementById("gameResultMoney").textContent = known ? `+${Number(state.cardBalanceEarned).toLocaleString("fr-FR", { maximumFractionDigits: 2 })}` : "—";
+        document.getElementById("gameResultMoney").textContent = known ? `+${Number(state.cardBalanceEarned).toLocaleString("fr-FR", { maximumFractionDigits: 0 })}` : "—";
         document.getElementById("gameResultRewardNote").textContent = known ? (won ? "Ces récompenses ont été ajoutées à votre compte." : "Aucune récompense attribuée pour cette partie.") : "Les montants enregistrés ne sont pas disponibles pour cette partie.";
         selectedHandCardId = null; targeting = null;
         el.dialog.close(); refreshTargeting(); updateControls();

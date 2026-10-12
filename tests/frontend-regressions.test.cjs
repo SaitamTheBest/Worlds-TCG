@@ -138,7 +138,7 @@ function deckBuilder() {
     };
     // Accès aux fonctions privées dans ce contexte de test uniquement.
     const source = script('deck-management-page.js').replace('// Initialiser au chargement du DOM',
-        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, renderCardGroup }; // Initialiser au chargement du DOM');
+        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, renderCardGroup, renderCardGrid, filteredCards, changeCardPage, resetCardPage, renderDeckPreview }; // Initialiser au chargement du DOM');
     vm.runInNewContext(source, context);
     context.builder.initDOM();
     get('worldsDeckModal').hidden = false;
@@ -178,6 +178,51 @@ test('variantes utilisent le composant Card et le vrai ArtType', () => {
     const app = deckBuilder();
     const html = app.renderCardGroup(10, { name: 'Carte', variants: [{ cardId: 11, ownedQuantity: 1, artType: 3 }] });
     assert.match(html, /data-card-component="11"/); assert.match(html, /Alternate Art/); assert.doesNotMatch(html, /<img/);
+});
+
+test('deck : pagination de 50 variantes physiques et sélection conservée hors page', () => {
+    const app = deckBuilder();
+    for (let id=1;id<=65;id++) app.state.cardsGrouped.set(id,{ name:`Carte ${id}`,variants:[{cardId:id,name:`Carte ${id}`,cardNumber:`P01-${id}`,ownedQuantity:4}] });
+    app.renderCardGrid();
+    assert.equal((app.get('worldsDeckCardGrid').innerHTML.match(/data-card-component=/g)||[]).length,50);
+    app.increaseVariant(1);
+    app.changeCardPage(1);
+    assert.equal((app.get('worldsDeckCardGrid').innerHTML.match(/data-card-component=/g)||[]).length,15);
+    assert.equal(app.state.selectedCards.get(1),1);
+    assert.match(app.get('worldsDeckPreviewCards').innerHTML,/data-card-component="1"/);
+    assert.match(app.get('worldsDeckPreviewCards').innerHTML,/×1/);
+    assert.equal(app.get('worldsDeckNextPage').disabled,true);
+    app.changeCardPage(-1);
+    assert.equal(app.get('worldsDeckPreviousPage').disabled,true);
+    assert.equal(app.state.selectedCards.get(1),1);
+});
+
+test('deck : filtres remettent la pagination à la première page sans vider le deck', () => {
+    const app = deckBuilder();
+    for (let id=1;id<=65;id++) app.state.cardsGrouped.set(id,{ name:`Carte ${id}`,variants:[{cardId:id,name:`Carte ${id}`,cardNumber:`P01-${id}`,cardSetId: id<=55?1:2,ownedQuantity:4}] });
+    app.state.selectedCards.set(1,4); app.state.cardPage=2;
+    app.get('worldsDeckCardExtension').value='2';
+    app.resetCardPage();
+    assert.equal(app.state.cardPage,1);
+    assert.equal((app.get('worldsDeckCardGrid').innerHTML.match(/data-card-component=/g)||[]).length,10);
+    assert.equal(app.get('worldsDeckPreviewCount').textContent,'4 / 40 cartes');
+    app.get('worldsDeckCardSearch').value='absent'; app.resetCardPage();
+    assert.match(app.get('worldsDeckCardGrid').innerHTML,/Aucune carte/);
+    assert.equal(app.state.selectedCards.get(1),4);
+});
+
+test('deck : aperçu du Leader, nom, variantes et retrait synchronisés', () => {
+    const app=deckBuilder();
+    app.state.leaders=[{cardId:100,name:'Leader'}]; app.get('worldsDeckLeaderSelect').value='100';
+    app.get('worldsDeckName').value='Mon deck';
+    app.state.cardsGrouped.set(1,{name:'Carte',variants:[{cardId:1,ownedQuantity:4,artType:1},{cardId:2,ownedQuantity:4,artType:2}]});
+    app.increaseVariant(2);
+    assert.match(app.get('worldsDeckPreviewLeader').innerHTML,/data-card-component="100"/);
+    assert.equal(app.get('worldsDeckPreviewName').textContent,'Mon deck');
+    assert.match(app.get('worldsDeckPreviewCards').innerHTML,/data-card-component="2"/);
+    app.decreaseVariant(2);
+    assert.doesNotMatch(app.get('worldsDeckPreviewCards').innerHTML,/data-card-component="2"/);
+    assert.equal(app.get('worldsDeckPreviewCount').textContent,'0 / 40 cartes');
 });
 
 function cardComponentDocument() {
@@ -702,16 +747,16 @@ test('ciblage : attaque animée après confirmation, refus sans animation', asyn
 
 test('fin : victoire et montants personnels réels, puis rechargement de partie terminée', async () => {
     const app = game();
-    app.handlers.GameFinished({ winnerUserId: 'me', xpReward: 123, cardBalanceReward: 10.5, reason: 'LeaderDefeated' });
+    app.handlers.GameFinished({ winnerUserId: 'me', xpReward: 123, cardBalanceReward: 10, reason: 'LeaderDefeated' });
     assert.equal(app.elements.gameResultDialog.open, true);
     assert.equal(app.elements.gameResultTitle.textContent, 'Victoire !');
     assert.equal(app.elements.gameResultXp.textContent, '+123 XP');
-    assert.equal(app.elements.gameResultMoney.textContent, '+10,5');
+    assert.equal(app.elements.gameResultMoney.textContent, '+10');
     await app.elements.gameResultClose.click();
-    app.handlers.GameStateUpdated({ ...app.state, status: 3, winnerUserId: 'me', xpEarned: 123, cardBalanceEarned: 10.5 });
+    app.handlers.GameStateUpdated({ ...app.state, status: 3, winnerUserId: 'me', xpEarned: 123, cardBalanceEarned: 10 });
     assert.equal(app.elements.gameResultDialog.open, false);
     const reload = game();
-    reload.handlers.GameStateUpdated({ ...reload.state, status: 3, winnerUserId: 'me', endReason: 1, xpEarned: 123, cardBalanceEarned: 10.5 });
+    reload.handlers.GameStateUpdated({ ...reload.state, status: 3, winnerUserId: 'me', endReason: 1, xpEarned: 123, cardBalanceEarned: 10 });
     assert.equal(reload.elements.gameResultDialog.open, true);
     assert.equal(reload.elements.endTurnButton.disabled, true);
 });

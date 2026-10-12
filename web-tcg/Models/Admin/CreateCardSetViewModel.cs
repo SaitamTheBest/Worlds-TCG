@@ -31,6 +31,7 @@ namespace web_tcg.Models.Admin
         [Required(ErrorMessage = "Le prix du booster est obligatoire.")]
         [Range(0, 999999999, ErrorMessage = "Le prix doit être compris entre 0 et 999 999 999.")]
         [Display(Name = "Prix du booster")]
+        [web_tcg.Models.Balance.WholeCurrency]
         public decimal BoosterPrice { get; set; }
     }
 }

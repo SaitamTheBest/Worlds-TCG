@@ -124,7 +124,8 @@
                 </button>
             </div>
 
-            <div class="worlds-deck-modal-body">
+            <div class="worlds-deck-modal-body worlds-deck-builder-layout">
+                <section class="worlds-deck-builder-collection" aria-label="Construire le deck">
 
                 <input type="hidden" id="worldsDeckId" value="" />
 
@@ -168,6 +169,19 @@
                 <div id="worldsDeckCardGrid"
                      class="worlds-deck-card-grid">
                 </div>
+                <nav class="worlds-deck-pagination" aria-label="Pages des cartes disponibles">
+                    <button type="button" id="worldsDeckPreviousPage" aria-label="Page précédente">←</button>
+                    <span id="worldsDeckPageLabel" role="status"></span>
+                    <button type="button" id="worldsDeckNextPage" aria-label="Page suivante">→</button>
+                </nav>
+                </section>
+                <aside class="worlds-deck-builder-preview" aria-label="Aperçu du deck">
+                    <h4>Aperçu du deck</h4>
+                    <strong id="worldsDeckPreviewName">Nouveau deck</strong>
+                    <div id="worldsDeckPreviewLeader"></div>
+                    <p id="worldsDeckPreviewCount" aria-live="polite">0 / 40 cartes</p>
+                    <div id="worldsDeckPreviewCards" class="worlds-deck-preview-cards"></div>
+                </aside>
 
             </div>
 

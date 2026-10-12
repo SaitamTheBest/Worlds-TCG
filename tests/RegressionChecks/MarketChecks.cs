@@ -52,6 +52,8 @@ public static class MarketChecks
             return (web_tcg.Models.Market.MarketIndexViewModel)((Microsoft.AspNetCore.Mvc.ViewResult)await controller.Purchases()).Model!;
         }
         var auction=await Act(service=>service.CreateAsync(seller,cardId,10,1));
+        Check(await Reject(service=>service.CreateAsync(seller,cardId,10.5m,1)),"marché : prix de vente décimal refusé");
+        Check(await Reject(service=>service.BidAsync(auction,alice,20.5m)) && await Balance(alice)==100,"marché : enchère décimale refusée sans débit");
         Check(await Quantity(seller,cardId)==19,"marché : une seule copie retirée de l’inventaire à la création");
         Check(await Reject(service=>service.BidAsync(auction,seller,10)),"marché : enchère sur sa propre vente refusée");
         await Mutate(service=>service.BidAsync(auction,alice,20));

@@ -1,4 +1,4 @@
-﻿@model web_tcg.Models.Admin.CreateCardSetViewModel
+@model web_tcg.Models.Admin.CreateCardSetViewModel
 
 @{
 var cardSetId = ViewData["CardSetId"] as int?;
@@ -252,7 +252,7 @@ Layout = "_Layout";
                                    type="number"
                                    min="0"
                                    max="999999999"
-                                   step="0.01"
+                                   step="1"
                                    placeholder="Ex : 100" />
 
                         </div>
@@ -635,13 +635,13 @@ Layout = "_Layout";
 
                 previewPrice.textContent =
                     price.toLocaleString('fr-FR', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 0
                     });
 
             } else {
 
-                previewPrice.textContent = '0.00';
+                previewPrice.textContent = '0';
 
             }
 

@@ -30,8 +30,8 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
 
     public async Task<Guid> CreateForMinutesAsync(string userId, int cardId, decimal price, int minutes)
     {
-        if (price < 1 || price > MaxPrice || decimal.Round(price,2) != price)
-            throw new MarketRuleException("Le prix doit être compris entre 1 et 999 999 999, avec deux décimales maximum.");
+        if (price < 1 || price > MaxPrice || decimal.Truncate(price) != price)
+            throw new MarketRuleException("Le prix doit être un entier compris entre 1 et 999 999 999.");
         var endsAt = AuctionEnd(DateTime.UtcNow,minutes);
         await using var transaction = await context.Database.BeginTransactionAsync();
         await CollectionTransactionLock.AcquireAsync(context);
@@ -57,8 +57,8 @@ public sealed class MarketService(ApplicationDbContext context, IHubContext<Mark
 
     public async Task BidAsync(Guid id, string userId, decimal amount)
     {
-        if (amount < 1 || amount > MaxPrice || decimal.Round(amount,2) != amount)
-            throw new MarketRuleException("Le montant doit être compris entre 1 et 999 999 999, avec deux décimales maximum.");
+        if (amount < 1 || amount > MaxPrice || decimal.Truncate(amount) != amount)
+            throw new MarketRuleException("Le montant doit être un entier compris entre 1 et 999 999 999.");
         await using var transaction = await context.Database.BeginTransactionAsync();
         await CollectionTransactionLock.AcquireAsync(context);
         var auction = await context.MarketAuctions.Include(x => x.Card).ThenInclude(x => x.CardSet).FirstOrDefaultAsync(x => x.Id == id);

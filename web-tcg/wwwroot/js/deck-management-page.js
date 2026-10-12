@@ -39,6 +39,8 @@
         isEditing: false,
         currentEditingDeckId: null
     };
+    const CARDS_PER_PAGE = 50;
+    state.cardPage = 1;
 
     /**
      * Initialisation au chargement du DOM
@@ -109,6 +111,7 @@
 
             // Grouper les cartes par gameplayCardId (pour gérer les variantes)
             state.cardsGrouped.clear();
+            state.cardPage = 1;
             playableCards.forEach(card => {
                 if (!state.cardsGrouped.has(card.gameplayCardId)) {
                     state.cardsGrouped.set(card.gameplayCardId, {
@@ -315,14 +318,20 @@
 
         console.log('Rendu de la grille, cartes groupées:', state.cardsGrouped.size);
 
-        DOM.deckCardGrid.innerHTML = Array.from(state.cardsGrouped.entries())
-            .filter(([, card]) => card.variants.some(variant => matchesFilter(variant, 'Card')))
-            .sort(([, a], [, b]) => compareCards(visibleVariants(a)[0], visibleVariants(b)[0]))
-            .map(([gameplayId, card]) => renderCardGroup(gameplayId, card))
+        const available = filteredCards();
+        const pages = Math.max(1, Math.ceil(available.length / CARDS_PER_PAGE));
+        state.cardPage = Math.max(1, Math.min(state.cardPage, pages));
+        DOM.deckCardGrid.innerHTML = available.slice((state.cardPage - 1) * CARDS_PER_PAGE, state.cardPage * CARDS_PER_PAGE)
+            .map(({ gameplayId, card, variant }) => renderCardGroup(gameplayId, card, [variant]))
             .join('') || '<p class="worlds-deck-subtitle">Aucune carte ne correspond à votre recherche.</p>';
+        const label = document.getElementById('worldsDeckPageLabel');
+        if (label) label.textContent = `${state.cardPage} / ${pages} · ${available.length} cartes · 50 par page`;
+        const previous = document.getElementById('worldsDeckPreviousPage'), next = document.getElementById('worldsDeckNextPage');
+        if (previous) previous.disabled = state.cardPage <= 1;
+        if (next) next.disabled = state.cardPage >= pages;
 
         // Attacher les événements
-        document.querySelectorAll('[data-variant-id]').forEach(btn => {
+        DOM.deckCardGrid.querySelectorAll('button[data-variant-id]').forEach(btn => {
             const variantId = btn.dataset.variantId;
             const action = btn.dataset.action;
 
@@ -357,23 +366,34 @@
     function visibleVariants(card) {
         return card.variants.filter(variant => matchesFilter(variant, 'Card')).sort(compareCards);
     }
+    function filteredCards() {
+        return Array.from(state.cardsGrouped.entries()).flatMap(([gameplayId, card]) =>
+            visibleVariants(card).map(variant => ({ gameplayId, card, variant })))
+            .sort((a, b) => compareCards(a.variant, b.variant));
+    }
+    function changeCardPage(delta) {
+        state.cardPage += delta;
+        renderCardGrid();
+        DOM.deckCardGrid.scrollTop = 0;
+    }
+    function resetCardPage() { state.cardPage = 1; renderCardGrid(); }
 
     /**
      * Rendre un groupe de variantes pour une carte
      */
-    function renderCardGroup(gameplayId, card) {
+    function renderCardGroup(gameplayId, card, variants = visibleVariants(card)) {
         const totalQty = card.variants.reduce((sum, v) => sum + (state.selectedCards.get(v.cardId) || 0), 0);
         const isMaxed = totalQty >= 4;
 
         return `
             <div class="worlds-card-group" data-gameplay-id="${gameplayId}">
                 <div class="worlds-card-group-header">
-                    <h4>${escapeHtml(card.name)}</h4>
+                    <h4 title="${escapeHtml(card.name)}">${escapeHtml(card.name)}</h4>
                     <span class="worlds-card-group-total">${totalQty}/4</span>
                 </div>
 
                 <div class="worlds-variants-list">
-                    ${visibleVariants(card).map((variant, idx) => {
+                    ${variants.map((variant, idx) => {
                         const qty = state.selectedCards.get(variant.cardId) || 0;
                         const total = Array.from(state.selectedCards.values()).reduce((sum, value) => sum + value, 0);
                         const canAdd = qty < variant.ownedQuantity && !isMaxed && total < 40;
@@ -453,6 +473,33 @@
         const canSave = total <= 40 && DOM.deckLeaderSelect.value && DOM.deckName.value.trim() && !state.saving;
         if (DOM.deckSaveButton) {
             DOM.deckSaveButton.disabled = !canSave;
+        }
+        renderDeckPreview();
+    }
+
+    function renderDeckPreview() {
+        const preview = document.getElementById('worldsDeckPreviewCards');
+        if (!preview) return;
+        const total = Array.from(state.selectedCards.values()).reduce((sum, qty) => sum + qty, 0);
+        document.getElementById('worldsDeckPreviewName').textContent = DOM.deckName.value.trim() || 'Nouveau deck';
+        document.getElementById('worldsDeckPreviewCount').textContent = `${total} / 40 cartes`;
+        const leader = state.leaders.find(item => String(item.cardId) === DOM.deckLeaderSelect.value);
+        const leaderPreview = document.getElementById('worldsDeckPreviewLeader');
+        const leaderKey = String(leader?.cardId || '');
+        if (leaderPreview.dataset.leaderId !== leaderKey) {
+            leaderPreview.dataset.leaderId = leaderKey;
+            leaderPreview.innerHTML = leader ? `<div class="worlds-deck-preview-leader-slot"><div class="worlds-deck-card-mount" data-card-component="${leader.cardId}"></div></div><strong>${escapeHtml(leader.name)}</strong>`
+                : '<p class="worlds-deck-subtitle">Choisissez un Leader.</p>';
+            window.worldsCardComponents?.hydrate(leaderPreview);
+        }
+        const variants = Array.from(state.cardsGrouped.values()).flatMap(group => group.variants.map(card => ({ ...card, name: card.name || group.name })));
+        const selected = variants.filter(card => (state.selectedCards.get(card.cardId) || 0) > 0);
+        const key = selected.map(card => `${card.cardId}:${state.selectedCards.get(card.cardId)}`).join('|');
+        if (preview.dataset.selection !== key) {
+            preview.dataset.selection = key;
+            preview.innerHTML = selected.map(card => `<article class="worlds-deck-preview-card"><div class="worlds-deck-preview-card-slot"><div class="worlds-deck-card-mount" data-card-component="${card.cardId}"></div></div><strong title="${escapeHtml(card.name)}">${escapeHtml(card.name)}</strong><small>${escapeHtml(card.cardNumber || '')}</small><span>×${state.selectedCards.get(card.cardId)}</span></article>`).join('')
+                || '<p class="worlds-deck-subtitle">Ajoutez des cartes pour voir votre deck.</p>';
+            window.worldsCardComponents?.hydrate(preview);
         }
     }
 
@@ -600,7 +647,7 @@
     function escapeHtml(text) {
         const div = document.createElement('div');
         div.textContent = text;
-        return div.innerHTML;
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     /**
@@ -617,9 +664,11 @@
         DOM.deckLeaderSelect?.addEventListener('change', updateCardCount);
         DOM.deckLeaderSelect?.addEventListener('change', renderLeaderPreview);
         DOM.deckName?.addEventListener('input', updateCardCount);
-        document.getElementById('worldsDeckCardSort')?.addEventListener('change', renderCardGrid);
+        document.getElementById('worldsDeckCardSort')?.addEventListener('change', resetCardPage);
+        document.getElementById('worldsDeckPreviousPage')?.addEventListener('click', () => changeCardPage(-1));
+        document.getElementById('worldsDeckNextPage')?.addEventListener('click', () => changeCardPage(1));
         for (const kind of ['Leader', 'Card']) {
-            const render = kind === 'Leader' ? renderLeaderPreview : renderCardGrid;
+            const render = kind === 'Leader' ? renderLeaderPreview : resetCardPage;
             document.getElementById(`worldsDeck${kind}Search`)?.addEventListener('input', render);
             document.getElementById(`worldsDeck${kind}Extension`)?.addEventListener('change', render);
         }
