@@ -18,6 +18,8 @@ namespace web_tcg.Models.Inventory
         /// Nombre de cartes différentes possédées.
         /// </summary>
         public int UniqueCards { get; set; }
+        public int Page { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
 
         public string? SearchQuery { get; set; }
 

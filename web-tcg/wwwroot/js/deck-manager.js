@@ -332,7 +332,7 @@
         const deckId = deckIdInput.value;
         if (!deckId) return;
 
-        if (!confirm('Supprimer définitivement ce deck ?')) return;
+        if (!await window.worldsConfirmation.ask('Supprimer définitivement ce deck ?', { title: 'Supprimer le deck', confirmText: 'Supprimer' })) return;
 
         try {
             const response = await fetch(`/Deck/${deckId}/Delete`, {

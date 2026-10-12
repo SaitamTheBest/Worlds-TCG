@@ -1078,8 +1078,8 @@
         finally { actionPending = false; updateControls(); }
     });
 
-    el.surrenderButton.addEventListener("click", () => {
-        if (!confirm("Voulez-vous vraiment abandonner la partie ?"))
+    el.surrenderButton.addEventListener("click", async () => {
+        if (!await window.worldsConfirmation.ask("Voulez-vous vraiment abandonner la partie ?", { title: 'Abandonner la partie', confirmText: 'Abandonner' }))
             return;
 
         connection.invoke("Surrender", matchId)

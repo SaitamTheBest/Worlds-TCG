@@ -66,7 +66,7 @@
     root.querySelectorAll('[data-market-bid], [data-market-cancel]').forEach(form => {
         form.addEventListener('submit',async event => {
             event.preventDefault(); if (busy) return;
-            if (form.hasAttribute('data-market-cancel') && !window.confirm('Annuler cette vente et récupérer la carte ?')) return;
+            if (form.hasAttribute('data-market-cancel') && !await window.worldsConfirmation.ask('Annuler cette vente et récupérer la carte ?', { title: 'Annuler la vente', confirmText: 'Annuler la vente', cancelText: 'Garder la vente' })) return;
             const input = form.querySelector('input[name=amount]');
             const amount = input ? Number(input.value) : null;
             if (input && (!Number.isFinite(amount) || amount <= 0 || !input.checkValidity())) { input.reportValidity(); return; }

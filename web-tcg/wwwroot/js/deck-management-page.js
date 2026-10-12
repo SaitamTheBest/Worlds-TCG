@@ -558,9 +558,9 @@
     /**
      * Supprimer un deck (avec confirmation)
      */
-    function deleteDeckConfirm(deckId) {
-        if (!confirm('Êtes-vous sûr de vouloir supprimer ce deck?')) return;
-        deleteDeck(deckId);
+    async function deleteDeckConfirm(deckId) {
+        if (!await window.worldsConfirmation.ask('Êtes-vous sûr de vouloir supprimer ce deck ?', { title: 'Supprimer le deck', confirmText: 'Supprimer' })) return;
+        return deleteDeck(deckId);
     }
 
     /**

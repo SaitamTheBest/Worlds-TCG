@@ -397,7 +397,7 @@
                                                   asp-action="DeleteRegion"
                                                   asp-route-id="@region.Id"
                                                   method="post"
-                                                  class="admin-regions-delete-form">
+                                                  class="admin-regions-delete-form" data-popup-confirm="Voulez-vous vraiment supprimer la région « @region.Name » ?" data-confirm-title="Supprimer la région" data-confirm-text="Supprimer">
 
                                                 @Html.AntiForgeryToken()
 
@@ -547,38 +547,6 @@
                 );
 
             }
-
-
-            document
-                .querySelectorAll('.admin-regions-delete-form')
-                .forEach(function(form) {
-
-                    form.addEventListener(
-                        'submit',
-                        function(event) {
-
-                            const button =
-                                form.querySelector(
-                                    '[data-region-name]'
-                                );
-
-                            const regionName =
-                                button?.dataset.regionName ||
-                                'cette région';
-
-                            const confirmed =
-                                confirm(
-                                    `Voulez-vous vraiment supprimer la région « ${regionName} » ?`
-                                );
-
-                            if (!confirmed) {
-                                event.preventDefault();
-                            }
-
-                        }
-                    );
-
-                });
 
 
             if (typeof lucide !== 'undefined') {

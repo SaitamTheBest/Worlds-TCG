@@ -8,7 +8,11 @@
       href="~/css/inventory.css"
       asp-append-version="true" />
 
-<div class="inventory-page">
+<div class="inventory-page inventory-compact">
+    @if (TempData["InventorySuccess"] is string success)
+    { <p class="inventory-feedback" role="status">@success</p> }
+    @if (TempData["InventoryError"] is string error)
+    { <p class="inventory-feedback inventory-feedback-error" role="alert">@error</p> }
 
     <!-- =========================================================
          HERO
@@ -104,7 +108,7 @@
                 </span>
 
                 <strong class="inventory-stat-value">
-                    @(Model.Items?.Count() ?? 0)
+                    @Model.UniqueCards
                 </strong>
 
             </div>
@@ -301,6 +305,7 @@
                             </div>
 
                             <div class="inventory-card-render">
+                                <div class="inventory-card-mount">
                                 @await Component.InvokeAsync(
                                     "Card",
                                     new
@@ -308,6 +313,7 @@
                                         model = item.Card
                                     }
                                 )
+                                </div>
                             </div>
 
                             <div class="inventory-card-details">
@@ -321,10 +327,28 @@
                             </div>
 
                         </a>
+                        <form method="post" asp-action="DiscardCard" class="inventory-discard-form"
+                              data-inventory-discard data-card-name="@item.Card.Name" data-owned="@item.Quantity">
+                            <input type="hidden" name="id" value="@item.Id" />
+                            <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Inventory", new { page = Model.Page, search = Model.SearchQuery, sortBy = Model.CurrentSort })" />
+                            <input type="number" name="quantity" min="1" max="@item.Quantity" step="1" value="1" required
+                                   aria-label="Quantité de @item.Card.Name à défausser" />
+                            <button type="submit" aria-label="Défausser @item.Card.Name">Défausser</button>
+                        </form>
 
                     </article>
                 }
             </div>
+            <nav class="inventory-pagination" aria-label="Pages de l'inventaire">
+                @if (Model.Page > 1) {
+                    <a asp-action="Index" asp-route-page="@(Model.Page - 1)" asp-route-search="@Model.SearchQuery" asp-route-sortBy="@Model.CurrentSort">← Précédent</a>
+                }
+                <span>Page @Model.Page / @Model.TotalPages · 50 cartes par page</span>
+                @if (Model.Page < Model.TotalPages) {
+                    <a asp-action="Index" asp-route-page="@(Model.Page + 1)" asp-route-search="@Model.SearchQuery" asp-route-sortBy="@Model.CurrentSort">Suivant →</a>
+                }
+            </nav>
+            <p class="inventory-discard-help">Défausser 1 carte rapporte 1 ¤ de monnaie marché. Défausser votre dernier exemplaire peut rendre un deck incomplet.</p>
         }
 
     </section>
@@ -333,6 +357,7 @@
 
 
 @section Scripts {
+    <script src="~/js/inventory-discard.js" asp-append-version="true"></script>
 
     <script>
 
@@ -343,7 +368,7 @@
 
         async function deleteCard(id) {
 
-            if (!confirm(
+            if (!await window.worldsConfirmation.ask(
                 "Êtes-vous sûr de vouloir supprimer cette carte de votre inventaire ?"
             )) {
                 return;

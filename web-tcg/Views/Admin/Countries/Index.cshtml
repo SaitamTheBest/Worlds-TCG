@@ -369,7 +369,7 @@
                                                   asp-route-id="@country.Id"
                                                   method="post"
                                                   class="admin-country-delete-form"
-                                                  onsubmit="return confirmDelete('@country.Name.Replace("'", "\\'")');">
+                                                  data-popup-confirm="Supprimer le pays « @country.Name » ? Cette action peut être impossible si des cartes sont encore associées à ce pays." data-confirm-title="Supprimer le pays" data-confirm-text="Supprimer">
 
                                                 @Html.AntiForgeryToken()
 
@@ -543,18 +543,6 @@
 
         });
 
-
-        function confirmDelete(countryName) {
-
-            return window.confirm(
-                'Supprimer le pays "' +
-                countryName +
-                '" ?\n\n' +
-                'Cette action peut être impossible si ' +
-                'des cartes sont encore associées à ce pays.'
-            );
-
-        }
 
     </script>
 }

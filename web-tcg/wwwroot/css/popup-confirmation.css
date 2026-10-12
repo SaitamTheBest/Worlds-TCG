@@ -1,0 +1,15 @@
+.popup-confirmation { width: min(460px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 0; overflow-y: auto; color: #f5f5f5; background: #101012; border: 1px solid #f4c43066; border-radius: 16px; box-shadow: 0 24px 90px #000b, 0 0 35px #f4c43012; font-family: system-ui, sans-serif; }
+.popup-confirmation::backdrop { background: #000b; backdrop-filter: blur(5px); }
+.popup-confirmation-panel { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 16px; padding: 24px; }
+.popup-confirmation-icon { display: grid; place-items: center; align-self: start; width: 40px; height: 40px; border: 1px solid #f4c43055; border-radius: 12px; background: #f4c43012; color: #f4c430; font-size: 1.4rem; font-weight: 800; }
+.popup-confirmation-label { color: #f4c430; font-size: .6rem; letter-spacing: .16em; font-weight: 800; }
+.popup-confirmation-content h2 { margin: 6px 0 12px; color: #fff; font-size: 1.1rem; font-weight: 750; }
+.popup-confirmation-content p { margin: 0; color: #b8b8c2; font-size: .85rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.popup-confirmation-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: 10px; padding-top: 12px; border-top: 1px solid #ffffff12; }
+.popup-confirmation-actions button { padding: 10px 16px; border-radius: 8px; font: 700 .8rem system-ui, sans-serif; cursor: pointer; }
+.popup-confirmation-cancel { background: #1a1a1f; border: 1px solid #ffffff24; color: #eee; }
+.popup-confirmation-accept { background: #f4c430; border: 1px solid #f4c430; color: #161204; }
+.popup-confirmation-accept:hover { background: #ffe080; }
+.popup-confirmation-cancel:hover { background: #27272d; }
+.popup-confirmation-actions button:focus-visible { outline: 2px solid #ffe080; outline-offset: 3px; }
+@media (max-width: 480px) { .popup-confirmation-panel { padding: 18px; gap: 12px; } }

@@ -8,6 +8,61 @@
     color: #fff;
 }
 
+/* Compact inventory: resize the Card mount, leaving the shared card styles intact. */
+.inventory-compact .inventory-hero { min-height: 0; }
+.inventory-compact .inventory-hero-content { max-width: 1600px; padding: 16px 16px 10px; }
+.inventory-compact .inventory-eyebrow { margin-bottom: 6px; font-size: .55rem; }
+.inventory-compact .inventory-title { font-size: 1.9rem; line-height: 1.1; }
+.inventory-compact .inventory-title span { display: inline; }
+.inventory-compact .inventory-subtitle { font-size: .75rem; margin-top: 6px; }
+.inventory-compact .inventory-stats-section { max-width: 1600px; padding: 0 16px; margin: 10px auto; gap: 8px; }
+.inventory-compact .inventory-stat-card { padding: 9px 12px; min-height: 0; gap: 10px; }
+.inventory-compact .inventory-stat-icon { width: 30px; height: 30px; border-radius: 8px; }
+.inventory-compact .inventory-stat-icon svg { width: 16px; height: 16px; }
+.inventory-compact .inventory-stat-value { font-size: 1.1rem; }
+.inventory-compact .inventory-stat-label { font-size: .55rem; }
+.inventory-compact .inventory-content { max-width: 1600px; padding: 10px 16px 20px; }
+.inventory-compact .inventory-toolbar { margin-bottom: 10px; gap: 10px; }
+.inventory-compact .inventory-toolbar-heading h2 { font-size: 1.1rem; margin: 3px 0; }
+.inventory-compact .inventory-section-label { font-size: .55rem; }
+.inventory-compact .inventory-controls { gap: 6px; }
+.inventory-compact .inventory-search,
+.inventory-compact .inventory-sort,
+.inventory-compact .inventory-search-button { min-height: 32px; height: 32px; }
+.inventory-compact .inventory-search input,
+.inventory-compact .inventory-sort select,
+.inventory-compact .inventory-search-button { font-size: .7rem; }
+.inventory-compact .inventory-collection-header { padding: 10px 12px; margin-bottom: 10px; min-height: 0; }
+.inventory-compact .inventory-collection-count strong,
+.inventory-compact .inventory-collection-status { font-size: .65rem; }
+.inventory-compact .inventory-card-grid { grid-template-columns: repeat(auto-fill, minmax(124px, 1fr)); gap: 8px; }
+.inventory-compact .inventory-card-item { padding: 7px; border-radius: 10px; }
+.inventory-compact .inventory-card-clickable { display: block; text-decoration: none; color: inherit; }
+.inventory-compact .inventory-card-render { min-height: 0; padding: 5px 0; }
+.inventory-compact .inventory-card-mount { width: 320px; max-width: none !important; zoom: .3; }
+.inventory-compact .inventory-card-item:hover .inventory-card-mount { transform: none; }
+.inventory-compact .inventory-card-details { padding: 7px 0; }
+.inventory-compact .inventory-card-details strong { display: block; font-size: .68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.inventory-compact .inventory-card-details span { font-size: .55rem; }
+.inventory-compact .inventory-card-quantity { top: 5px; right: 5px; height: 20px; min-width: 28px; padding: 0 5px; font-size: .6rem; }
+.inventory-discard-form { display: flex; gap: 4px; align-items: center; }
+.inventory-discard-form input { width: 40px; min-width: 0; padding: 4px; font-size: .65rem; background: #090a0c; color: #fff; border: 1px solid #ffffff24; border-radius: 5px; }
+.inventory-discard-form button { flex: 1; padding: 5px 4px; font-size: .62rem; background: #241f0f; color: #f4c430; border: 1px solid #f4c43055; border-radius: 5px; cursor: pointer; }
+.inventory-discard-form button:disabled { opacity: .5; cursor: wait; }
+.inventory-discard-form :focus-visible { outline: 2px solid #f4c430; outline-offset: 2px; }
+.inventory-pagination { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; margin-top: 14px; font-size: .75rem; color: #aaa; }
+.inventory-pagination a { color: #f4c430; padding: 5px 10px; border: 1px solid #f4c43033; border-radius: 6px; text-decoration: none; }
+.inventory-discard-help { color: #999; font-size: .7rem; text-align: center; }
+.inventory-feedback { margin: 0; padding: 10px 16px; background: #252111; color: #ffe08a; font-size: .8rem; }
+.inventory-feedback-error { background: #291414; color: #ffaaaa; }
+@media (max-width: 640px) {
+    .inventory-compact .inventory-card-mount { width: 280px; zoom: .3428571429; }
+    .inventory-compact .inventory-stats-section { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .inventory-compact .inventory-stat-icon { display: none; }
+    .inventory-compact .inventory-stat-card { padding: 8px; }
+    .inventory-compact .inventory-controls { width: 100%; }
+}
+
 /* =========================================================
    HERO
    ========================================================= */

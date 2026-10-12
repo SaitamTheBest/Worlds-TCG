@@ -42,7 +42,7 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
-      - run: node --test .github/scripts/release.test.mjs .github/scripts/prepare-deploy.test.mjs tests/frontend-regressions.test.cjs tests/friends-pagination.test.cjs
+      - run: node --test .github/scripts/release.test.mjs .github/scripts/prepare-deploy.test.mjs tests/frontend-regressions.test.cjs tests/friends-pagination.test.cjs tests/inventory-discard.test.cjs tests/popup-confirmation.test.cjs
       - run: dotnet run --project tests/RegressionChecks/RegressionChecks.csproj -p:NuGetAudit=false
       - name: Vérifier les enchères concurrentes et les transferts
         env:
@@ -56,6 +56,10 @@ jobs:
         env:
           TCG_MARKET_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=market_checks;Username=checks;Password=test-password
         run: dotnet run --project tests/RegressionChecks/RegressionChecks.csproj --no-build -- --currency
+      - name: Vérifier l'inventaire et la défausse
+        env:
+          TCG_MARKET_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=market_checks;Username=checks;Password=test-password
+        run: dotnet run --project tests/RegressionChecks/RegressionChecks.csproj --no-build -- --inventory
       - name: Valider Compose sans secrets réels
         run: docker compose --env-file .env.example -f docker-compose.yml config --quiet
       - name: Valider la configuration de production sans secrets réels

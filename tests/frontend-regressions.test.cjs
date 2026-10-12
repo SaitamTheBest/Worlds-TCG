@@ -128,7 +128,7 @@ function deckBuilder() {
     };
     const requests = [];
     const context = {
-        document, window: {}, console: { log() {}, error() {} }, confirm: () => true,
+        document, window: { worldsConfirmation: { ask: async () => true } }, console: { log() {}, error() {} },
         CustomEvent: class {},
         fetch: async (url, options) => {
             requests.push({ url, options });
@@ -138,11 +138,11 @@ function deckBuilder() {
     };
     // Accès aux fonctions privées dans ce contexte de test uniquement.
     const source = script('deck-management-page.js').replace('// Initialiser au chargement du DOM',
-        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, renderCardGroup, renderCardGrid, filteredCards, changeCardPage, resetCardPage, renderDeckPreview }; // Initialiser au chargement du DOM');
+        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, deleteDeckConfirm, renderCardGroup, renderCardGrid, filteredCards, changeCardPage, resetCardPage, renderDeckPreview }; // Initialiser au chargement du DOM');
     vm.runInNewContext(source, context);
     context.builder.initDOM();
     get('worldsDeckModal').hidden = false;
-    return { ...context.builder, get, requests };
+    return { ...context.builder, get, requests, confirmation: context.window.worldsConfirmation };
 }
 
 test('deck : possession exacte, plafond partagé entre variantes, retrait', () => {
@@ -178,6 +178,14 @@ test('variantes utilisent le composant Card et le vrai ArtType', () => {
     const app = deckBuilder();
     const html = app.renderCardGroup(10, { name: 'Carte', variants: [{ cardId: 11, ownedQuantity: 1, artType: 3 }] });
     assert.match(html, /data-card-component="11"/); assert.match(html, /Alternate Art/); assert.doesNotMatch(html, /<img/);
+});
+
+test('deck : annuler la popup ne supprime rien, accepter appelle la suppression protégée', async () => {
+    const app=deckBuilder();app.confirmation.ask=async()=>false;
+    await app.deleteDeckConfirm('deck-123');assert.equal(app.requests.length,0);
+    app.confirmation.ask=async()=>true;
+    await app.deleteDeckConfirm('deck-123');assert.equal(app.requests[0].url,'/Deck/deck-123/Delete');
+    assert.equal(app.requests[0].options.headers.RequestVerificationToken,'csrf');
 });
 
 test('deck : pagination de 50 variantes physiques et sélection conservée hors page', () => {

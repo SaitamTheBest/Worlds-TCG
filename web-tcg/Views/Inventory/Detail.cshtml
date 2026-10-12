@@ -709,9 +709,7 @@
                             ? `Vous allez défausser vos ${quantity} exemplaire(s) de cette carte pour ${quantity} ¤. La carte disparaîtra de votre inventaire. Continuer ?`
                             : `Défausser ${quantity} exemplaire(s) pour ${quantity} ¤ ?`;
 
-                    if (!window.confirm(confirmation)) {
-                        event.preventDefault();
-                    }
+                    window.worldsConfirmation.confirmForm(event, confirmation, { title: 'Défausser des cartes', confirmText: 'Défausser' });
                 }
             );
 

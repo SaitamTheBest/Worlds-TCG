@@ -8,6 +8,7 @@ using web_tcg.Data.Entities;
 if (args.Contains("--parties")) { await PoliticalPartyChecks.RunAsync(); return; }
 if (args.Contains("--friends")) { await FriendsChecks.RunAsync(); return; }
 if (args.Contains("--currency")) { await CurrencyChecks.RunAsync(); return; }
+if (args.Contains("--inventory")) { await InventoryChecks.RunAsync(); return; }
 
 if (args.Contains("--market"))
 {

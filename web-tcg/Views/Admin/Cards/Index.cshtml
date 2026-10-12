@@ -574,13 +574,12 @@
                                                       asp-action="DeleteCardVariant"
                                                       asp-route-id="@item.VariantId"
                                                       method="post"
-                                                      class="admin-delete-form">
+                                                      class="admin-delete-form" data-popup-confirm="Supprimer uniquement la variante @item.SerialNumber ?" data-confirm-title="Supprimer la variante" data-confirm-text="Supprimer">
 
                                                     @Html.AntiForgeryToken()
 
                                                     <button type="submit"
-                                                            class="admin-action-button admin-action-delete"
-                                                            onclick="return confirm('Supprimer uniquement la variante @item.SerialNumber ?');">
+                                                            class="admin-action-button admin-action-delete">
 
                                                         <i data-lucide="trash-2"></i>
                                                         <span>Supprimer</span>
@@ -595,13 +594,12 @@
                                                       asp-action="DeleteCard"
                                                       asp-route-id="@item.CardId"
                                                       method="post"
-                                                      class="admin-delete-form">
+                                                      class="admin-delete-form" data-popup-confirm="Supprimer la carte @item.SerialNumber et toutes ses variantes ?" data-confirm-title="Supprimer la carte" data-confirm-text="Supprimer">
 
                                                     @Html.AntiForgeryToken()
 
                                                     <button type="submit"
-                                                            class="admin-action-button admin-action-delete"
-                                                            onclick="return confirm('Supprimer la carte @item.SerialNumber et toutes ses variantes ?');">
+                                                            class="admin-action-button admin-action-delete">
 
                                                         <i data-lucide="trash-2"></i>
                                                         <span>Supprimer</span>

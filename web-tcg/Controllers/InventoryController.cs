@@ -47,7 +47,8 @@ namespace web_tcg.Controllers
         /// </summary>
         public async Task<IActionResult> Index(
             string? search = null,
-            string? sortBy = "name")
+            string? sortBy = "name",
+            int page = 1)
         {
             var user = await _userManager.GetUserAsync(User);
 
@@ -62,7 +63,7 @@ namespace web_tcg.Controllers
 
                 var query = _context.UserCardCollections
                     .AsNoTracking()
-                    .Where(x => x.UserId == user.Id)
+                    .Where(x => x.UserId == user.Id && x.Quantity > 0)
                     .Include(x => x.Card)
                         .ThenInclude(x => x.Region)
                     .Include(x => x.Card)
@@ -131,7 +132,13 @@ namespace web_tcg.Controllers
                 // CHARGEMENT
                 // =========================================================
 
-                var inventoryEntities = await query.ToListAsync();
+                const int pageSize = 50;
+                var uniqueCards = await query.CountAsync();
+                var totalCards = await query.SumAsync(x => (int?)x.Quantity) ?? 0;
+                var totalPages = Math.Max(1, (int)Math.Ceiling(uniqueCards / (double)pageSize));
+                page = Math.Clamp(page, 1, totalPages);
+                var inventoryEntities = await ((IOrderedQueryable<UserCardCollection>)query)
+                    .ThenBy(x => x.Id).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 
                 /*
                  * Une variante utilise les informations gameplay
@@ -245,8 +252,10 @@ namespace web_tcg.Controllers
                 var viewModel = new InventoryViewModel
                 {
                     Items = inventoryItems,
-                    TotalCards = inventoryEntities.Sum(x => x.Quantity),
-                    UniqueCards = inventoryEntities.Count,
+                    TotalCards = totalCards,
+                    UniqueCards = uniqueCards,
+                    Page = page,
+                    TotalPages = totalPages,
                     SearchQuery = search,
                     CurrentSort = sortBy
                 };
@@ -504,8 +513,15 @@ namespace web_tcg.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DiscardCard(
             int id,
-            int quantity)
+            int quantity,
+            string? returnUrl = null)
         {
+            IActionResult ReturnToInventory(bool removed = false)
+            {
+                if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    return LocalRedirect(returnUrl);
+                return removed ? RedirectToAction(nameof(Index)) : RedirectToAction(nameof(Detail), new { id });
+            }
             var userId = _userManager.GetUserId(User);
 
             if (string.IsNullOrWhiteSpace(userId))
@@ -516,9 +532,7 @@ namespace web_tcg.Controllers
                 TempData["InventoryError"] =
                     "La quantité à défausser doit être supérieure à zéro.";
 
-                return RedirectToAction(
-                    nameof(Detail),
-                    new { id });
+                return ReturnToInventory();
             }
 
             await using var transaction =
@@ -549,9 +563,7 @@ namespace web_tcg.Controllers
                     TempData["InventoryError"] =
                         $"Vous ne possédez que {inventoryItem.Quantity} exemplaire(s) de cette carte.";
 
-                    return RedirectToAction(
-                        nameof(Detail),
-                        new { id });
+                    return ReturnToInventory();
                 }
 
                 var user = await _context.Users
@@ -635,13 +647,10 @@ namespace web_tcg.Controllers
 
                 if (discardAll)
                 {
-                    return RedirectToAction(
-                        nameof(Index));
+                    return ReturnToInventory(removed: true);
                 }
 
-                return RedirectToAction(
-                    nameof(Detail),
-                    new { id });
+                return ReturnToInventory();
             }
             catch (Exception ex)
             {
@@ -657,9 +666,7 @@ namespace web_tcg.Controllers
                 TempData["InventoryError"] =
                     "Une erreur est survenue pendant la défausse de la carte.";
 
-                return RedirectToAction(
-                    nameof(Detail),
-                    new { id });
+                return ReturnToInventory();
             }
         }
 
