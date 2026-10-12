@@ -8,7 +8,7 @@ namespace web_tcg.Services
     public static class BalanceRewardSettings
     {
         public const decimal RewardAmount = 100m;
-        public const decimal MaximumBalance = 10000m;
+        public const decimal MaximumBalance = 1500m;
         public const int RewardIntervalMinutes = 10;
     }
 

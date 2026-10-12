@@ -104,6 +104,11 @@
    BALANCE PRINCIPALE - JAUNE
    ========================================================= */
 
+.tcg-topbar .tcg-balance-limit {
+    color: #a3a3a3;
+    font-weight: 400;
+}
+
 .tcg-topbar .tcg-balance-timer {
     display: flex;
     align-items: center;

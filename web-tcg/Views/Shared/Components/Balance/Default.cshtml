@@ -13,8 +13,9 @@
             SOLDE
         </span>
 
-        <strong class="tcg-balance-value" id="userBalance">
-            @Model.Balance.ToString("0")
+        <strong class="tcg-balance-value" id="userBalance"
+                data-maximum-balance="@web_tcg.Services.BalanceRewardSettings.MaximumBalance.ToString("0", System.Globalization.CultureInfo.InvariantCulture)">
+            <span data-current-balance>@Model.Balance.ToString("0")</span><span class="tcg-balance-limit">/@web_tcg.Services.BalanceRewardSettings.MaximumBalance.ToString("0", System.Globalization.CultureInfo.InvariantCulture)</span>
         </strong>
     </div>
 
@@ -52,7 +53,7 @@
             console.log("BalanceUpdated reçu :", data);
 
             if (data.balance !== undefined && data.balance !== null) {
-                balanceElement.textContent =
+                balanceElement.querySelector('[data-current-balance]').textContent =
                     Number(data.balance)
                         .toLocaleString("fr-FR");
             }
