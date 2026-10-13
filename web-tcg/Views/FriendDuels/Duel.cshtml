@@ -1,0 +1,44 @@
+@using web_tcg.Data.Entities
+@model web_tcg.Models.Friends.FriendDuelViewModel
+@{ ViewData["Title"]="Duel entre amis"; var invitation=Model.Invitation; var inviter=invitation?.InviterId==Model.UserId; }
+<link rel="stylesheet" href="~/css/friends.css" asp-append-version="true" />
+<main class="friends-page friends-duel-page">
+    <header class="friends-header"><div><span class="friends-kicker">DUEL PVP</span><h1>@Model.FriendName</h1></div><a href="/Friends" class="friends-button secondary">Amis</a></header>
+    @await Html.PartialAsync("~/Views/Friends/_Feedback.cshtml")
+    <div asp-validation-summary="All" class="friends-feedback error"></div>
+    <section class="friends-panel friends-duel-panel" id="friendDuel" data-id="@invitation?.Id" data-status="@((int?)invitation?.Status)" data-expires="@invitation?.ExpiresAt.ToString("O")">
+    @if(invitation==null || (!inviter && invitation.Status==FriendDuelStatus.Accepted)) {
+        <h2>Choisissez votre deck</h2>
+        <p>@(invitation==null?"Votre ami recevra une invitation valable 5 minutes.":"Votre ami vous attend. Le duel commence dès que vous confirmez votre deck.")</p>
+        @if(Model.Decks.Count==0) {<p>Créez un deck de 40 cartes pour jouer.</p><a href="/Deck/Manage" class="friends-button">Mes decks</a>}
+        else {
+            <form method="post" action="@(invitation==null?$"/Friends/Duel/Create/{Model.FriendshipId}":$"/Friends/Duel/{invitation.Id}/Resolve")" class="friends-duel-deck-form">
+                @Html.AntiForgeryToken()
+                @if(invitation!=null) {<input type="hidden" name="action" value="start" />}
+                <label for="duelDeck">Deck</label><select name="deckId" id="duelDeck" required><option value="">Sélectionnez un deck</option>@foreach(var deck in Model.Decks) {<option value="@deck.Id">@deck.Name</option>}</select>
+                <button class="friends-button">@(invitation==null?"Inviter en duel":"Lancer le duel")</button>
+            </form>
+        }
+    } else if(invitation.Status==FriendDuelStatus.Pending && !inviter) {
+        <h2>@Model.FriendName vous invite en duel</h2><p>Acceptez l’invitation pour choisir votre deck.</p>
+        <form method="post" asp-action="Resolve" asp-route-id="@invitation.Id" class="friends-actions">
+            <button name="action" value="accept" class="friends-button">Accepter</button><button name="action" value="decline" class="friends-button secondary">Refuser</button>
+        </form>
+    } else if(invitation.Status is FriendDuelStatus.Pending or FriendDuelStatus.Accepted) {
+        <div class="friends-duel-spinner" aria-hidden="true"></div>
+        <h2>@(invitation.Status==FriendDuelStatus.Pending?"En attente de votre ami…":"Votre ami choisit son deck…")</h2>
+        <p>La partie s’ouvrira automatiquement lorsque les deux decks seront prêts.</p>
+    } else {
+        <h2>@(invitation.Status==FriendDuelStatus.Expired?"Invitation expirée":invitation.Status==FriendDuelStatus.Declined?"Invitation refusée":"Invitation annulée")</h2>
+        <p>@(invitation.Status==FriendDuelStatus.Expired?"Le délai de 5 minutes est écoulé.":"Aucune partie n’a été lancée.")</p>
+        <a asp-action="Create" asp-route-id="@Model.FriendshipId" class="friends-button">Proposer un nouveau duel</a>
+    }
+    @if(invitation?.Status is FriendDuelStatus.Pending or FriendDuelStatus.Accepted) {
+        <p class="friends-duel-countdown">Temps restant : <strong id="friendDuelCountdown">05:00</strong></p>
+        <p id="friendDuelConnection" role="status" hidden>Connexion interrompue. Nouvelle tentative en cours…</p>
+        @if(inviter) {<form method="post" asp-action="Resolve" asp-route-id="@invitation.Id"><button name="action" value="cancel" class="friends-button secondary">Annuler l’invitation</button></form>}
+        else if(invitation.Status==FriendDuelStatus.Accepted) {<form method="post" asp-action="Resolve" asp-route-id="@invitation.Id"><button name="action" value="decline" class="friends-button secondary">Annuler le duel</button></form>}
+    }
+    </section>
+</main>
+@section Scripts {<script src="~/js/friend-duel.js" asp-append-version="true"></script>}

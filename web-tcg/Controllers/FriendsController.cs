@@ -21,6 +21,8 @@ public sealed class FriendsController(ApplicationDbContext db,FriendsService fri
             .Where(x=>!x.IsBot&&x.Id!=UserId&&x.NormalizedUserName!=null&&x.NormalizedUserName.Contains(term))
             .OrderBy(x=>x.UserName).Take(30).ToListAsync();}
         return View(new FriendsIndexViewModel { UserId=UserId,Search=search,Results=results,
+            Duels=await db.FriendDuelInvitations.AsNoTracking().Where(x=>(x.InviterId==UserId||x.RecipientId==UserId)&&
+                (x.Status==FriendDuelStatus.Pending||x.Status==FriendDuelStatus.Accepted)&&x.ExpiresAt>DateTime.UtcNow).OrderByDescending(x=>x.CreatedAt).ToListAsync(),
             Relations=await db.Friendships.AsNoTracking().Include(x=>x.FirstUser).Include(x=>x.SecondUser)
                 .Where(x=>(x.FirstUserId==UserId||x.SecondUserId==UserId)&&x.Status!=FriendshipStatus.Declined)
                 .OrderByDescending(x=>x.CreatedAt).ToListAsync() });

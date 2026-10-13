@@ -1128,3 +1128,12 @@
         padding: 0 6px;
     }
 }
+.inventory-selection-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 10px 0; font-size: .75rem; }
+.inventory-selection-toolbar button { padding: 7px 10px; border: 1px solid #f4c43066; border-radius: 7px; background: #24200e; color: #f4c430; cursor: pointer; }
+.inventory-selection-toolbar button:disabled { opacity: .4; cursor: default; }
+.inventory-selection-toolbar [hidden], .inventory-selection-choice[hidden] { display: none; }
+.inventory-selection-choice { display: flex; align-items: center; gap: 6px; padding: 4px 0; color: #f4c430; font-size: .7rem; cursor: pointer; }
+.inventory-selection-choice input { accent-color: #f4c430; }
+.inventory-card-grid.is-selecting .inventory-card-item.is-selected { border-color: #f4c430; box-shadow: 0 0 0 1px #f4c430; }
+.inventory-card-grid.is-selecting .inventory-discard-form { display: none; }
+.inventory-selection-toolbar > span { color: #f4c430; }

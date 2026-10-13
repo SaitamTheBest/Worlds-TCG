@@ -9,6 +9,7 @@ public sealed class FriendsIndexViewModel
     public string Search { get; init; } = string.Empty;
     public List<ApplicationUser> Results { get; init; } = new();
     public List<Friendship> Relations { get; init; } = new();
+    public List<FriendDuelInvitation> Duels { get; init; } = new();
 }
 public sealed class FriendConversationViewModel
 {

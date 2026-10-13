@@ -511,6 +511,57 @@ namespace web_tcg.Controllers
         /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DiscardSelection(List<InventoryDiscardItem> items, string? returnUrl = null)
+        {
+            IActionResult Back() => !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? LocalRedirect(returnUrl) : RedirectToAction(nameof(Index));
+            var userId = _userManager.GetUserId(User);
+            if (string.IsNullOrWhiteSpace(userId)) return Unauthorized();
+            if (!ModelState.IsValid || items == null || items.Count is < 1 or > 50 ||
+                items.Any(x => x.Id <= 0 || x.Quantity <= 0) || items.Select(x => x.Id).Distinct().Count() != items.Count)
+            {
+                TempData["InventoryError"] = "Sélection invalide. Sélectionnez entre 1 et 50 cartes.";
+                return Back();
+            }
+            await using var transaction = await _context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
+            await CollectionTransactionLock.AcquireAsync(_context);
+            try
+            {
+                var ids = items.Select(x => x.Id).ToList();
+                var entries = await _context.UserCardCollections.Where(x => x.UserId == userId && ids.Contains(x.Id)).ToListAsync();
+                if (entries.Count != items.Count || entries.Any(x => x.Quantity != items.Single(i => i.Id == x.Id).Quantity))
+                {
+                    await transaction.RollbackAsync();
+                    TempData["InventoryError"] = "Votre sélection a changé. Rechargez l’inventaire et vérifiez les quantités avant de confirmer.";
+                    return Back();
+                }
+                var user = await _context.Users.SingleOrDefaultAsync(x => x.Id == userId);
+                if (user == null) { await transaction.RollbackAsync(); return Unauthorized(); }
+                var cardIds = entries.Select(x => x.CardId).ToList();
+                var showcases = await _context.UserProfileShowcaseCards.Where(x => x.UserId == userId && cardIds.Contains(x.CardId)).ToListAsync();
+                var total = entries.Sum(x => (long)x.Quantity);
+                var reward = total * DiscardValuePerCard;
+                _context.UserProfileShowcaseCards.RemoveRange(showcases);
+                _context.UserCardCollections.RemoveRange(entries);
+                user.CardBalance += reward;
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+                try { await _cardBalanceRealtimeService.PublishAsync(user.Id,user.CardBalance); }
+                catch (Exception ex) { _logger.LogWarning(ex,"Défausse multiple validée, notification du solde impossible pour {UserId}.",userId); }
+                TempData["InventorySuccess"] = $"{total} exemplaire(s) de {entries.Count} carte(s) défaussés pour {reward:N0} ¤.";
+                return Back();
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                _logger.LogError(ex,"Erreur de défausse multiple pour {UserId}.",userId);
+                TempData["InventoryError"] = "La défausse a échoué. Aucune carte n’a été défaussée.";
+                return Back();
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DiscardCard(
             int id,
             int quantity,

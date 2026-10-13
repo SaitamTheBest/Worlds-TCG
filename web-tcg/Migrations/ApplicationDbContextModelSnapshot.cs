@@ -653,6 +653,59 @@ namespace web_tcg.Migrations
                     b.ToTable("DeckCard");
                 });
 
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendDuelInvitation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("FriendshipId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("InviterDeckId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("InviterId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("MatchId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RecipientDeckId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("RecipientId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FriendshipId");
+
+                    b.HasIndex("InviterId");
+
+                    b.HasIndex("MatchId");
+
+                    b.HasIndex("RecipientId");
+
+                    b.HasIndex("Status", "ExpiresAt");
+
+                    b.ToTable("FriendDuelInvitations", t =>
+                        {
+                            t.HasCheckConstraint("CK_FriendDuel_DifferentPlayers", "\"InviterId\" <> \"RecipientId\"");
+                        });
+                });
+
             modelBuilder.Entity("web_tcg.Data.Entities.FriendMessage", b =>
                 {
                     b.Property<long>("Id")
@@ -1469,6 +1522,32 @@ namespace web_tcg.Migrations
                     b.Navigation("Card");
 
                     b.Navigation("Deck");
+                });
+
+            modelBuilder.Entity("web_tcg.Data.Entities.FriendDuelInvitation", b =>
+                {
+                    b.HasOne("web_tcg.Data.Entities.Friendship", null)
+                        .WithMany()
+                        .HasForeignKey("FriendshipId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("InviterId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("web_tcg.Data.Entities.GameMatch", null)
+                        .WithMany()
+                        .HasForeignKey("MatchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("web_tcg.Data.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("RecipientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("web_tcg.Data.Entities.FriendMessage", b =>

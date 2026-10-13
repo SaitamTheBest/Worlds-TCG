@@ -66,3 +66,12 @@ body:has(.friends-page) main { background:#080808; }
 .friends-trade-pagination button { min-width:30px; padding:5px 9px; }
 @media(max-width:640px) { .friends-trade-builder .friends-card-mount { transform:scale(.3428571429); } }
 @media(max-width:400px) { .friends-trade-builder .friends-card-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .friends-trade-filters { grid-template-columns:1fr; } }
+.friends-duel-page { max-width: 1000px; margin: auto; }
+.friends-duel-panel { text-align: center; padding: 32px; }
+.friends-duel-panel .friends-actions { justify-content: center; }
+.friends-duel-deck-form { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; margin: 24px 0; }
+.friends-duel-deck-form select { min-width: min(300px,100%); max-width: 100%; padding: 12px; color: #fff; background: #0b0c0e; border: 1px solid #f4c43066; border-radius: 8px; color-scheme: dark; }
+.friends-duel-countdown strong { color: #f4c430; font-variant-numeric: tabular-nums; }
+.friends-duel-spinner { margin: 0 auto 24px; width: 44px; height: 44px; border: 3px solid #f4c43033; border-top-color: #f4c430; border-radius: 50%; animation: friend-duel-spin 1s linear infinite; }
+@keyframes friend-duel-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .friends-duel-spinner { animation: none; } }

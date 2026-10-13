@@ -6,6 +6,14 @@
     <header class="friends-header"><div><span class="friends-kicker">COMMUNAUTÉ</span><h1>Amis</h1><p>Retrouvez vos amis, discutez et échangez vos cartes.</p></div></header>
     @await Html.PartialAsync("_Feedback")
     <p class="friends-refresh" data-friends-refresh hidden>Votre liste d'amis a changé. <button type="button" onclick="location.reload()">Actualiser</button></p>
+    @if(Model.Duels.Count>0) {
+        <section class="friends-panel"><h2>Duels en attente</h2>
+        @foreach(var duel in Model.Duels) {
+            <article class="friends-person"><strong>@(duel.InviterId==Model.UserId?"Votre invitation au duel":"Invitation au duel reçue")</strong>
+                <a href="/Friends/Duel/@duel.Id" class="friends-button">@(duel.InviterId==Model.UserId?"Reprendre l’attente":"Voir l’invitation")</a></article>
+        }
+        </section>
+    }
     <section class="friends-panel"><h2>Rechercher des joueurs</h2>
         <form method="get" class="friends-search"><input name="search" value="@Model.Search" placeholder="Pseudo du joueur" maxlength="100" aria-label="Rechercher un joueur" /><button class="friends-button">Rechercher</button></form>
         @if(Model.Search.Length>0) {
@@ -40,7 +48,8 @@
             var player=relation.FirstUserId==Model.UserId?relation.SecondUser:relation.FirstUser;
             <article class="friends-person"><div class="friends-person-name">@if(player.AvatarUrl!=null){<img src="@player.AvatarUrl" alt="" />}<strong>@player.UserName</strong></div>
                 <div class="friends-actions"><a asp-action="Conversation" asp-route-id="@relation.Id" class="friends-button secondary"><i data-lucide="message-circle"></i>Messages</a>
-                <a asp-action="CreateTrade" asp-route-id="@relation.Id" class="friends-button"><i data-lucide="arrow-left-right"></i>Échanger</a></div>
+                <a asp-action="CreateTrade" asp-route-id="@relation.Id" class="friends-button"><i data-lucide="arrow-left-right"></i>Échanger</a>
+                <a href="/Friends/Duel/Create/@relation.Id" class="friends-button"><i data-lucide="swords"></i>Duel PVP</a></div>
             </article>
         }
         </div>

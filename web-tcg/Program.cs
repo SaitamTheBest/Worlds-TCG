@@ -95,6 +95,8 @@ builder.Services.AddRateLimiter(o =>
 builder.Services.AddSignalR();
 builder.Services.AddScoped<MarketService>();
 builder.Services.AddScoped<FriendsService>();
+builder.Services.AddScoped<FriendDuelService>();
+builder.Services.AddHostedService<FriendDuelExpiryWorker>();
 builder.Services.AddHostedService<MarketSettlementWorker>();
 
 builder.Services.AddScoped<BoosterRarityGenerator>();

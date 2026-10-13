@@ -72,6 +72,29 @@ public static class InventoryChecks
             "inventaire : dernière copie retirée et monnaie créditée une seule fois");
         Check(await controller.DiscardCard(entry.Id,0,"https://example.org") is RedirectToActionResult,
             "inventaire : URL de retour externe refusée");
+        db.ChangeTracker.Clear();
+        var batch = await db.UserCardCollections.AsNoTracking().Where(x=>x.UserId==userId).Take(3)
+            .Select(x=>new InventoryDiscardItem { Id=x.Id,Quantity=x.Quantity }).ToListAsync();
+        var batchIds = batch.Select(x=>x.Id).ToList();
+        await controller.DiscardSelection(new() { batch[0],batch[0] },returnUrl);
+        Check(await db.UserCardCollections.CountAsync(x=>batchIds.Contains(x.Id))==3 && await db.Users.Where(x=>x.Id==userId).Select(x=>x.CardBalance).SingleAsync()==2,
+            "sélection : doublons refusés sans défausse ni récompense");
+        await Controller("another-user").DiscardSelection(batch,returnUrl);
+        Check(await db.UserCardCollections.CountAsync(x=>batchIds.Contains(x.Id))==3,"sélection : cartes d'un autre joueur protégées");
+        await controller.DiscardSelection(new() { batch[0],new() { Id=batch[1].Id,Quantity=1 } },returnUrl);
+        Check(await db.UserCardCollections.CountAsync(x=>batchIds.Contains(x.Id))==3 && await db.Users.Where(x=>x.Id==userId).Select(x=>x.CardBalance).SingleAsync()==2,
+            "sélection : quantité modifiée refuse le lot entier avant suppression");
+        db.ChangeTracker.Clear();
+        var bulkResult = await controller.DiscardSelection(batch,returnUrl);
+        Check(bulkResult is LocalRedirectResult bulkBack && bulkBack.Url==returnUrl &&
+            !await db.UserCardCollections.AnyAsync(x=>batchIds.Contains(x.Id)) &&
+            await db.Users.Where(x=>x.Id==userId).Select(x=>x.CardBalance).SingleAsync()==8,
+            "sélection : toutes les quantités supprimées ensemble et six exemplaires crédités");
+        db.ChangeTracker.Clear();
+        await controller.DiscardSelection(batch,returnUrl);
+        Check(await db.Users.Where(x=>x.Id==userId).Select(x=>x.CardBalance).SingleAsync()==8,"sélection : répétition du POST ne crédite pas deux fois");
+        Check(typeof(InventoryController).GetMethod(nameof(InventoryController.DiscardSelection))!.IsDefined(typeof(ValidateAntiForgeryTokenAttribute),true),
+            "sélection : endpoint protégé contre les requêtes sans jeton CSRF");
         Console.WriteLine($"{checks} vérifications inventaire réussies sur PostgreSQL.");
     }
 }

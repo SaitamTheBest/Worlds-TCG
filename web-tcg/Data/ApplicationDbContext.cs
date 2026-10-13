@@ -13,6 +13,7 @@ namespace web_tcg.Data
         }
         public DbSet<CardSet> CardSets { get; set; }
         public DbSet<Friendship> Friendships { get; set; }
+        public DbSet<FriendDuelInvitation> FriendDuelInvitations { get; set; }
         public DbSet<FriendMessage> FriendMessages { get; set; }
         public DbSet<FriendTrade> FriendTrades { get; set; }
         public DbSet<FriendTradeCard> FriendTradeCards { get; set; }
@@ -49,6 +50,15 @@ namespace web_tcg.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<FriendDuelInvitation>(e => {
+                e.HasOne<Friendship>().WithMany().HasForeignKey(x => x.FriendshipId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.InviterId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<ApplicationUser>().WithMany().HasForeignKey(x => x.RecipientId).OnDelete(DeleteBehavior.Restrict);
+                e.HasOne<GameMatch>().WithMany().HasForeignKey(x => x.MatchId).OnDelete(DeleteBehavior.Restrict);
+                e.HasIndex(x => new { x.Status, x.ExpiresAt });
+                e.HasIndex(x => x.InviterId); e.HasIndex(x => x.RecipientId);
+                e.ToTable(t => t.HasCheckConstraint("CK_FriendDuel_DifferentPlayers", "\"InviterId\" <> \"RecipientId\""));
+            });
             modelBuilder.Entity<ApplicationUser>().ToTable(t => t.HasCheckConstraint("CK_User_WholeBalances",
                 "\"Balance\" = trunc(\"Balance\") AND \"CardBalance\" = trunc(\"CardBalance\")"));
             modelBuilder.Entity<CardSet>().ToTable(t => t.HasCheckConstraint("CK_CardSet_WholePrice",

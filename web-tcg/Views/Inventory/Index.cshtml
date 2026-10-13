@@ -290,10 +290,22 @@
                  CARD GRID
                  ================================================= -->
 
-            <div class="inventory-card-grid">
+            <form method="post" asp-action="DiscardSelection" id="inventoryBulkDiscard" class="inventory-selection-toolbar">
+                <input type="hidden" name="returnUrl" value="@Url.Action("Index", "Inventory", new { page = Model.Page, search = Model.SearchQuery, sortBy = Model.CurrentSort })" />
+                <button type="button" id="inventorySelectionToggle" aria-pressed="false">Sélectionner des cartes</button>
+                <button type="button" id="inventorySelectionAll" hidden>Tout sélectionner sur cette page</button>
+                <span id="inventorySelectionCount" role="status" hidden></span>
+                <button type="submit" id="inventorySelectionDiscard" hidden disabled>Défausser la sélection</button>
+                <div id="inventorySelectionInputs"></div>
+            </form>
+            <div class="inventory-card-grid" id="inventorySelectionGrid">
                 @foreach (var item in Model.Items)
                 {
                     <article class="inventory-card-item">
+                        <label class="inventory-selection-choice" hidden>
+                            <input type="checkbox" data-inventory-select value="@item.Id" data-quantity="@item.Quantity" data-name="@item.Card.Name" aria-label="Sélectionner tous les exemplaires de @item.Card.Name" />
+                            Sélectionner
+                        </label>
 
                         <a href="@Url.Action("Detail", "Inventory", new { id = item.Id })"
                            class="inventory-card-clickable"
@@ -358,6 +370,7 @@
 
 @section Scripts {
     <script src="~/js/inventory-discard.js" asp-append-version="true"></script>
+    <script src="~/js/inventory-selection.js" asp-append-version="true"></script>
 
     <script>
 
