@@ -322,9 +322,14 @@
     </div>
 </dialog>
 <aside id="gameRevealedCards" class="game-revealed-cards" role="status" aria-live="polite" hidden></aside>
+<aside id="gameCardFocus" class="game-card-focus" aria-label="Carte agrandie" hidden>
+    <div id="gameCardFocusVisual"></div>
+    <p id="gameCardFocusStatus"></p>
+</aside>
 
 @section Scripts {
     <script src="~/js/card-components.js" asp-append-version="true"></script>
+    <script src="~/js/game-card-focus.js" asp-append-version="true"></script>
     <script src="~/js/game.js"
             asp-append-version="true">
     </script>

@@ -865,3 +865,36 @@ test('deck : survol, clavier et clic inspectent ; ajout et retrait depuis les pa
     app.get('worldsDeckModal').listeners.click({target:remove});
     assert.equal(app.state.selectedCards.size,0);
 });
+
+function gameFocus() {
+    const elements=new Map(['gamePage','gameCardFocus','gameCardFocusVisual','gameCardFocusStatus'].map(id=>[id,new Element()]));
+    const docEvents={}, windowEvents={}, timers=new Map();let sequence=0, observer, dialogOpen=false, hydrated=0;
+    const popup=elements.get('gameCardFocus');popup.hidden=true;popup.offsetWidth=340;popup.offsetHeight=480;
+    const context={document:{getElementById:id=>elements.get(id),createElement:()=>new Element(),querySelector:()=>dialogOpen?{}:null,addEventListener:(type,fn)=>docEvents[type]=fn},
+        window:{innerWidth:1000,innerHeight:800,worldsCardComponents:{hydrate(){hydrated++;}},setTimeout(fn){timers.set(++sequence,fn);return sequence;},clearTimeout(id){timers.delete(id);},addEventListener:(type,fn)=>windowEvents[type]=fn},
+        MutationObserver:class {constructor(fn){observer=fn;}observe(){}}};
+    vm.runInNewContext(script('game-card-focus.js'),context);
+    const card=new Element();card.contains=other=>other===card;card.getBoundingClientRect=()=>({left:800,right:900,top:650});
+    card.querySelector=selector=>selector==='[data-card-component]'?{dataset:{cardComponent:'42'}}:selector==='.game-card-hp'?{textContent:'30/40'}:null;
+    const target={closest:()=>card};
+    return {popup,card,target,elements,docEvents,windowEvents,get hydrated(){return hydrated;},events:elements.get('gamePage').listeners,flush(){for(const [id,fn]of timers){timers.delete(id);fn();}},mutate(){observer();},setDialog(value){dialogOpen=value;}};
+}
+test('jeu : focus agrandi au survol et au clavier, position dans la fenêtre, sans sélection',()=>{
+    const app=gameFocus();app.events.pointerover({target:app.target,type:'pointerover',pointerType:'mouse',buttons:0});
+    assert.equal(app.popup.hidden,true);app.flush();assert.equal(app.popup.hidden,false);
+    assert.equal(app.elements.get('gameCardFocusVisual').children[0].dataset.cardComponent,'42');
+    assert.equal(app.elements.get('gameCardFocusStatus').textContent,'30/40');
+    assert.equal(app.popup.style.left,'444px');assert.equal(app.popup.style.top,'312px');
+    app.events.pointerout({relatedTarget:app.card});assert.equal(app.popup.hidden,false);
+    app.events.pointerout({relatedTarget:null});assert.equal(app.popup.hidden,true);
+    app.events.focusin({target:app.target,type:'focusin'});app.flush();assert.equal(app.popup.hidden,false);
+    app.events.click();assert.equal(app.popup.hidden,true);
+});
+test('jeu : focus annulé pendant déplacement, popup ouverte, touche Échap et carte retirée',()=>{
+    const app=gameFocus();const hover=()=>app.events.pointerover({target:app.target,type:'pointerover',pointerType:'mouse',buttons:0});
+    hover();app.events.pointerdown();app.flush();assert.equal(app.popup.hidden,true);
+    app.events.pointerover({target:app.target,pointerType:'touch'});app.flush();assert.equal(app.hydrated,0);
+    hover();app.setDialog(true);app.flush();assert.equal(app.popup.hidden,true);
+    app.setDialog(false);hover();app.flush();app.docEvents.keydown({key:'Escape'});assert.equal(app.popup.hidden,true);
+    hover();app.flush();app.card.isConnected=false;app.mutate();assert.equal(app.popup.hidden,true);
+});

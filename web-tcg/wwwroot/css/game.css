@@ -42,6 +42,17 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-hand > .game-card:first-child { margin-left: 0; }
 .game-hand > .game-card:hover, .game-hand > .game-card.is-selected { z-index: 80; transform: translateY(-6px); }
 .game-card { position: relative; width: 100%; height: 100%; aspect-ratio: 63/88; border-radius: 8px; cursor: pointer; }
+.game-card-focus { position: fixed; z-index: 1300; width: 340px; padding: 9px; border: 1px solid #f4c43088; border-radius: 14px; background: #101113; box-shadow: 0 18px 55px #000b; pointer-events: none; }
+.game-card-focus[hidden] { display: none; }
+.game-card-focus-mount { width: 320px; min-height: 447px; }
+.game-card-focus > p { margin: 7px 0 0; font-size: .75rem; color: #f4c430; }
+@media (max-width: 640px), (max-height: 600px) {
+    .game-card-focus { width: 260px; }
+    .game-card-focus-mount { zoom: .75; }
+}
+@media (max-width: 640px) {
+    .game-card-focus-mount { width: 280px; min-height: 391px; zoom: .8571428571; }
+}
 .game-card-visual { width: 100%; height: 100%; pointer-events: none; }
 .game-card-visual .tcg-card { --card-width: 100%; width: 100%; height: 100%; box-shadow: none; }
 .game-card-visual .tcg-card:hover { transform: none; }
