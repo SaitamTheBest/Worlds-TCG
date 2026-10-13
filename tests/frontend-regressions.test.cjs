@@ -898,3 +898,16 @@ test('jeu : focus annulé pendant déplacement, popup ouverte, touche Échap et 
     app.setDialog(false);hover();app.flush();app.docEvents.keydown({key:'Escape'});assert.equal(app.popup.hidden,true);
     hover();app.flush();app.card.isConnected=false;app.mutate();assert.equal(app.popup.hidden,true);
 });
+
+test('talent : popup ouverte reflète immédiatement la recharge puis le retour à disponibilité', async()=>{
+    const app=game();app.state.me.turnsPlayed=3;
+    app.state.me.leader.abilities=[{id:9,type:2,name:'Talent',usageCost:0,cooldown:0,targetTypes:[1]}];
+    app.handlers.GameStateUpdated(app.state);await app.elements.selfLeader.children[0].click();
+    const action=()=>app.elements.gameCardDialogActions.children.find(n=>n.textContent==='Utiliser Talent');
+    assert.equal(action().disabled,false);
+    const stateWithCooldown=remaining=>({...app.state,me:{...app.state.me,leader:{...app.state.me.leader,abilities:[{...app.state.me.leader.abilities[0],cooldown:remaining}]}}});
+    app.handlers.GameStateUpdated(stateWithCooldown(2));assert.equal(action().disabled,true);assert.match(action().title,/2 tour/);
+    await action().click();assert.equal(app.calls.some(c=>c.name==='UseAbility'),false);
+    app.handlers.GameStateUpdated(stateWithCooldown(1));assert.equal(action().disabled,true);
+    app.handlers.GameStateUpdated(stateWithCooldown(0));assert.equal(action().disabled,false);
+});

@@ -7,8 +7,8 @@ namespace web_tcg.Game.Engine
     public sealed class GameEngine
     {
         public const int InactivityLimitSeconds = 300;
-        public const int EnergyPerTurn = 40;
-        public const int FirstPlayerOpeningEnergy = 30;
+        public const int EnergyPerTurn = 80;
+        public const int FirstPlayerOpeningEnergy = 60;
 
         private readonly GameEffectEngine _effects;
         private readonly GameConditionEvaluator _conditions;
@@ -406,7 +406,7 @@ namespace web_tcg.Game.Engine
             else
             {
                 source.AbilityCooldowns[ability.Id] =
-                    ability.CooldownTurns;
+                    Math.Max(1, ability.CooldownTurns);
             }
 
             var logs =

@@ -93,13 +93,13 @@ public static class ActionFlowAuditChecks
             new() { Type=GameEffectType.HealthBonus,Trigger=GameEffectTrigger.OnPlay,Target=GameTargetType.Self,Value=20 } } });
         await engine.StartMatchAsync(state);
         check(source.MaxHealth==100,"audit déclenchements : condition du Leader respectée au lancement");
-        check(state.GetPlayer(state.FirstPlayerId).Money==30,"énergie : premier tour du premier joueur augmenté de 10 à 30");
+        check(state.GetPlayer(state.FirstPlayerId).Money==60,"énergie : premier joueur reçoit 60 au premier tour");
         var next=state.GetOpponent(state.ActivePlayerId);
         var logs=await engine.EndTurnAsync(state,state.ActivePlayerId);
-        check(next.Money==40 && logs.Any(l=>l.Contains("gagne 40 énergie")),"énergie : premier tour du second joueur augmenté de 20 à 40");
+        check(next.Money==80 && logs.Any(l=>l.Contains("gagne 80 énergie")),"énergie : second joueur reçoit 80 au premier tour");
         var opening=state.GetOpponent(state.ActivePlayerId);
         await engine.EndTurnAsync(state,state.ActivePlayerId);
-        check(opening.Money==70,"énergie : tours suivants accordent 40 énergie");
+        check(opening.Money==140,"énergie : tours suivants accordent 80 énergie");
         check(new GameStateProjector().Project(state,"a").FirstPlayerId==state.FirstPlayerId,
             "pile ou face : le résultat serveur est transmis aux deux joueurs");
         var capped = state.GetOpponent(state.ActivePlayerId); capped.Money=740;
@@ -137,24 +137,27 @@ public static class ActionFlowAuditChecks
         state.PlayerTwo.Leader.Abilities.Add(new() { Type=AbilityType.Effect,Effects=new() {
             new() { Type=GameEffectType.GainMoney,Trigger=GameEffectTrigger.OnTurnStart,Target=GameTargetType.FriendlyPlayer,Value=9 } } });
         await engine.EndTurnAsync(state,"a");
-        check(state.PlayerOne.Money==107 && state.PlayerTwo.Money==149,"audit déclenchements : fin du tour puis début adverse exécutés une seule fois");
+        check(state.PlayerOne.Money==107 && state.PlayerTwo.Money==189,"audit déclenchements : fin du tour puis début adverse exécutés une seule fois");
 
         state=State(); source=state.PlayerOne.Leader; target=state.PlayerTwo.Characters[0]!;
         source.Abilities.Add(new() { Id=1,Type=AbilityType.Trait,Effects=new() {
             new() { Type=GameEffectType.Damage,Trigger=GameEffectTrigger.OnTalent,Target=GameTargetType.EnemyCharacter,Value=10 } } });
         target.Abilities.Add(new() { Type=AbilityType.Effect,Effects=new() {
             new() { Type=GameEffectType.GainMoney,Trigger=GameEffectTrigger.OnDamaged,Target=GameTargetType.FriendlyPlayer,Value=7 } } });
+        // Separate talents exercise shield, damage and death independently in the same turn.
+        source.Abilities.Add(new() { Id=2,Type=AbilityType.Trait,Effects=source.Abilities[0].Effects });
+        source.Abilities.Add(new() { Id=3,Type=AbilityType.Trait,Effects=source.Abilities[0].Effects });
         target.HasShield=true;
         await engine.UseAbilityAsync(state,"a",source.InstanceId,1,target.InstanceId);
         check(target.CurrentHealth==40 && state.PlayerTwo.Money==100 && !target.HasShield,"audit réaction : bouclier absorbe l'attaque sans déclencher une réaction aux dégâts");
-        await engine.UseAbilityAsync(state,"a",source.InstanceId,1,target.InstanceId);
+        await engine.UseAbilityAsync(state,"a",source.InstanceId,2,target.InstanceId);
         check(target.CurrentHealth==30 && state.PlayerTwo.Money==107,"audit réaction : dégâts reçus déclenchent l'effet du bénéficiaire");
         target.Abilities.Add(new() { Type=AbilityType.Effect,Effects=new() {
             new() { Type=GameEffectType.Damage,Trigger=GameEffectTrigger.OnDeath,Target=GameTargetType.EnemyLeader,Value=10 } } });
         state.PlayerOne.Leader.IsStealthed=true;
         state.PlayerOne.Leader.AppliedEffects.Add(new() { Type=GameEffectType.Stealth,Value=1 });
         source.Abilities[0].Effects[0].Value=100;
-        await engine.UseAbilityAsync(state,"a",source.InstanceId,1,target.InstanceId);
+        await engine.UseAbilityAsync(state,"a",source.InstanceId,3,target.InstanceId);
         check(state.PlayerTwo.Characters[0]==null && state.PlayerTwo.Graveyard.Contains(target) && source.CurrentHealth==40,
             "audit mort : Dernier souffle avec cible camouflée ne bloque pas l'envoi au cimetière");
 

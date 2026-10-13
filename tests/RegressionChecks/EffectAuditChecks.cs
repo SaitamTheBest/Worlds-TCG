@@ -91,6 +91,8 @@ public static class EffectAuditChecks
                 ControllerUserId = victimOwner.UserId, Zone = GameCardZone.Location };
             victimOwner.Location = location;
             actor.Abilities[0].Effects[0].Target = allied ? GameTargetType.FriendlyLocation : GameTargetType.EnemyLocation;
+            await engine.EndTurnAsync(koState,"a");
+            await engine.EndTurnAsync(koState,"b");
             await engine.UseAbilityAsync(koState,"a",actor.InstanceId,99,null);
             check(victimOwner.Location == null && victimOwner.Graveyard.Contains(location),
                 $"KO : lieu {(allied ? "allié" : "adverse")} retiré du plateau");
@@ -107,14 +109,15 @@ public static class EffectAuditChecks
             new() { Type = GameEffectType.Heal, Trigger = GameEffectTrigger.OnTalent, Target = GameTargetType.Self, Value = 30 } } });
         await engine.UseAbilityAsync(healState,"a",healer.InstanceId,3,null);
         check(healer.CurrentHealth == 70, "audit : talent d'auto-soin avec condition de PV cible la carte elle-même");
-        healer.Abilities[1].UsageCost = 5;
+        healer.Abilities.Add(new() { Id = 4, Type = AbilityType.Trait, UsageCost = 5,
+            Conditions = healer.Abilities[1].Conditions, Effects = healer.Abilities[1].Effects });
         healer.CurrentHealth = 90;
         var money = healState.PlayerOne.Money;
         try {
-            await engine.UseAbilityAsync(healState,"a",healer.InstanceId,3,null);
+            await engine.UseAbilityAsync(healState,"a",healer.InstanceId,4,null);
             check(false, "audit : auto-soin refusé si la carte ne remplit pas sa condition");
         } catch (GameRuleException ex) {
-            check(healState.PlayerOne.Money == money && healer.AbilityCooldowns.GetValueOrDefault(3) == 0 && ex.Message.Contains("90"),
+            check(healState.PlayerOne.Money == money && healer.AbilityCooldowns.GetValueOrDefault(4) == 0 && ex.Message.Contains("90"),
                 "audit : auto-soin interdit explique les PV actuels sans paiement ni recharge");
         }
         healer.Abilities.Add(new() { Id = 2, Type = AbilityType.Skill,

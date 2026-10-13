@@ -161,5 +161,43 @@ public static class AbilityRuleChecks
         check(prisonState.PlayerTwo.Leader.IsImprisoned, "moteur : Prison appliquée pendant son propre tour ne disparaît pas à la fin de ce tour");
         await engine.EndTurnAsync(prisonState,"a"); await engine.EndTurnAsync(prisonState,"b");
         check(!prisonState.PlayerTwo.Leader.IsImprisoned, "moteur : Prison sur son propre tour dure jusqu'à la fin du prochain tour");
+
+        foreach (var type in new[] { CardType.Character, CardType.Leader })
+        foreach (var recharge in new[] { 0, 1, 2 })
+        {
+            var cooldownState = new GameState { Status = GameMatchStatus.InProgress, ActivePlayerId = "a", TurnNumber = 10,
+                PlayerOne = new() { UserId = "a", TurnsPlayed = 3, Money = 100, Leader = Unit(CardType.Leader,"a") },
+                PlayerTwo = new() { UserId = "b", TurnsPlayed = 3, Money = 100, Leader = Unit(CardType.Leader,"b") } };
+            var caster = type == CardType.Leader ? cooldownState.PlayerOne.Leader : Unit(type,"a");
+            if (type == CardType.Character) cooldownState.PlayerOne.Characters[0] = caster;
+            caster.CurrentHealth = 10;
+            caster.Abilities.Add(new() { Id = 50, Type = AbilityType.Trait, UsageCost = 5, CooldownTurns = recharge,
+                Effects = new() { new() { Type = GameEffectType.Heal, Trigger = GameEffectTrigger.OnTalent, Target = GameTargetType.Self, Value = 10 } } });
+            await engine.UseAbilityAsync(cooldownState,"a",caster.InstanceId,50,null);
+            check(await Rejected(() => engine.UseAbilityAsync(cooldownState,"a",caster.InstanceId,50,null)) &&
+                caster.CurrentHealth == 20 && cooldownState.PlayerOne.Money == 95 && !caster.IsExhausted,
+                $"talent {type} recharge {recharge} : deuxième utilisation refusée sans soin ni dépense");
+            // Match state is serialized between commands in real games.
+            cooldownState = System.Text.Json.JsonSerializer.Deserialize<GameState>(System.Text.Json.JsonSerializer.Serialize(cooldownState))!;
+            caster = cooldownState.FindCard(caster.InstanceId)!;
+            check(new GameStateProjector().Project(cooldownState,"a").Me.Leader.Abilities.FirstOrDefault(a => a.Id == 50)?.Cooldown == Math.Max(1,recharge) ||
+                type == CardType.Character && new GameStateProjector().Project(cooldownState,"a").Me.Characters[0]!.Abilities.Single().Cooldown == Math.Max(1,recharge),
+                $"talent {type} recharge {recharge} : verrou sauvegardé et transmis à Play");
+            await engine.EndTurnAsync(cooldownState,"a");
+            check(caster.AbilityCooldowns[50] == Math.Max(1,recharge), $"talent {type} : tour adverse ne réduit pas la recharge");
+            await engine.EndTurnAsync(cooldownState,"b");
+            if (recharge == 2)
+            {
+                var energy = cooldownState.PlayerOne.Money;
+                check(await Rejected(() => engine.UseAbilityAsync(cooldownState,"a",caster.InstanceId,50,null)) &&
+                    caster.AbilityCooldowns[50] == 1 && cooldownState.PlayerOne.Money == energy,
+                    $"talent {type} : recharge 2 interdit le prochain tour du propriétaire");
+                await engine.EndTurnAsync(cooldownState,"a");
+                await engine.EndTurnAsync(cooldownState,"b");
+            }
+            await engine.UseAbilityAsync(cooldownState,"a",caster.InstanceId,50,null);
+            check(caster.CurrentHealth == 30 && caster.AbilityCooldowns[50] == Math.Max(1,recharge),
+                $"talent {type} recharge {recharge} : disponible après attente puis verrouillé à nouveau");
+        }
     }
 }

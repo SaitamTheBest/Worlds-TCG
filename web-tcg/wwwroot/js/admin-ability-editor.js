@@ -134,7 +134,8 @@
         const section = node("section",null,"ability-rules"); section.appendChild(node("h3","1. Définir ce que fait la capacité"));
         const help = node("p","La description est le texte de la carte. Configurez ici ce qu'elle fait réellement. Les actions sont exécutées dans l'ordre ; toutes les conditions doivent être remplies.","ability-rules-help"); section.appendChild(help);
         const cooldown = input(`Abilities[${item.dataset.abilityKey}].CooldownTurns`,data.cooldownTurns ?? 0); cooldown.max = 99;
-        field(section,"Recharge du talent (tours à attendre, y compris à la pose)",cooldown);
+        field(section,"Recharge du talent (tours du propriétaire, y compris à la pose)",cooldown);
+        section.appendChild(node("p","Un talent s’utilise au maximum une fois par tour. Recharge 0 ou 1 : réutilisable au prochain tour ; recharge 2 : au deuxième prochain tour. Les tours adverses ne réduisent pas la recharge.","ability-rules-help"));
         const list = node("div",null,"ability-effects-list"), conditionList = node("div"); section.appendChild(list);
         (data.effects || []).forEach(e=>addEffect(item,list,e));
         section.appendChild(button("Ajouter une action",()=>addEffect(item,list)));
@@ -159,7 +160,7 @@
         const summarize = () => {
             const kind=abilityType(item), cost=Number(item.querySelector('[name$=".UsageCost"]')?.value || 0);
             summaryCost.textContent = kind===1 ? `Compétence · ${cost} énergie · épuise la carte après utilisation.`
-                : kind===2 ? `Talent · ${cost} énergie · recharge de ${cooldown.value} tour(s), à la pose et après utilisation · n’épuise pas la carte.`
+                : kind===2 ? `Talent · ${cost} énergie · une utilisation par tour · recharge initiale de ${cooldown.value} tour(s), puis ${Math.max(1,Number(cooldown.value))} tour(s) après utilisation · n’épuise pas la carte.`
                 : "Effet · sans coût d’activation · automatique au déclenchement choisi.";
             summaryConditions.replaceChildren(); summaryActions.replaceChildren();
             [...conditionList.children].forEach(row=>{
