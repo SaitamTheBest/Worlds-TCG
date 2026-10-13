@@ -125,6 +125,17 @@
             </div>
 
             <div class="worlds-deck-modal-body worlds-deck-builder-layout">
+                <aside class="worlds-deck-builder-focus" aria-label="Carte en détail">
+                    <h4>Carte en détail</h4>
+                    <div id="worldsDeckFocusCard" class="worlds-deck-focus-slot"></div>
+                    <strong id="worldsDeckFocusName">Survolez une carte</strong>
+                    <p id="worldsDeckFocusInfo">Survolez ou sélectionnez une carte pour la lire en grand.</p>
+                    <div class="worlds-deck-focus-controls">
+                        <button type="button" id="worldsDeckFocusRemove" aria-label="Retirer un exemplaire" disabled>−</button>
+                        <span id="worldsDeckFocusQuantity"></span>
+                        <button type="button" id="worldsDeckFocusAdd" aria-label="Ajouter un exemplaire" disabled>+</button>
+                    </div>
+                </aside>
                 <section class="worlds-deck-builder-collection" aria-label="Construire le deck">
 
                 <input type="hidden" id="worldsDeckId" value="" />
@@ -154,7 +165,7 @@
                 </div>
 
                 <div class="worlds-deck-field">
-                    <label for="worldsDeckCardSearch">Cartes</label>
+                    <label for="worldsDeckCardSearch">Collection</label>
                     <div class="worlds-deck-filters worlds-deck-card-filters">
                         <input type="search" id="worldsDeckCardSearch" placeholder="Nom ou numéro de carte" />
                         <select id="worldsDeckCardExtension" aria-label="Extension des cartes"></select>
@@ -176,7 +187,7 @@
                 </nav>
                 </section>
                 <aside class="worlds-deck-builder-preview" aria-label="Aperçu du deck">
-                    <h4>Aperçu du deck</h4>
+                    <h4>Mon deck</h4>
                     <strong id="worldsDeckPreviewName">Nouveau deck</strong>
                     <div id="worldsDeckPreviewLeader"></div>
                     <p id="worldsDeckPreviewCount" aria-live="polite">0 / 40 cartes</p>

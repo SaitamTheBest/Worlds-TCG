@@ -401,9 +401,9 @@
 
                         return `
                             <div class="worlds-variant-item" data-variant-id="${variant.cardId}">
-                                <div class="worlds-variant-preview">
+                                <button type="button" class="worlds-variant-preview" data-focus-card="${variant.cardId}" aria-label="Voir ${escapeHtml(card.name)} en grand">
                                     <div class="worlds-deck-card-mount" data-card-component="${variant.cardId}"></div>
-                                </div>
+                                </button>
 
                                 <div class="worlds-variant-controls">
                                     <button class="worlds-qty-btn" data-action="decrease" data-variant-id="${variant.cardId}" ${!canRemove ? 'disabled' : ''}>−</button>
@@ -475,6 +475,42 @@
             DOM.deckSaveButton.disabled = !canSave;
         }
         renderDeckPreview();
+        updateFocusControls();
+    }
+
+    function findBuilderCard(id) {
+        return state.leaders.find(card => card.cardId === id) ||
+            Array.from(state.cardsGrouped.values()).flatMap(group => group.variants.map(card => ({ ...card, name: card.name || group.name }))).find(card => card.cardId === id);
+    }
+
+    function focusCard(id) {
+        const card = findBuilderCard(id);
+        const mount = document.getElementById('worldsDeckFocusCard');
+        if (!card || !mount) return;
+        state.focusCardId = id;
+        if (mount.dataset.cardId !== String(id)) {
+            mount.dataset.cardId = String(id);
+            mount.innerHTML = `<div class="worlds-deck-card-mount" data-card-component="${id}"></div>`;
+            window.worldsCardComponents?.hydrate(mount);
+        }
+        document.getElementById('worldsDeckFocusName').textContent = card.name;
+        document.getElementById('worldsDeckFocusInfo').textContent = `${card.cardNumber || ''} · ${getArtTypeBadge(card.artType)} · ${card.ownedQuantity ?? 1} possédée(s)`;
+        updateFocusControls();
+    }
+
+    function updateFocusControls() {
+        const add = document.getElementById('worldsDeckFocusAdd');
+        const remove = document.getElementById('worldsDeckFocusRemove');
+        if (!add || !remove) return;
+        const id = state.focusCardId;
+        const group = Array.from(state.cardsGrouped.values()).find(group => group.variants.some(card => card.cardId === id));
+        const card = group?.variants.find(card => card.cardId === id);
+        const qty = state.selectedCards.get(id) || 0;
+        const groupQty = group?.variants.reduce((sum, card) => sum + (state.selectedCards.get(card.cardId) || 0), 0) || 0;
+        const total = Array.from(state.selectedCards.values()).reduce((sum, qty) => sum + qty, 0);
+        add.disabled = state.saving || !card || qty >= card.ownedQuantity || groupQty >= 4 || total >= 40;
+        remove.disabled = state.saving || !card || qty === 0;
+        document.getElementById('worldsDeckFocusQuantity').textContent = card ? `${qty} dans le deck` : 'Leader';
     }
 
     function renderDeckPreview() {
@@ -488,7 +524,7 @@
         const leaderKey = String(leader?.cardId || '');
         if (leaderPreview.dataset.leaderId !== leaderKey) {
             leaderPreview.dataset.leaderId = leaderKey;
-            leaderPreview.innerHTML = leader ? `<div class="worlds-deck-preview-leader-slot"><div class="worlds-deck-card-mount" data-card-component="${leader.cardId}"></div></div><strong>${escapeHtml(leader.name)}</strong>`
+            leaderPreview.innerHTML = leader ? `<button type="button" class="worlds-deck-preview-leader-slot" data-focus-card="${leader.cardId}" aria-label="Voir le leader en grand"><div class="worlds-deck-card-mount" data-card-component="${leader.cardId}"></div></button><strong>${escapeHtml(leader.name)}</strong>`
                 : '<p class="worlds-deck-subtitle">Choisissez un Leader.</p>';
             window.worldsCardComponents?.hydrate(leaderPreview);
         }
@@ -497,7 +533,7 @@
         const key = selected.map(card => `${card.cardId}:${state.selectedCards.get(card.cardId)}`).join('|');
         if (preview.dataset.selection !== key) {
             preview.dataset.selection = key;
-            preview.innerHTML = selected.map(card => `<article class="worlds-deck-preview-card"><div class="worlds-deck-preview-card-slot"><div class="worlds-deck-card-mount" data-card-component="${card.cardId}"></div></div><strong title="${escapeHtml(card.name)}">${escapeHtml(card.name)}</strong><small>${escapeHtml(card.cardNumber || '')}</small><span>×${state.selectedCards.get(card.cardId)}</span></article>`).join('')
+            preview.innerHTML = selected.map(card => `<article class="worlds-deck-preview-card"><button type="button" class="worlds-deck-preview-card-slot" data-focus-card="${card.cardId}" aria-label="Voir ${escapeHtml(card.name)} en grand"><div class="worlds-deck-card-mount" data-card-component="${card.cardId}"></div></button><strong title="${escapeHtml(card.name)}">${escapeHtml(card.name)}</strong><small>${escapeHtml(card.cardNumber || '')}</small><span>×${state.selectedCards.get(card.cardId)}</span><button type="button" class="worlds-deck-preview-remove" data-remove-card="${card.cardId}" aria-label="Retirer un exemplaire de ${escapeHtml(card.name)}">−</button></article>`).join('')
                 || '<p class="worlds-deck-subtitle">Ajoutez des cartes pour voir votre deck.</p>';
             window.worldsCardComponents?.hydrate(preview);
         }
@@ -600,6 +636,9 @@
      */
     function showModal() {
         renderLeaderPreview();
+        state.focusCardId = null;
+        const initial = Number(DOM.deckLeaderSelect.value) || state.leaders[0]?.cardId;
+        if (initial) focusCard(initial);
         if (DOM.deckModal) {
             DOM.deckModal.removeAttribute('hidden');
             state.previousFocus = document.activeElement;
@@ -664,6 +703,18 @@
         DOM.deckLeaderSelect?.addEventListener('change', updateCardCount);
         DOM.deckLeaderSelect?.addEventListener('change', renderLeaderPreview);
         DOM.deckName?.addEventListener('input', updateCardCount);
+        for (const eventName of ['mouseover', 'focusin', 'click']) {
+            DOM.deckModal?.addEventListener(eventName, event => {
+                const item = event.target.closest('[data-focus-card]');
+                if (item) focusCard(Number(item.dataset.focusCard));
+                if (eventName === 'click') {
+                    const remove = event.target.closest('[data-remove-card]');
+                    if (remove && !state.saving) decreaseVariant(Number(remove.dataset.removeCard));
+                }
+            });
+        }
+        document.getElementById('worldsDeckFocusAdd')?.addEventListener('click', () => { if (!state.saving) increaseVariant(state.focusCardId); });
+        document.getElementById('worldsDeckFocusRemove')?.addEventListener('click', () => { if (!state.saving) decreaseVariant(state.focusCardId); });
         document.getElementById('worldsDeckCardSort')?.addEventListener('change', resetCardPage);
         document.getElementById('worldsDeckPreviousPage')?.addEventListener('click', () => changeCardPage(-1));
         document.getElementById('worldsDeckNextPage')?.addEventListener('click', () => changeCardPage(1));
@@ -697,7 +748,7 @@
             ? `Leader choisi : ${selected.name} · ${selected.cardNumber || ''}`
             : 'Choisissez un leader pour ce deck.';
         grid.innerHTML = state.leaders.filter(leader => matchesFilter(leader, 'Leader')).map(leader => `
-            <button type="button" class="worlds-deck-leader-choice" data-leader-id="${leader.cardId}"
+            <button type="button" class="worlds-deck-leader-choice" data-leader-id="${leader.cardId}" data-focus-card="${leader.cardId}"
                 aria-pressed="${String(leader.cardId) === DOM.deckLeaderSelect.value}">
                 <span class="worlds-deck-card-mount" data-card-component="${leader.cardId}"></span>
                 <strong>${escapeHtml(leader.name)}</strong><small>${escapeHtml(leader.cardNumber || '')} · ${getArtTypeBadge(leader.artType)}</small>

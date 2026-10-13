@@ -138,7 +138,7 @@ function deckBuilder() {
     };
     // Accès aux fonctions privées dans ce contexte de test uniquement.
     const source = script('deck-management-page.js').replace('// Initialiser au chargement du DOM',
-        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, deleteDeckConfirm, renderCardGroup, renderCardGrid, filteredCards, changeCardPage, resetCardPage, renderDeckPreview }; // Initialiser au chargement du DOM');
+        'globalThis.builder = { state, DOM, initDOM, increaseVariant, decreaseVariant, updateCardCount, saveDeck, deleteDeck, deleteDeckConfirm, renderCardGroup, renderCardGrid, filteredCards, changeCardPage, resetCardPage, renderDeckPreview, focusCard, updateFocusControls, attachEventListeners }; // Initialiser au chargement du DOM');
     vm.runInNewContext(source, context);
     context.builder.initDOM();
     get('worldsDeckModal').hidden = false;
@@ -821,4 +821,47 @@ test('glisser : personnage avec cible attend la sélection et confirmation', asy
     await app.elements.opponentLeader.children[0].click();
     await app.elements.gameCardDialogActions.children.find(n => n.textContent === 'Confirmer l’action').click(); await tick();
     assert.deepEqual(app.calls.find(c => c.name === 'PlayCardWithTarget').args,['match-1','hand-1',3,'enemy-leader']);
+});
+
+test('deck : focus en grand sans modifier la sélection, contrôles synchronisés et leader distinct', () => {
+    const app=deckBuilder();
+    app.state.leaders=[{cardId:100,name:'Leader',artType:1}];
+    app.state.cardsGrouped.set(1,{name:'Carte',variants:[{cardId:1,ownedQuantity:1,cardNumber:'P01-1'},{cardId:2,ownedQuantity:4}]});
+    app.focusCard(1);
+    assert.match(app.get('worldsDeckFocusCard').innerHTML,/data-card-component="1"/);
+    assert.equal(app.get('worldsDeckFocusName').textContent,'Carte');
+    assert.equal(app.state.selectedCards.size,0);
+    assert.equal(app.get('worldsDeckFocusAdd').disabled,false);
+    assert.equal(app.get('worldsDeckFocusRemove').disabled,true);
+    app.increaseVariant(1);
+    assert.equal(app.get('worldsDeckFocusAdd').disabled,true);
+    assert.equal(app.get('worldsDeckFocusRemove').disabled,false);
+    assert.equal(app.get('worldsDeckFocusQuantity').textContent,'1 dans le deck');
+    app.decreaseVariant(1);
+    app.state.selectedCards.set(2,4);app.updateFocusControls();
+    assert.equal(app.get('worldsDeckFocusAdd').disabled,true);
+    app.focusCard(100);
+    assert.equal(app.get('worldsDeckFocusQuantity').textContent,'Leader');
+    assert.equal(app.get('worldsDeckFocusAdd').disabled,true);
+    assert.equal(app.get('worldsDeckFocusRemove').disabled,true);
+    app.focusCard(999);
+    assert.equal(app.state.focusCardId,100);
+});
+
+test('deck : survol, clavier et clic inspectent ; ajout et retrait depuis les panneaux', async () => {
+    const app=deckBuilder();app.attachEventListeners();
+    app.state.cardsGrouped.set(1,{name:'Carte',variants:[{cardId:1,ownedQuantity:4}]});
+    const target={closest: selector => selector==='[data-focus-card]' ? {dataset:{focusCard:'1'}} : null};
+    for (const event of ['mouseover','focusin','click']) {
+        app.state.focusCardId=null;
+        app.get('worldsDeckModal').listeners[event]({target});
+        assert.equal(app.state.focusCardId,1);
+        assert.equal(app.state.selectedCards.size,0);
+    }
+    await app.get('worldsDeckFocusAdd').click();
+    assert.equal(app.state.selectedCards.get(1),1);
+    assert.match(app.get('worldsDeckPreviewCards').innerHTML,/data-remove-card="1"/);
+    const remove={closest: selector => selector==='[data-remove-card]' ? {dataset:{removeCard:'1'}} : null};
+    app.get('worldsDeckModal').listeners.click({target:remove});
+    assert.equal(app.state.selectedCards.size,0);
 });
