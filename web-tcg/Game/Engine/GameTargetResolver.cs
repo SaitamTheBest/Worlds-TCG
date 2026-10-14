@@ -191,7 +191,7 @@ namespace web_tcg.Game.Engine
             GameEffectDefinition effect,
             Guid? requestedTargetId)
         {
-            if (target.ControllerUserId != player.UserId && target.IsStealthed)
+            if (target.ControllerUserId != player.UserId && GameCamouflage.IsActive(state,target))
             {
                 if (IsAutomatic(effect.Trigger)) return Array.Empty<GameCardState>();
                 throw new GameRuleException("Cette carte est camouflée : elle ne peut pas être ciblée par l'adversaire.");

@@ -161,7 +161,7 @@
         if (card.isExhausted) states.push("Épuisé");
         if (card.isBlocking) states.push("Provocation");
         if (card.hasShield) states.push("Bouclier");
-        if (card.isStealthed) states.push("Furtif");
+        if (card.isStealthed) states.push("Camouflage");
         if (card.damageMultiplier && card.damageMultiplier !== 1) states.push(`Dégâts ×${card.damageMultiplier}`);
         if (card.extraSkillUses > 0) states.push(`+${card.extraSkillUses} attaque(s)`);
         if (card.damageBonus) states.push(`Dégâts ${card.damageBonus > 0 ? "+" : ""}${card.damageBonus}`);
@@ -592,7 +592,7 @@
                 delta(`${label} · multiplicateur de dégâts`, old.damageMultiplier, card.damageMultiplier);
                 delta(`${label} · bonus de dégâts`, old.damageBonus, card.damageBonus);
                 delta(`${label} · utilisations supplémentaires`, old.extraSkillUses, card.extraSkillUses);
-                for (const [field, text] of [["hasShield", "bouclier"], ["isStealthed", "furtivité"]]) {
+                for (const [field, text] of [["hasShield", "bouclier"], ["isStealthed", "camouflage"]]) {
                     if (typeof old[field] === "boolean" && old[field] !== card[field])
                         notify(`${label} : ${card[field] ? "gain" : "perte"} de ${text}`, !!card[field], `${card[field] ? "+" : "−"} ${text}`);
                 }

@@ -78,6 +78,7 @@ public static class EffectAuditChecks
             actor.Abilities[0].Conditions.Clear();
             if (!allied)
             {
+                koState.PlayerTwo.Characters[1] = Unit("b");
                 victim.IsStealthed = true;
                 try { await engine.UseAbilityAsync(koState,"a",actor.InstanceId,99,victim.InstanceId); check(false,"KO : camouflage respecté"); }
                 catch (GameRuleException) { check(!victim.IsKnockedOut,"KO : cible adverse camouflée refusée"); }

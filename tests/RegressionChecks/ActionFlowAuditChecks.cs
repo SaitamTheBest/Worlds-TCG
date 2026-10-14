@@ -123,6 +123,7 @@ public static class ActionFlowAuditChecks
             "audit pose : condition d'énergie validée avant paiement reste acquise après paiement");
 
         state=State(); source=state.PlayerOne.Leader; target=state.PlayerTwo.Characters[0]!; target.IsStealthed=true;
+        state.PlayerTwo.Characters[1]=Unit("b");
         source.Abilities.Add(new() { Id=1,Type=AbilityType.Skill,UsageCost=10,Effects=new() {
             new() { Type=GameEffectType.Prison,Trigger=GameEffectTrigger.OnSkill,Target=GameTargetType.EnemyCharacter,DurationTurns=1 } } });
         try { await engine.UseAbilityAsync(state,"a",source.InstanceId,1,target.InstanceId); check(false,"audit camouflage : Prison ciblée refusée"); }

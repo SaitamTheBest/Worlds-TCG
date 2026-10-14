@@ -165,7 +165,7 @@ namespace web_tcg.Services
                     card.HasShield,
 
                 IsStealthed =
-                    card.IsStealthed,
+                    GameCamouflage.IsActive(state,card),
                 PlayTargetIds = GameActionTargets.Get(state, player, card, card.Abilities, GameEffectTrigger.OnPlay, GameEffectTrigger.Passive),
                 PlayTargetTypes = card.Abilities.SelectMany(a => a.Effects)
                     .Where(e => e.Trigger is GameEffectTrigger.OnPlay or GameEffectTrigger.Passive)

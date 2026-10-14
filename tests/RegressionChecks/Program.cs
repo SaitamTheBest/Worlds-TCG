@@ -194,6 +194,7 @@ Check(aiFrames.Count == 3 && aiFrames[0] == (1, "bot") && aiFrames[1] == (2, "bo
 Check(streamedLogs.SequenceEqual(aiLogs), "IA : historique progressif complet sans doublon");
 
 await AbilityRuleChecks.RunAsync(Check, context);
+await CamouflageChecks.RunAsync(Check);
 await GeographyChecks.RunAsync(Check);
 await PartyRuleChecks.RunAsync(Check);
 await EffectAuditChecks.RunAsync(Check);

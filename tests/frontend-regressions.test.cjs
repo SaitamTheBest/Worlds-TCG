@@ -668,7 +668,7 @@ test('partie : les états et bonus sont affichés sur la carte et dans sa popup'
     const app = game(); Object.assign(app.state.me.leader, { isExhausted: true, isBlocking: true, hasShield: true, isStealthed: true, damageMultiplier: 1.5, extraSkillUses: 1 });
     app.handlers.GameStateUpdated(app.state);
     const badges = app.elements.selfLeader.children[0].children.find(n => n.className === 'game-card-states');
-    assert.deepEqual(badges.children.map(n => n.textContent), ['Épuisé', 'Provocation', 'Bouclier', 'Furtif', 'Dégâts ×1.5', '+1 attaque(s)']);
+    assert.deepEqual(badges.children.map(n => n.textContent), ['Épuisé', 'Provocation', 'Bouclier', 'Camouflage', 'Dégâts ×1.5', '+1 attaque(s)']);
     await app.elements.selfLeader.children[0].click();
     assert.match(app.elements.gameCardDialogStatus.textContent, /Épuisé.*Provocation.*Bouclier/);
 });
