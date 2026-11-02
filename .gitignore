@@ -4,7 +4,7 @@
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
 # User-specific files
-# Environnement local, fichiers envoyÃ©s et donnÃ©es persistantes.
+# Environnement local, fichiers envoyés et données persistantes.
 .env
 .env.*
 *.env
