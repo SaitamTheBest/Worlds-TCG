@@ -1075,3 +1075,6 @@ body {
         transition-duration: .01ms !important;
     }
 }
+.booster-opening .booster-start-opening { position: absolute; z-index: 80; left: 50%; top: 50%; transform: translate(-50%,-50%); padding: 16px 24px; border: 1px solid #ffe18a; border-radius: 12px; background: #f4c430; color: #111; font-weight: 800; box-shadow: 0 0 35px #f4c43033; cursor: pointer; white-space: nowrap; }
+.booster-opening .booster-start-opening[hidden] { display: none; }
+#booster-sound-toggle { font-size: .8rem; white-space: nowrap; }

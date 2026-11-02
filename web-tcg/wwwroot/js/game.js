@@ -155,18 +155,45 @@
         el.opponentTimer.textContent = formatTime(latestState.opponent.remainingSeconds - (ticking && !latestState.isMyTurn ? elapsed : 0));
     }
 
-    function cardStates(card) {
-        const states = [];
-        if (card.isImprisoned) states.push("Prison · 1 tour");
-        if (card.isExhausted) states.push("Épuisé");
-        if (card.isBlocking) states.push("Provocation");
-        if (card.hasShield) states.push("Bouclier");
-        if (card.isStealthed) states.push("Camouflage");
-        if (card.damageMultiplier && card.damageMultiplier !== 1) states.push(`Dégâts ×${card.damageMultiplier}`);
-        if (card.extraSkillUses > 0) states.push(`+${card.extraSkillUses} attaque(s)`);
-        if (card.damageBonus) states.push(`Dégâts ${card.damageBonus > 0 ? "+" : ""}${card.damageBonus}`);
-        return states;
+    function cardEffects(card) {
+        const effects = [];
+        const add = (key,icon,label,description) => effects.push({key,icon,label,description});
+        if (card.isImprisoned) add('prison','lock-keyhole','Prison','Ne peut effectuer aucune action jusqu’à la fin de son prochain tour.');
+        if (card.isExhausted) add('exhausted','hourglass','Épuisé','Ne peut effectuer aucune action avant d’être prêt à nouveau.');
+        if (card.isBlocking) add('taunt','shield-alert','Provocation','Les attaques adverses doivent cibler un personnage avec Provocation en priorité.');
+        if (card.hasShield) add('shield','shield','Bouclier','Absorbe la prochaine attaque reçue, puis disparaît.');
+        if (card.isStealthed) add('camouflage','eye-off','Camouflage','Ne peut pas être ciblé par l’adversaire. Pour un Personnage, nécessite un autre Personnage allié sur le terrain.');
+        const multiplier = Number(card.damageMultiplier ?? 1);
+        if (Number.isFinite(multiplier) && multiplier > 1) add('multiplier','swords',`Dégâts ×${multiplier}`,`Les dégâts de cette carte sont multipliés par ${multiplier} tant que ce bonus est actif.`);
+        const attacks = Number(card.extraSkillUses || 0), bonus = Number(card.damageBonus || 0);
+        if (attacks > 0) add('extra-attack','repeat-2',`+${attacks} attaque(s)`,`Autorise ${attacks} utilisation(s) supplémentaire(s) de compétence avant l’épuisement de cette carte pendant ce tour.`);
+        if (Number.isFinite(bonus) && bonus !== 0) add('damage-bonus',bonus > 0 ? 'trending-up' : 'trending-down',`Dégâts ${bonus > 0 ? '+' : ''}${bonus}`,`Les dégâts de cette carte sont ${bonus > 0 ? 'augmentés' : 'réduits'} de ${Math.abs(bonus)} tant que ce bonus ou malus est actif.`);
+        return effects;
     }
+    function cardStates(card) { return cardEffects(card).map(effect => effect.label); }
+    const effectTooltip = document.getElementById('gameEffectTooltip');
+    function hideEffectTooltip() {
+        if (!effectTooltip) return;
+        effectTooltip.hidePopover?.(); effectTooltip.hidden = true;
+    }
+    function showEffectTooltip(badge,effect) {
+        if (!effectTooltip) return;
+        document.getElementById('gameEffectTooltipTitle').textContent = effect.label;
+        document.getElementById('gameEffectTooltipDescription').textContent = effect.description;
+        effectTooltip.hidden = false; effectTooltip.showPopover?.();
+        const rect = badge.getBoundingClientRect();
+        const width = effectTooltip.offsetWidth || 260, height = effectTooltip.offsetHeight || 90;
+        effectTooltip.style.left = `${Math.max(8,Math.min(rect.left,window.innerWidth-width-8))}px`;
+        effectTooltip.style.top = `${Math.max(8,rect.top-height-8 >= 8 ? rect.top-height-8 : Math.min(rect.bottom+8,window.innerHeight-height-8))}px`;
+    }
+    let effectIconsQueued = false;
+    function queueEffectIcons() {
+        if (effectIconsQueued || !window.lucide) return;
+        effectIconsQueued = true;
+        Promise.resolve().then(() => { effectIconsQueued = false; window.lucide.createIcons(); });
+    }
+    window.addEventListener('resize',hideEffectTooltip);
+    document.addEventListener?.('scroll',hideEffectTooltip,true);
 
     function showStatus(message, error = false) {
         el.actionStatus.textContent = message;
@@ -252,12 +279,30 @@
             div.appendChild(hp);
         }
 
-        const states = cardStates(card);
-        if (states.length) {
+        const effects = cardEffects(card);
+        if (effects.length) {
             const badges = document.createElement("div"); badges.className = "game-card-states";
-            badges.setAttribute("aria-label", `États : ${states.join(", ")}`);
-            states.forEach(state => { const badge = document.createElement("span"); badge.textContent = state; badges.appendChild(badge); });
+            badges.setAttribute("aria-label", `États : ${effects.map(effect => effect.label).join(", ")}`);
+            effects.forEach(effect => {
+                const badge = document.createElement('span'); badge.className = 'game-effect-icon'; badge.dataset.effect = effect.key;
+                badge.tabIndex = 0; badge.setAttribute('role','img'); badge.setAttribute('aria-label',`${effect.label} : ${effect.description}`);
+                badge.setAttribute('aria-describedby','gameEffectTooltip');
+                const icon = document.createElement('i'); icon.setAttribute('data-lucide',effect.icon); icon.setAttribute('aria-hidden','true'); badge.appendChild(icon);
+                badge.addEventListener('mouseenter',() => showEffectTooltip(badge,effect));
+                badge.addEventListener('mouseleave',hideEffectTooltip);
+                badge.addEventListener('focus',() => showEffectTooltip(badge,effect));
+                badge.addEventListener('blur',hideEffectTooltip);
+                badge.addEventListener('click',event => { event.stopPropagation(); showEffectTooltip(badge,effect); });
+                badge.addEventListener('pointerdown',event => event.stopPropagation());
+                badge.addEventListener('keydown',event => {
+                    event.stopPropagation();
+                    if (event.key === 'Escape') hideEffectTooltip();
+                    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showEffectTooltip(badge,effect); }
+                });
+                badges.appendChild(badge);
+            });
             div.appendChild(badges);
+            queueEffectIcons();
         }
 
         if (options.selectable) {
@@ -396,7 +441,7 @@
         if (!board?.clientHeight) return;
         const rows = page.querySelectorAll(".game-board-row");
         const height = Math.min(...[...rows].map(row => row.clientHeight));
-        const width = Math.max(28, Math.floor(Math.min(180, (board.clientWidth - 88) / 5.85, (height - 24) * 63 / 88)));
+        const width = Math.max(28, Math.floor(Math.min(180, (board.clientWidth - 88) / 5.85, (height - 64) * 63 / 88)));
         page.style.setProperty("--game-card-width", `${width}px`);
         updateHandSpacing();
         if (opponentPreview) renderOpponentPreview();
@@ -410,6 +455,8 @@
     fitBoard();
 
     function renderState(state) {
+        if (latestState && Number.isFinite(state.version) && Number.isFinite(latestState.version) && state.version < latestState.version) return;
+        hideEffectTooltip();
         const previous = latestState;
         if (previous !== state) clockReceivedAt = Date.now();
         const positions = new Map();

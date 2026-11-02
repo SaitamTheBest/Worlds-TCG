@@ -15,6 +15,7 @@
 
 <div class="booster-opening"
      data-card-count="@Model.Cards.Count"
+     data-sound-base-url="@Url.Content("~/sons/")"
      data-opened-at="@Model.OpenedAt.ToUniversalTime().ToString("O")"
      data-expires-after-seconds="60"
      data-expired-url="@boosterMenuUrl">
@@ -46,6 +47,7 @@
     </header>
 
     <main class="booster-opening-stage">
+        <button type="button" id="booster-start-opening" class="tcg-button booster-start-opening">Ouvrir le booster</button>
         <div class="booster-stage-grid"></div>
         <div class="booster-stage-vignette"></div>
         <div class="booster-opening-glow"></div>
@@ -155,6 +157,7 @@
     </main>
 
     <footer class="booster-opening-footer">
+        <button type="button" id="booster-sound-toggle" class="tcg-button tcg-button-secondary" aria-pressed="false">Son activé</button>
         <button type="button"
                 id="skip-opening"
                 class="tcg-button tcg-button-secondary booster-skip-button">
@@ -205,6 +208,7 @@
 </div>
 
 @section Scripts {
+    <script src="~/js/booster-sounds.js" asp-append-version="true"></script>
     <script src="~/js/booster-opening.js"
             asp-append-version="true">
     </script>

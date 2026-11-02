@@ -29,6 +29,8 @@
     const particleContainer = document.querySelector(".booster-particles");
     const mysteryCard = document.querySelector("#booster-mystery-card");
     const openingRoot = document.querySelector(".booster-opening");
+    const startButton = document.getElementById('booster-start-opening');
+    const soundButton = document.getElementById('booster-sound-toggle');
 
     function redirectIfOpeningExpired() {
         if (!openingRoot) return false;
@@ -67,6 +69,23 @@
     let isAnimating = false;
     let openingFinished = false;
     let lastCardWaitingForReveal = false;
+    let openingStarted = !startButton;
+    const revealedSounds = new Set();
+    const sounds = window.worldsBoosterSounds?.create(openingRoot?.dataset.soundBaseUrl || '/sons/');
+    function updateSoundButton() {
+        if(!soundButton) return;
+        soundButton.textContent = sounds?.muted ? 'Son désactivé' : 'Son activé';
+        soundButton.setAttribute('aria-pressed',String(!sounds?.muted));
+        soundButton.setAttribute('aria-label',sounds?.muted ? 'Activer les sons' : 'Couper les sons');
+    }
+    updateSoundButton();
+    soundButton?.addEventListener('click',()=>{sounds?.setMuted(!sounds.muted);updateSoundButton();});
+    window.addEventListener('pagehide',()=>sounds?.dispose());
+    document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')sounds?.stop();});
+    function playRevealSound(slot) {
+        if(openingFinished || revealedSounds.has(slot)) return;
+        revealedSounds.add(slot); sounds?.reveal(getAnimationRarity(slot));
+    }
 
     /* ============================================================
        CONFIGURATION DES RARETÉS
@@ -447,6 +466,8 @@
         if (instant) {
             return;
         }
+
+        playRevealSound(slot);
 
         gsap.fromTo(
             visual,
@@ -1827,6 +1848,7 @@
         }
 
         function startRarityAnimation() {
+            playRevealSound(slot);
             setInstruction(
                 config.label
             );
@@ -2102,6 +2124,7 @@
        ============================================================ */
 
     function revealNext() {
+        if(!openingStarted) return;
         if (
             isAnimating ||
             openingFinished
@@ -2192,6 +2215,10 @@
         if (openingFinished) {
             return;
         }
+
+        openingStarted = true;
+        if(startButton) startButton.hidden = true;
+        sounds?.stop();
 
         isAnimating = true;
 
@@ -2480,15 +2507,28 @@
      * C'est cette ligne qui manquait dans ton JS cassé.
      * Sans elle toutes les cartes restent display:none.
      */
-    showCard(
-        0,
-        true
-    );
+    function startOpening() {
+        if(openingStarted || openingFinished || redirectIfOpeningExpired()) return;
+        openingStarted = true;
+        startButton.hidden = true;
+        sounds?.open();
+        // The archive contains reveal sounds only: Common also introduces the pack.
+        window.setTimeout(()=>{
+            if(openingFinished) return;
+            if(total===1) {prepareLastCard();return;}
+            showCard(0);
+            setInstruction('CLIQUEZ SUR LA CARTE POUR CONTINUER');
+        },420);
+    }
+    if(startButton) {
+        startButton.addEventListener('click',startOpening);
+        setInstruction('CLIQUEZ SUR OUVRIR LE BOOSTER');
+    } else showCard(0,true);
 
     updateCounters();
 
     setInstruction(
-        "CLIQUEZ SUR LA CARTE POUR CONTINUER"
+        startButton ? "CLIQUEZ SUR OUVRIR LE BOOSTER" : "CLIQUEZ SUR LA CARTE POUR CONTINUER"
     );
 
     if (

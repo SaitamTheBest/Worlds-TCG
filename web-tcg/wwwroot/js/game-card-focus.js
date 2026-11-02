@@ -32,6 +32,7 @@
     }
     function inspect(event) {
         if (event.pointerType === 'touch' || event.buttons > 0) return;
+        if (event.target.closest('.game-effect-icon')) return hide();
         const card = event.target.closest('.game-card[data-instance-id]');
         if (!card || card === source) return;
         hide();

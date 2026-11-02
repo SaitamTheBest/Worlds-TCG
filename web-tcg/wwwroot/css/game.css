@@ -10,7 +10,7 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-player-avatar { width: 28px; height: 28px; border: 1px solid #f4c43055; border-radius: 50%; object-fit: cover; }
 .game-player-identity strong { display: block; font-size: .75rem; }
 .game-player-identity span { color: #777d87; font-size: .5rem; }
-.game-board-row { display: grid; grid-template-columns: calc(var(--game-card-width) * .85) minmax(0,1fr); gap: 12px; align-items: center; min-height: 0; min-width: 0; }
+.game-board-row { padding-top: 40px; box-sizing: border-box; display: grid; grid-template-columns: calc(var(--game-card-width) * .85) minmax(0,1fr); gap: 12px; align-items: center; min-height: 0; min-width: 0; }
 .game-side-zone { display: flex; justify-content: center; }
 .game-location-slot { width: 100%; aspect-ratio: 63/88; display: grid; place-items: center; border: 1px dashed #f4c43033; border-radius: 8px; color: #f4c43066; font-size: .55rem; }
 .game-main-board { display: flex; align-items: center; justify-content: center; gap: 12px; min-width: 0; min-height: 0; }
@@ -76,12 +76,14 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-opening-dialog p { margin-bottom: 0; color: #d6dbe3; line-height: 1.5; }
 @keyframes gameOpeningFlip { 0% { transform: rotateY(0) scale(.85); } 40% { transform: rotateY(900deg) scale(1.08); } 100% { transform: rotateY(var(--coin-end)) scale(1); } }
 @media (prefers-reduced-motion: reduce) { .game-opening-coin.is-tossing { animation: none; transform: rotateY(var(--coin-end)); } }
-.game-card-states { position: absolute; z-index: 65; bottom: 3px; left: 3px; right: 3px; display: flex; flex-wrap: wrap; gap: 2px; pointer-events: none; }
-.game-card-states span { padding: 2px 4px; border: 1px solid #f4c43044; border-radius: 4px; background: #101723ee; color: #ffdc75; font-size: .52rem; line-height: 1.2; }
+.game-card-states { position: absolute; z-index: 65; bottom: calc(100% + 5px); left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 3px; pointer-events: auto; }
+.game-effect-icon { display: grid; place-items: center; width: 22px; height: 22px; padding: 3px; border: 1px solid #f4c43088; border-radius: 50%; background: #17150cf5; color: #ffe294; box-shadow: 0 2px 7px #000a; cursor: help; }
+.game-effect-icon svg, .game-effect-icon i { width: 14px; height: 14px; pointer-events: none; }
+.game-effect-icon:focus-visible, .game-effect-icon:hover { outline: 2px solid #ffe294; outline-offset: 1px; background: #44360b; }
 .game-card.is-exhausted .game-card-visual { opacity: .65; }
 .game-card.is-imprisoned { box-shadow: 0 0 0 3px #c084fc, 0 0 18px #9333ea55; }
 .game-card.is-imprisoned .game-card-visual { opacity: .65; }
-.game-card.is-imprisoned .game-card-states span:first-child { background: #3b1559; color: #f3e8ff; border: 2px solid #c084fc; }
+.game-effect-icon[data-effect="prison"] { background: #3b1559; color: #f3e8ff; border-color: #c084fc; }
 .game-card.is-selected { outline: 2px solid #f4c430; }
 .game-card.is-opponent-source { outline: 3px solid #ffcf65; outline-offset: 3px; box-shadow: 0 0 20px #ffcf6555; }
 .game-card.is-opponent-target { outline: 3px solid #ff8e82; outline-offset: 3px; box-shadow: 0 0 20px #ff8e8255; }
@@ -115,7 +117,7 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-card-dialog::backdrop { background: #000b; backdrop-filter: blur(4px); }
 .game-dialog-close { position: absolute; right: 12px; top: 8px; background: transparent; border: 0; color: #c2c7d0; font-size: 1.8rem; cursor: pointer; }
 .game-card-dialog-layout { display: grid; grid-template-columns: minmax(220px,330px) minmax(0,1fr); gap: 28px; }
-.game-card-dialog-preview { align-self: start; }
+.game-card-dialog-preview { align-self: start; padding-top: 54px; }
 .game-card-dialog-preview .game-card { height: auto; }
 .game-card-dialog-details h2 { margin: 10px 0; color: #f4c430; font-size: 1.3rem; }
 #gameCardDialogStatus { color: #a4adba; font-size: .85rem; }
@@ -146,10 +148,8 @@ body:has(#gamePage) .worlds-footer { display: none; }
 .game-character-row { justify-self: center; }
 .game-leader-slot { position: relative; background: #f4c4300b; box-shadow: 0 0 18px #f4c43012; }
 .game-leader-slot::before { content: "LEADER"; position: absolute; inset: -18px 0 auto; text-align: center; color: #f4c430; font-size: .65rem; font-weight: 800; letter-spacing: .1em; }
-.game-card-states { bottom: 6px; left: 4px; right: 4px; gap: 4px; }
-.game-card-states span { padding: 4px 6px; border: 1px solid #ffe078; background: #251b04f5; color: #fff0a5; font-size: clamp(.55rem,calc(var(--game-card-width) * .07),.8rem); font-weight: 800; box-shadow: 0 2px 6px #000a; }
-.game-card.is-blocking .game-card-states span { border-color: #7dc6ff; background: #082640f5; color: #c1e5ff; }
-@media (max-width:650px) { .game-main-board { gap: 8px; } .game-card-states span { padding: 2px; font-size: .5rem; } }
+.game-effect-icon[data-effect="taunt"] { border-color: #7dc6ff; background: #082640f5; color: #c1e5ff; }
+@media (max-width:650px) { .game-main-board { gap: 8px; } }
 /* Sélection et confirmation des actions ciblées. */
 .game-target-bar[hidden] { display:none; }
 .game-target-bar { position:fixed; top:12px; left:50%; transform:translateX(-50%); z-index:100; max-width:90vw; display:flex; align-items:center; gap:16px; padding:12px 18px; background:#111b29; color:#fff; border:2px solid #65daff; border-radius:12px; box-shadow:0 5px 25px #000a; }
@@ -271,3 +271,9 @@ body:has(#gamePage) .worlds-footer { display: none; }
     .game-end-turn-button,.game-dialog-action,.game-target-bar button,.game-chat-form button,.game-surrender-button,.game-dialog-action::after { transition: none; }
     .game-end-turn-button:hover:not(:disabled),.game-dialog-action:hover:not(:disabled),.game-target-bar button:hover:not(:disabled),.game-chat-form button:hover:not(:disabled) { transform: none; }
 }
+
+.game-leader-slot:has(.game-card-states)::before { top: -58px; }
+.game-effect-tooltip { position: fixed; z-index: 2000; inset: auto; margin: 0; width: 270px; max-width: calc(100vw - 16px); padding: 12px 14px; box-sizing: border-box; border: 1px solid #f4c43088; border-radius: 10px; background: #101113; color: #dce0e8; box-shadow: 0 10px 30px #000b; pointer-events: none; font-size: .8rem; line-height: 1.5; }
+.game-effect-tooltip[hidden] { display: none; }
+.game-effect-tooltip > strong { color: #ffe294; }
+.game-effect-tooltip > p { margin: 5px 0 0; }

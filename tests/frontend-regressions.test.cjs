@@ -644,7 +644,7 @@ test('partie : bonus fixe de dégâts visible et variation notifiée près de la
     app.handlers.GameStateUpdated(app.state);
     app.handlers.GameStateUpdated({ ...app.state, me: { ...app.state.me, leader: { ...app.state.me.leader, damageBonus: 40 } } });
     const badges = app.elements.selfLeader.children[0].children.find(n => n.className === 'game-card-states');
-    assert.equal(badges.children.some(n => n.textContent === 'Dégâts +40'), true);
+    assert.equal(badges.children.some(n => n['aria-label'].startsWith('Dégâts +40 :')), true);
     assert.equal(app.elements.gameStatNotifications.children.some(n => n.title.includes('bonus de dégâts : +40')), true);
 });
 
@@ -668,7 +668,7 @@ test('partie : les états et bonus sont affichés sur la carte et dans sa popup'
     const app = game(); Object.assign(app.state.me.leader, { isExhausted: true, isBlocking: true, hasShield: true, isStealthed: true, damageMultiplier: 1.5, extraSkillUses: 1 });
     app.handlers.GameStateUpdated(app.state);
     const badges = app.elements.selfLeader.children[0].children.find(n => n.className === 'game-card-states');
-    assert.deepEqual(badges.children.map(n => n.textContent), ['Épuisé', 'Provocation', 'Bouclier', 'Camouflage', 'Dégâts ×1.5', '+1 attaque(s)']);
+    assert.deepEqual(badges.children.map(n => n['aria-label'].split(' : ')[0]), ['Épuisé', 'Provocation', 'Bouclier', 'Camouflage', 'Dégâts ×1.5', '+1 attaque(s)']);
     await app.elements.selfLeader.children[0].click();
     assert.match(app.elements.gameCardDialogStatus.textContent, /Épuisé.*Provocation.*Bouclier/);
 });
@@ -876,7 +876,7 @@ function gameFocus() {
     vm.runInNewContext(script('game-card-focus.js'),context);
     const card=new Element();card.contains=other=>other===card;card.getBoundingClientRect=()=>({left:800,right:900,top:650});
     card.querySelector=selector=>selector==='[data-card-component]'?{dataset:{cardComponent:'42'}}:selector==='.game-card-hp'?{textContent:'30/40'}:null;
-    const target={closest:()=>card};
+    const target={closest:selector=>selector==='.game-card[data-instance-id]'?card:null};
     return {popup,card,target,elements,docEvents,windowEvents,get hydrated(){return hydrated;},events:elements.get('gamePage').listeners,flush(){for(const [id,fn]of timers){timers.delete(id);fn();}},mutate(){observer();},setDialog(value){dialogOpen=value;}};
 }
 test('jeu : focus agrandi au survol et au clavier, position dans la fenêtre, sans sélection',()=>{
@@ -910,4 +910,27 @@ test('talent : popup ouverte reflète immédiatement la recharge puis le retour 
     await action().click();assert.equal(app.calls.some(c=>c.name==='UseAbility'),false);
     app.handlers.GameStateUpdated(stateWithCooldown(1));assert.equal(action().disabled,true);
     app.handlers.GameStateUpdated(stateWithCooldown(0));assert.equal(action().disabled,false);
+});
+
+test('Play : un bonus expiré disparaît de la carte et de la popup, un ancien état ne le rétablit pas',async()=>{
+    const app=game();
+    const withMultiplier=(version,multiplier)=>({...app.state,version,me:{...app.state.me,leader:{...app.state.me.leader,damageMultiplier:multiplier}}});
+    app.handlers.GameStateUpdated(withMultiplier(10,2));
+    await app.elements.selfLeader.children[0].click();assert.match(app.elements.gameCardDialogStatus.textContent,/Dégâts ×2/);
+    app.handlers.GameStateUpdated(withMultiplier(11,1));
+    assert.doesNotMatch(app.elements.gameCardDialogStatus.textContent,/Dégâts ×/);
+    assert.equal(app.elements.selfLeader.children[0].children.some(n=>n.className==='game-card-states'),false);
+    app.handlers.GameStateUpdated(withMultiplier(10,2));
+    assert.doesNotMatch(app.elements.gameCardDialogStatus.textContent,/Dégâts ×/);
+    assert.equal(app.elements.selfLeader.children[0].children.some(n=>n.className==='game-card-states'),false);
+});
+test('Play : icônes Lucide, explication au focus et clic sans activation de la carte',()=>{
+    const app=game();app.handlers.GameStateUpdated({...app.state,me:{...app.state.me,leader:{...app.state.me.leader,hasShield:true}}});
+    const badges=app.elements.selfLeader.children[0].children.find(n=>n.className==='game-card-states'),badge=badges.children[0];
+    assert.equal(badge.dataset.effect,'shield');assert.equal(badge.tabIndex,0);assert.equal(badge.children[0]['data-lucide'],'shield');
+    badge.listeners.focus();assert.equal(app.elements.gameEffectTooltip.hidden,false);
+    assert.equal(app.elements.gameEffectTooltipTitle.textContent,'Bouclier');assert.match(app.elements.gameEffectTooltipDescription.textContent,/prochaine attaque/);
+    let stopped=false;badge.listeners.click({stopPropagation(){stopped=true;}});assert.equal(stopped,true);assert.equal(!!app.elements.gameCardDialog.open,false);
+    badge.listeners.keydown({key:'Escape',stopPropagation(){}});assert.equal(app.elements.gameEffectTooltip.hidden,true);
+    badge.listeners.mouseenter();app.handlers.GameStateUpdated({...app.state});assert.equal(app.elements.gameEffectTooltip.hidden,true);
 });
