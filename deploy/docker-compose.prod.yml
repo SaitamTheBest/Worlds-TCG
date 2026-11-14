@@ -49,7 +49,7 @@ services:
       timeout: 5s
       retries: 20
   smtp:
-    image: boky/postfix:5.1.0
+    image: boky/postfix:v5.2.1
     restart: unless-stopped
     environment:
       RELAYHOST: '[${SMTP_HOST:?}]:${SMTP_PORT:-587}'
