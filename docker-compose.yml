@@ -1,7 +1,7 @@
 services:
   uploads-init:
     # Ce service ne doit pas être détecté comme un deuxième projet .NET par VS.
-    image: busybox:1.37.0
+    image: busybox:1.38.0
 
     user: "0:0"
 
