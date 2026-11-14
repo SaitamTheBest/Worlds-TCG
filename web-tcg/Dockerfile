@@ -19,7 +19,7 @@ COPY web-tcg/ ./
 RUN npm run build:css
 
 # Cette phase est utilisée pour générer le projet de service
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:11.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY global.json ./
