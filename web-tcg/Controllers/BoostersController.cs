@@ -502,6 +502,9 @@ namespace web_tcg.Controllers
                     OpenedAt =
                         opening.OpenedAt,
 
+                    BoosterImageUrl = opening.Cards.Select(x => x.Card.CardSet.BoosterImageUrl).FirstOrDefault() ?? string.Empty,
+                    CardSetName = opening.Cards.Select(x => x.Card.CardSet.Name).FirstOrDefault() ?? string.Empty,
+
                     Cards =
                         cards
                 };

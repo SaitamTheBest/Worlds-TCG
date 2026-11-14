@@ -6,6 +6,8 @@ namespace web_tcg.Models.Booster
     {
         public int OpeningId { get; set; }
         public int CardSetId { get; set; }
+        public string BoosterImageUrl { get; set; } = string.Empty;
+        public string CardSetName { get; set; } = string.Empty;
         public DateTime OpenedAt { get; set; }
         public List<BoosterOpeningCardViewModel> Cards { get; set; } = [];
     }

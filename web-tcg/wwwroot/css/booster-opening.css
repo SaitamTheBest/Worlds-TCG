@@ -295,7 +295,7 @@ body {
 .booster-card-slot {
     position: absolute;
     inset: 0;
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: center;
     pointer-events: none;
@@ -330,7 +330,19 @@ body {
     transform-style: preserve-3d;
     backface-visibility: hidden;
     will-change: transform, opacity, filter;
+    opacity: 0;
+    visibility: hidden;
 }
+
+.booster-card-front { display: flex; }
+.booster-card-back {
+    position: absolute;
+    inset: 0;
+    visibility: hidden;
+}
+.booster-card-back > .tcg-card-back { width: 100%; height: 100%; }
+.booster-card-slot.is-face-down .booster-card-front { visibility: hidden; }
+.booster-card-slot.is-face-down .booster-card-back { visibility: inherit; }
 
 .booster-new-badge {
     position: absolute;
@@ -1078,3 +1090,200 @@ body {
 .booster-opening .booster-start-opening { position: absolute; z-index: 80; left: 50%; top: 50%; transform: translate(-50%,-50%); padding: 16px 24px; border: 1px solid #ffe18a; border-radius: 12px; background: #f4c430; color: #111; font-weight: 800; box-shadow: 0 0 35px #f4c43033; cursor: pointer; white-space: nowrap; }
 .booster-opening .booster-start-opening[hidden] { display: none; }
 #booster-sound-toggle { font-size: .8rem; white-space: nowrap; }
+
+/* ============================================================
+   NOUVELLE OUVERTURE GSAP (à ajouter en fin de fichier)
+   ============================================================ */
+
+/* Reflet holographique injecté par le JS */
+.booster-card-sheen {
+    position: absolute;
+    inset: 0;
+    z-index: 4;
+    border-radius: 12px;
+    pointer-events: none;
+    opacity: 0;
+    mix-blend-mode: overlay;
+    background: linear-gradient(115deg, transparent 38%, rgba(255,255,255,.7) 50%, transparent 62%);
+}
+
+/* ============================================================
+   PAQUET
+   ============================================================ */
+
+.booster-pack-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 60;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 26px;
+    pointer-events: none;
+}
+
+.booster-pack {
+    position: relative;
+    width: clamp(200px, 22vw, 262px);
+    aspect-ratio: 5 / 7;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    pointer-events: auto;
+    transform-origin: 50% 100%;
+    -webkit-tap-highlight-color: transparent;
+}
+
+    .booster-pack:focus-visible {
+        outline: 2px solid var(--booster-gold);
+        outline-offset: 8px;
+        border-radius: 14px;
+    }
+
+.booster-pack-glow {
+    position: absolute;
+    inset: -30%;
+    z-index: 0;
+    border-radius: 50%;
+    opacity: .6;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(212,175,55,.38), rgba(212,175,55,.08) 42%, transparent 70%);
+}
+
+.booster-pack-body {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    border: 2px solid rgba(231,202,103,.85);
+    border-radius: 14px;
+    background: radial-gradient(circle at 50% 40%, rgba(255,230,140,.22), transparent 45%), repeating-linear-gradient(115deg, rgba(255,255,255,.04) 0 6px, transparent 6px 14px), linear-gradient(160deg, #3a2b06, #100c03 45%, #2a1f05 75%, #0a0802);
+    box-shadow: 0 24px 60px rgba(0,0,0,.7), 0 0 40px rgba(212,175,55,.25), inset 0 0 30px rgba(212,175,55,.08);
+    transition: filter .25s;
+}
+
+.booster-pack:hover .booster-pack-body {
+    filter: brightness(1.15);
+}
+
+/* Ligne de déchirure */
+.booster-pack-body::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 18%;
+    border-top: 1px dashed rgba(255,241,166,.55);
+}
+
+.booster-pack-emblem {
+    width: 96px;
+    height: 96px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(212,175,55,.5);
+    border-radius: 50%;
+    color: var(--booster-gold);
+    font-size: 2.6rem;
+    line-height: 1;
+    text-shadow: 0 0 14px rgba(212,175,55,.5);
+    box-shadow: 0 0 25px rgba(212,175,55,.25), inset 0 0 25px rgba(212,175,55,.08);
+}
+
+.booster-pack-name {
+    color: rgba(255,255,255,.7);
+    font-size: .6rem;
+    font-weight: 900;
+    letter-spacing: .35em;
+}
+
+.booster-pack-top {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2;
+    height: 18%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px 12px 0 0;
+    background: linear-gradient(180deg, #fff1a6, #e7ca67 50%, #b8912a);
+    box-shadow: 0 4px 14px rgba(0,0,0,.5);
+    color: #2a1d02;
+    font-size: .6rem;
+    font-weight: 900;
+    letter-spacing: .3em;
+}
+
+.booster-pack-hint {
+    color: var(--booster-gold);
+    font-size: .6rem;
+    font-weight: 900;
+    letter-spacing: .3em;
+    pointer-events: none;
+}
+
+.booster-pack-artwork {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    filter: drop-shadow(0 18px 32px #000a) drop-shadow(0 0 22px #f4c43040);
+    visibility: hidden;
+}
+.booster-pack.has-artwork .booster-pack-artwork { visibility: visible; }
+.booster-pack.has-artwork .booster-pack-body,
+.booster-pack.has-artwork .booster-pack-top { visibility: hidden; }
+
+/* ============================================================
+   ÉTOILES
+   ============================================================ */
+
+.booster-fx {
+    position: absolute;
+    inset: 0;
+    z-index: 33;
+    pointer-events: none;
+}
+
+.booster-star {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: var(--star-size, 48px);
+    height: var(--star-size, 48px);
+    margin: calc(var(--star-size, 48px) / -2);
+    color: #ffeaa0;
+    will-change: transform, opacity;
+}
+.booster-star-core { position: absolute; inset: 0; filter: drop-shadow(0 0 7px currentColor) drop-shadow(0 0 22px currentColor); }
+.booster-star-core svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.booster-star-halo { position: absolute; inset: -110%; border-radius: 50%; background: radial-gradient(circle, currentColor, transparent 65%); opacity: .32; filter: blur(8px); }
+.booster-star-tail {
+    position: absolute; right: 45%; top: 40%; width: 155px; height: 20%;
+    opacity: 0; transform: scaleX(.2); transform-origin: right center;
+    border-radius: 100%; background: linear-gradient(90deg, transparent, currentColor);
+    filter: blur(3px); box-shadow: 0 0 12px currentColor;
+}
+.booster-star-glint { position: absolute; width: 35%; height: 35%; left: 65%; top: 0; background: #fff; clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%); }
+.booster-star-spark { position: absolute; left: 50%; top: 50%; width: 10px; height: 10px; background: currentColor; clip-path: polygon(50% 0,60% 40%,100% 50%,60% 60%,50% 100%,40% 60%,0 50%,40% 40%); filter: drop-shadow(0 0 5px currentColor); pointer-events: none; }
+
+@media (max-width: 650px) {
+    .booster-star { width: calc(var(--star-size, 48px) * .8); height: calc(var(--star-size, 48px) * .8); }
+    .booster-star-tail { width: 95px; }
+}
+
+/* Le flash doit passer au-dessus du paquet */
+.booster-rarity-flash {
+    z-index: 70;
+}

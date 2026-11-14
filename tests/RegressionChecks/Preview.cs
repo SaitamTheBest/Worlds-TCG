@@ -38,6 +38,9 @@ public static class Preview
         builder.Services.AddControllersWithViews().AddApplicationPart(typeof(CardViewComponent).Assembly)
             .ConfigureApplicationPartManager(manager => manager.FeatureProviders.Add(new PreviewControllersOnly()));
         builder.Services.AddSignalR();
+        builder.Services.AddSingleton(TimeProvider.System);
+        builder.Services.AddHttpClient(web_tcg.Services.LatestReleaseService.ClientName, client => client.Timeout = TimeSpan.FromMilliseconds(100));
+        builder.Services.AddSingleton<web_tcg.Services.LatestReleaseService>();
         var app = builder.Build();
         app.UseExceptionHandler("/Error/500");
         app.UseStatusCodePagesWithReExecute("/Error/{0}");
@@ -79,8 +82,11 @@ public sealed class PreviewController : Controller
     [HttpGet("/__preview/booster")]
     public IActionResult BoosterOpening() => View("~/Views/Booster/OpenResult.cshtml",new web_tcg.Models.Booster.BoosterOpeningViewModel {
         OpenedAt=DateTime.UtcNow,
+        BoosterImageUrl="/worlds-tcg-logo.png", CardSetName="Extension de démonstration",
         Cards=Enumerable.Range(1,5).Select(id=> { var card=Preview.Card(id); card.ImageUrl="/worlds-tcg-logo.png";
-            return new web_tcg.Models.Booster.BoosterOpeningCardViewModel { Position=id,CardId=id,Card=card,Rarity="Common",IsNew=id is 1 or 2 }; }).ToList() });
+            return new web_tcg.Models.Booster.BoosterOpeningCardViewModel { Position=id,CardId=id,Card=card,Rarity=id==5?"UltraRare":id==2?"Rare":"Common",IsNew=id is 1 or 2 }; }).ToList() });
+    [HttpGet("/__preview/card/back")]
+    public IActionResult CardBack() => ViewComponent("Card", new { faceDown = true });
     [HttpGet("/__preview/market/create")]
     public IActionResult MarketCreate() => View("~/Views/Market/Create.cshtml",new web_tcg.Models.Market.CreateAuctionViewModel {
         Cards = Enumerable.Range(1,6).Select(id => { var card=Preview.Card(id); card.ImageUrl="/worlds-tcg-logo.png"; return (card,id+2); }).ToList() });

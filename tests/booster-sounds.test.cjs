@@ -46,28 +46,43 @@ test('sons : un fichier absent ne bloque pas la découverte et les six ressource
     }
 });
 
-function opening() {
+function opening({reducedMotion=false}={}) {
     const elements=new Map(),timers=[],calls=[];
-    function node() {const classes=new Set();return {dataset:{},style:{setProperty(){}},listeners:{},classList:{add(...names){names.forEach(n=>classes.add(n));},remove(...names){names.forEach(n=>classes.delete(n));},contains:name=>classes.has(name)},
-        offsetWidth:320,offsetHeight:447,querySelector(){return node();},addEventListener(type,fn){this.listeners[type]=fn;},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:1200,height:800};},appendChild(){},remove(){}};}
+    function node() {const classes=new Set(),children=new Map();return {dataset:{},style:{setProperty(){}},listeners:{},classList:{add(...names){names.forEach(n=>classes.add(n));},remove(...names){names.forEach(n=>classes.delete(n));},contains:name=>classes.has(name)},
+        offsetWidth:320,offsetHeight:447,querySelector(selector){if(!children.has(selector))children.set(selector,node());return children.get(selector);},querySelectorAll(){return [];},addEventListener(type,fn){this.listeners[type]=fn;},setAttribute(){},getBoundingClientRect(){return {left:0,top:0,width:1200,height:800};},appendChild(){},remove(){}};}
     const get=selector=>{if(!elements.has(selector))elements.set(selector,node());return elements.get(selector);};
     get('.booster-opening').dataset={soundBaseUrl:'/sons/'};
     const slots=[{rarity:'Common',artType:'Normal'},{rarity:'Rare',artType:'FullArt'},{rarity:'SuperRare',artType:'AlternateArt'}].map(data=>Object.assign(node(),{dataset:data}));
     const audio={muted:false,open(){calls.push('open');},reveal(rarity){calls.push(rarity);},stop(){calls.push('stop');},dispose(){},setMuted(value){this.muted=value;}};
     const context={document:{querySelector:get,querySelectorAll:selector=>selector==='.booster-card-slot'?slots:[],getElementById:id=>get('#'+id),addEventListener(type,fn){if(type==='DOMContentLoaded')fn();},createElement:node},
-        window:{innerWidth:1200,addEventListener(){},setTimeout(fn){timers.push(fn);},worldsBoosterSounds:{create:()=>audio}},
-        gsap:{set(){},killTweensOf(){},fromTo(){},to(){},timeline(){const chain={to(){return chain;},set(){return chain;},call(){return chain;}};return chain;}},console:{log(){},error(){}},setTimeout(){},clearTimeout(){}};
-    const source=script('booster-opening.js').replace('function startOpening() {','globalThis.openingTest={showCard,playRevealSound,getAnimationRarity,skipOpening}; function startOpening() {');
+        window:{innerWidth:1200,matchMedia:()=>({matches:reducedMotion}),addEventListener(){},setTimeout(fn){timers.push(fn);},worldsBoosterSounds:{create:()=>audio}},
+        gsap:{set(){},killTweensOf(){},fromTo(){return {kill(){}};},to(){return {kill(){}};},timeline(){const chain={to(){return chain;},fromTo(){return chain;},set(){return chain;},call(){return chain;},kill(){}};return chain;}},console:{log(){},error(){}},setTimeout(){},clearTimeout(){}};
+    const source=script('booster-opening.js').replace('function startOpening() {','globalThis.openingTest={showCard,playRevealSound,getAnimationRarity,finishInstantly,enterCollection}; function startOpening() {');
     vm.runInNewContext(source,context);
     return {calls,slots,get,timers,api:context.openingTest};
 }
 test('booster : clic initial déverrouille le son, variantes prioritaires et récapitulatif silencieux',()=>{
     const app=opening();assert.deepEqual(app.calls,[]);
-    app.get('#booster-start-opening').listeners.click();assert.deepEqual(app.calls,['open']);app.timers[0]();
+    app.get('#booster-pack').listeners.click();assert.deepEqual(app.calls,['open']);
+    assert.ok(app.slots.every(slot=>slot.classList.contains('is-face-down')),'éventail sans recto dévoilé');
+    app.api.enterCollection();
     assert.deepEqual(app.calls,['open','C']);app.api.showCard(0);assert.deepEqual(app.calls,['open','C']);
     app.api.showCard(1);assert.equal(app.calls.at(-1),'FULL_ART');app.api.playRevealSound(app.slots[2]);assert.equal(app.calls.at(-1),'ALT');
-    app.api.skipOpening();assert.equal(app.calls.at(-1),'stop');app.api.playRevealSound(app.slots[2]);assert.equal(app.calls.at(-1),'stop');
+    app.api.finishInstantly();assert.equal(app.calls.at(-1),'stop');app.api.playRevealSound(app.slots[2]);assert.equal(app.calls.at(-1),'stop');
+    assert.ok(app.slots.every(slot=>!slot.classList.contains('is-face-down')),'récapitulatif face visible');
 });
 test('booster : passer dès le début annule l’introduction retardée sans jouer toutes les cartes',()=>{
-    const app=opening();app.get('#booster-start-opening').listeners.click();app.api.skipOpening();app.timers[0]();assert.deepEqual(app.calls,['open','stop']);
+    const app=opening();app.get('#booster-pack').listeners.click();app.api.finishInstantly();assert.deepEqual(app.calls,['open','stop']);
+});
+
+test('booster : passer avant ouverture affiche les cartes sans son de révélation',()=>{
+    const app=opening();app.api.finishInstantly();assert.deepEqual(app.calls,['stop']);
+    assert.ok(app.slots.every(slot=>!slot.classList.contains('is-face-down')));
+});
+
+test('booster : mouvement réduit passe directement à la découverte sans dévoiler les cartes suivantes',()=>{
+    const app=opening({reducedMotion:true});app.get('#booster-pack').listeners.click();
+    assert.deepEqual(app.calls,['open','C']);
+    assert.equal(app.slots[0].classList.contains('is-face-down'),false);
+    assert.ok(app.slots.slice(1).every(slot=>slot.classList.contains('is-face-down')));
 });

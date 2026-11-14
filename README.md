@@ -158,6 +158,8 @@ deploy/              Configuration Caddy, Compose de production et scripts VPS
 
 Le composant partagé **Card** centralise le rendu des cartes. Pour adapter leur taille à une page, utilisez les conteneurs d’aperçu plutôt que de modifier `web-tcg/wwwroot/css/card.css`.
 
+Pour afficher un dos standard noir et jaune avec le logo Worlds TCG : `@await Component.InvokeAsync("Card", new { faceDown = true })`. Aucun modèle de carte n'est nécessaire pour un dos. Sa présentation est centralisée dans `Views/Shared/Components/Card/Back.cshtml` et `wwwroot/css/card-back.css` ; les pages gèrent uniquement ses dimensions et sa visibilité. Le rendu du recto conserve l'appel habituel avec `model`.
+
 ## Vérifications
 
 Depuis la racine du dépôt :
