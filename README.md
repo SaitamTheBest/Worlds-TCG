@@ -138,6 +138,8 @@ dotnet build web-tcg/web-tcg.csproj --no-restore
 
 La configuration de connexion PostgreSQL et, si nécessaire, celle du SMTP doivent être fournies à l’application pour un lancement hors Docker. Les secrets utilisateur .NET ou les variables d’environnement permettent de les garder hors du dépôt. Le `.env` est lu par Docker Compose, pas automatiquement par `dotnet run`.
 
+Visual Studio utilise le mode Docker `Regular` pour compiler et publier dans Linux. Si le démarrage échoue avec `mmap(...runtimeconfig.json) failed with error 22`, vérifier la taille du fichier dans l'image : `docker run --rm --entrypoint sh webtcg:latest -c 'wc -c /app/web-tcg.runtimeconfig.json /app/web-tcg.dll'`. Des fichiers à zéro octet indiquent une image locale inutilisable. Arrêter le débogage, reconstruire uniquement le service avec `docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.dev.yml build --no-cache web-tcg`, puis relancer F5. Les volumes PostgreSQL et uploads sont conservés ; aucun nettoyage global Docker n'est nécessaire. Le Dockerfile vérifie maintenant que les trois fichiers de lancement (`dll`, `deps.json`, `runtimeconfig.json`) sont présents et non vides dans l'image finale.
+
 ```text
 web-tcg/
   Controllers/       Routes des espaces joueur et administrateur
@@ -195,6 +197,10 @@ Les déploiements appliquent les migrations au démarrage et effectuent un contr
 
 ## Releases et annonces Discord
 
+Le footer affiche la dernière release publiée sur GitHub, préversions incluses, avec un lien vers ses notes. Le résultat est mis en cache cinq minutes côté serveur et actualisé lors du chargement d’une page. Cela fonctionne dans Docker sans dossier `.git`. Lors du déploiement, GitHub Actions intègre aussi le tag de la dernière release dans l’image via `APP_VERSION` : le footer dispose ainsi d’une version de repli même pour un dépôt privé, sans transmettre le jeton de déploiement au serveur. En cas d’indisponibilité de GitHub, la dernière valeur connue est conservée, ou cette version embarquée est utilisée si aucune release n’a encore pu être chargée.
+
+Le dépôt utilisé par défaut est `SaitamTheBest/Worlds-TCG`. Il peut être remplacé avec `GitHub:Repository` dans la configuration ASP.NET Core (`GitHub__Repository` en variable d’environnement). Pour actualiser un dépôt privé entre deux déploiements, fournissez également `GitHub:Token` (`GitHub__Token`), avec uniquement le droit de lecture du contenu du dépôt. Ce jeton reste côté serveur ; ne le versionnez pas et ne réutilisez pas un jeton disposant de droits de déploiement. Sans ce jeton, la version de repli d’un dépôt privé est mise à jour au prochain déploiement.
+
 Le workflow [.github/workflows/release.yml](.github/workflows/release.yml) crée une GitHub Release pour chaque tag poussé, avec les commits, les pull requests et les contributeurs. Les versions `alpha`, `beta`, `rc` et `preview` sont publiées comme préversions.
 
 Pour activer l’annonce dans Discord, créez un webhook de salon et enregistrez son URL dans le secret GitHub Actions **`DISCORD_WEBHOOK_URL`**. Le workflow utilise le script de la branche `master` ; ses modifications doivent être intégrées dans cette branche avant publication.
@@ -207,6 +213,10 @@ git push origin v1.0.0
 L’absence du secret Discord ne bloque pas la création de la release. Le workflow peut être relancé manuellement pour un tag existant. Les tests de publication simulent GitHub et Discord et n’envoient pas de véritable annonce.
 
 ## Configuration et confidentialité
+
+La supervision facultative associe Grafana, Prometheus, Loki et des collecteurs PostgreSQL, .NET, Docker et VPS. Elle fournit cinq tableaux de bord et des alertes e-mail/Discord, avec des limites adaptées au VPS de 4 Go. L'accès HTTPS prévu est `admin.grafana.worlds-tcg.com`. Suivre le [guide de supervision OVH et GitHub](deploy/MONITORING.md) pour configurer le DNS, les secrets et l'activation.
+
+Le fichier `global.json` maintient le SDK sur .NET 10, y compris lorsqu'un SDK .NET 11 est préinstallé sur GitHub Actions. Le projet de vérifications utilise le SDK console avec une référence ASP.NET Core ; il ne génère pas de second bundle d'assets web. La CI affiche et contrôle la version du SDK avant de lancer les tests.
 
 Les fichiers `.env`, `runtime.env`, les clés privées, mots de passe et webhooks ne doivent pas être versionnés ou partagés. Utilisez [.env.example](.env.example) pour documenter la configuration locale et les secrets GitHub pour la production. Évitez de partager la sortie détaillée de `docker compose config` : elle peut contenir des valeurs sensibles ; utilisez `config --quiet` pour une validation.
 

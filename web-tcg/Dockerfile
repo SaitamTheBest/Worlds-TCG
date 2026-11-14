@@ -22,6 +22,7 @@ RUN npm run build:css
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
+COPY global.json ./
 COPY ["web-tcg/web-tcg.csproj", "web-tcg/"]
 RUN dotnet restore "./web-tcg/web-tcg.csproj"
 COPY . .
@@ -36,6 +37,10 @@ RUN dotnet publish "./web-tcg.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p
 
 # Cette phase est utilisée en production ou lors de l’exécution à partir de VS en mode normal (par défaut quand la configuration de débogage n’est pas utilisée)
 FROM base AS final
+ARG APP_VERSION=v0.1
+ENV APP_VERSION=${APP_VERSION}
 WORKDIR /app
 COPY --from=publish /app/publish .
+# Refuser une image inutilisable avant son lancement par VS ou le déploiement.
+RUN test -s web-tcg.runtimeconfig.json && test -s web-tcg.deps.json && test -s web-tcg.dll
 ENTRYPOINT ["dotnet", "web-tcg.dll"]

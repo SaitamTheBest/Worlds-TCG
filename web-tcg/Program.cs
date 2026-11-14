@@ -11,8 +11,24 @@ using web_tcg.Game.Effects;
 using web_tcg.Game.Engine;
 using web_tcg.Hubs;
 using web_tcg.Services;
+using Prometheus;
+using web_tcg.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+var monitoringEnabled = builder.Configuration.GetValue<bool>("Monitoring:Enabled");
+if (monitoringEnabled) {
+    builder.Services.AddMetricServer(options => options.Port = 9091);
+    builder.Services.AddSingleton<DatabaseMetricsInterceptor>();
+    builder.Services.AddHostedService<ApplicationMetricsWorker>();
+}
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddHttpClient(LatestReleaseService.ClientName,client => {
+    client.Timeout = TimeSpan.FromSeconds(2);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Worlds-TCG/1.0");
+    client.DefaultRequestHeaders.Accept.ParseAdd("application/vnd.github+json");
+    client.DefaultRequestHeaders.Add("X-GitHub-Api-Version","2022-11-28");
+});
+builder.Services.AddSingleton<LatestReleaseService>();
 
 // Add services to the container.
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -22,8 +38,10 @@ if (!string.IsNullOrWhiteSpace(builder.Configuration["Database:Host"]))
         Host = builder.Configuration["Database:Host"], Database = builder.Configuration["Database:Name"],
         Username = builder.Configuration["Database:User"], Password = builder.Configuration["Database:Password"]
     }.ConnectionString;
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(connectionString ?? throw new InvalidOperationException("Database non configurée.")));
+builder.Services.AddDbContext<ApplicationDbContext>((services,options) => {
+    options.UseNpgsql(connectionString ?? throw new InvalidOperationException("Database non configurée."));
+    if (monitoringEnabled) options.AddInterceptors(services.GetRequiredService<DatabaseMetricsInterceptor>());
+});
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -233,6 +251,7 @@ app.UseExceptionHandler("/Error/500");
 app.UseStatusCodePagesWithReExecute("/Error/{0}");
 app.UseHttpsRedirection();
 app.UseRouting();
+if (monitoringEnabled) app.UseHttpMetrics();
 app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();

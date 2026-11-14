@@ -218,6 +218,7 @@
 }
 
 .worlds-footer-version {
+    text-decoration: none;
     padding: 5px 7px;
     border: 1px solid rgba(244,196,48,.16);
     border-radius: 6px;

@@ -1,0 +1,6 @@
+# Reproduce the GitHub Linux build without using SDKs installed on the host.
+# docker build -f tests/Dockerfile.regressions -t worlds-tcg:regression-check .
+FROM mcr.microsoft.com/dotnet/sdk:10.0
+WORKDIR /src
+COPY . .
+RUN dotnet --version && dotnet run --project tests/RegressionChecks/RegressionChecks.csproj -p:NuGetAudit=false

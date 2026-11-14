@@ -1,0 +1,53 @@
+groups:
+  - name: worlds-tcg
+    rules:
+      - alert: CollectorUnavailable
+        expr: up == 0
+        for: 3m
+        labels: {severity: critical}
+        annotations: {summary: 'Collecteur indisponible : {{ $labels.job }}', description: 'Vérifier le conteneur {{ $labels.instance }} et ses journaux.'}
+      - alert: PostgreSQLUnavailable
+        expr: pg_up == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations: {summary: PostgreSQL inaccessible, description: 'Le collecteur répond mais ne peut pas interroger PostgreSQL.'}
+      - alert: WebsiteUnavailable
+        expr: probe_success{job="https"} == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations: {summary: 'HTTPS indisponible : {{ $labels.instance }}'}
+      - alert: CertificateExpiring
+        expr: (probe_ssl_earliest_cert_expiry - time()) < 14 * 86400
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: 'Certificat expire dans moins de 14 jours : {{ $labels.instance }}'}
+      - alert: HighHttpErrorRate
+        expr: sum(rate(http_requests_received_total{code=~"5.."}[5m])) / clamp_min(sum(rate(http_requests_received_total[5m])), 0.01) > 0.05
+        for: 5m
+        labels: {severity: warning}
+        annotations: {summary: Plus de 5 % de réponses HTTP 5xx}
+      - alert: SlowApplication
+        expr: histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[5m]))) > 2
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: Temps de réponse p95 supérieur à 2 secondes}
+      - alert: HighMemoryUsage
+        expr: 1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes > 0.9
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: Plus de 90 % de la RAM du VPS utilisée}
+      - alert: HighCpuUsage
+        expr: 1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) > 0.9
+        for: 10m
+        labels: {severity: warning}
+        annotations: {summary: CPU du VPS supérieur à 90 %}
+      - alert: LowDiskSpace
+        expr: node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs",mountpoint="/"} / node_filesystem_size_bytes < 0.15
+        for: 5m
+        labels: {severity: critical}
+        annotations: {summary: Moins de 15 % du disque disponible}
+      - alert: BusinessMetricsStale
+        expr: time() - worlds_tcg_business_metrics_last_success_timestamp_seconds > 180
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: Indicateurs du TCG non actualisés depuis 3 minutes}

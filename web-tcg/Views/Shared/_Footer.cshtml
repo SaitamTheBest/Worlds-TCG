@@ -1,11 +1,12 @@
 ﻿@using web_tcg.Infrastructure
 
+@inject web_tcg.Services.LatestReleaseService Releases
+
 @{
     var isAuthenticated =
         User.Identity?.IsAuthenticated == true;
 
-    var appVersion =
-        AppVersion.Current;
+    var release = await Releases.GetAsync(Context.RequestAborted);
 }
 
 <footer class="worlds-footer">
@@ -116,10 +117,15 @@
                     WORLDS TCG
                 </span>
 
-                <span class="worlds-footer-version"
-                      title="Version actuelle du projet">
-                    @appVersion
-                </span>
+                @if (release.Url != null)
+                {
+                    <a class="worlds-footer-version" href="@release.Url" target="_blank" rel="noopener noreferrer"
+                       title="Dernière release publiée — consulter les nouveautés">@release.Version</a>
+                }
+                else
+                {
+                    <span class="worlds-footer-version" title="Version locale — release GitHub indisponible">@release.Version</span>
+                }
 
             </div>
 

@@ -1,0 +1,32 @@
+logging {
+  level = "warn"
+}
+discovery.docker "worlds" {
+  host = "tcp://docker-socket-proxy:2375"
+  refresh_interval = "30s"
+  filter {
+    name = "label"
+    values = ["com.docker.compose.project=worlds-tcg"]
+  }
+}
+discovery.relabel "worlds" {
+  targets = discovery.docker.worlds.targets
+  rule {
+    source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+    target_label = "service"
+  }
+  rule {
+    target_label = "job"
+    replacement = "worlds-tcg"
+  }
+}
+loki.source.docker "worlds" {
+  host = "tcp://docker-socket-proxy:2375"
+  targets = discovery.relabel.worlds.output
+  forward_to = [loki.write.local.receiver]
+}
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+  }
+}

@@ -1,6 +1,8 @@
 {
     email {$ACME_EMAIL}
 }
+
+import /etc/caddy/monitoring/*.caddy
 {$APP_DOMAIN} {
     encode zstd gzip
     header Referrer-Policy "no-referrer"

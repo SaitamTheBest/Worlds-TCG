@@ -42,6 +42,12 @@ jobs:
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.0.x'
+      - name: Vérifier le SDK .NET de la solution
+        shell: bash
+        run: |
+          version=$(dotnet --version)
+          echo "SDK sélectionné : $version"
+          [[ "$version" == 10.0.* ]]
       - run: node --test .github/scripts/release.test.mjs .github/scripts/prepare-deploy.test.mjs tests/frontend-regressions.test.cjs tests/friends-pagination.test.cjs tests/inventory-discard.test.cjs tests/popup-confirmation.test.cjs tests/friend-duel.test.cjs tests/booster-sounds.test.cjs
       - run: dotnet run --project tests/RegressionChecks/RegressionChecks.csproj -p:NuGetAudit=false
       - name: Vérifier les enchères concurrentes et les transferts
@@ -72,6 +78,10 @@ jobs:
         run: node tests/proxy-network.integration.mjs
       - name: Construire l'image et le CSS
         run: docker build -f web-tcg/Dockerfile -t worlds-tcg:ci .
+      - name: Vérifier la supervision dans une pile isolée
+        env:
+          TEST_APP_IMAGE: worlds-tcg:ci
+        run: node tests/monitoring.integration.mjs
       - name: Parcours HTTP et SMTP dans une pile isolée
         env:
           TEST_APP_IMAGE: worlds-tcg:ci
@@ -102,7 +112,8 @@ jobs:
         run: |
           image="ghcr.io/${GITHUB_REPOSITORY,,}:$GITHUB_SHA"
           printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
-          docker build -f web-tcg/Dockerfile -t "$image" .
+          version=$(gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '[.[] | select(.draft == false and .published_at != null)] | sort_by(.published_at) | last | .tag_name // "v0.1"')
+          docker build --build-arg "APP_VERSION=$version" -f web-tcg/Dockerfile -t "$image" .
           docker push "$image"
           echo "image=$image" >> "$GITHUB_OUTPUT"
 
@@ -138,6 +149,13 @@ jobs:
           SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
           MAIL_FROM: ${{ secrets.MAIL_FROM }}
           MAIL_FROM_NAME: ${{ secrets.MAIL_FROM_NAME }}
+          MONITORING_ENABLED: ${{ vars.MONITORING_ENABLED }}
+          GRAFANA_DOMAIN: ${{ vars.GRAFANA_DOMAIN }}
+          GRAFANA_ADMIN_USER: ${{ vars.GRAFANA_ADMIN_USER }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          POSTGRES_MONITOR_PASSWORD: ${{ secrets.POSTGRES_MONITOR_PASSWORD }}
+          ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+          MONITORING_DISCORD_WEBHOOK_URL: ${{ secrets.MONITORING_DISCORD_WEBHOOK_URL }}
       - name: Déployer via SSH avec vérification de la clé du VPS
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
@@ -155,7 +173,7 @@ jobs:
           printf '%s\n' "$VPS_KNOWN_HOSTS" > "$RUNNER_TEMP/deploy-ssh/known_hosts"
           opts=(-i "$RUNNER_TEMP/deploy-ssh/key" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -o "UserKnownHostsFile=$RUNNER_TEMP/deploy-ssh/known_hosts")
           ssh "${opts[@]}" -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "mkdir -p /opt/worlds-tcg/releases/$GITHUB_SHA && chmod 700 /opt/worlds-tcg/releases/$GITHUB_SHA"
-          scp "${opts[@]}" -P "${VPS_PORT:-22}" deployment-bundle/* "$VPS_USER@$VPS_HOST:/opt/worlds-tcg/releases/$GITHUB_SHA/"
+          scp -r "${opts[@]}" -P "${VPS_PORT:-22}" deployment-bundle/* "$VPS_USER@$VPS_HOST:/opt/worlds-tcg/releases/$GITHUB_SHA/"
           ssh "${opts[@]}" -p "${VPS_PORT:-22}" "$VPS_USER@$VPS_HOST" "bash /opt/worlds-tcg/releases/$GITHUB_SHA/remote-deploy.sh $GITHUB_SHA $GITHUB_ACTOR"
       - name: Effacer les fichiers temporaires du runner
         if: always()
