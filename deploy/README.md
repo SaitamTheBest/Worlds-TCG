@@ -113,6 +113,18 @@ docker compose -p worlds-tcg-recovery-test -f tests/password-recovery.compose.ym
 
 Le dernier `down -v` vise exclusivement la pile de tests jetable, jamais le projet production `worlds-tcg`.
 
+## Supervision sur un VPS de 4 Go
+
+Dans l'environnement GitHub `production`, les **variables** `MONITORING_ENABLED=true` et `GRAFANA_DOMAIN=admin.grafana.worlds-tcg.com` activent la supervision au prochain déploiement. Les **secrets** requis sont `GRAFANA_ADMIN_PASSWORD`, `POSTGRES_MONITOR_PASSWORD` (deux mots de passe distincts d'au moins 16 caractères), `ALERT_EMAIL` et `MONITORING_DISCORD_WEBHOOK_URL`. L'enregistrement DNS A `admin.grafana` doit pointer vers le VPS. Caddy fournit le certificat HTTPS sur les ports publics 80/443 ; aucun port de collecteur n'est publié.
+
+Grafana dispose de **512 Mio de RAM et d'un CPU maximum**. La limite mémoire plus swap est de 1 Gio : cela autorise jusqu'à 512 Mio de swap uniquement si le VPS en possède, sans en créer. Les plafonds permanents de la supervision totalisent **1 552 Mio**, plus 32 Mio pour l'initialisation ponctuelle du compte PostgreSQL. Debian, le TCG, PostgreSQL, Caddy et SMTP partagent le reste des 4 Go. Ces limites n'annulent pas la nécessité de surveiller la mémoire globale du serveur.
+
+Le contrôle de santé conserve une grâce de démarrage de 90 secondes, puis 18 tentatives espacées de 15 secondes. Le script attend jusqu'à 420 secondes pour les conteneurs, avant de vérifier HTTPS. Le job GitHub de déploiement dispose de 30 minutes, y compris pour un éventuel retour à la release précédente. Une panne persistante reste bloquante ; les détails de santé, redémarrages et mémoire de Grafana sont affichés dans le job avant le rollback, sans afficher les variables contenant les secrets.
+
+Après déploiement, accéder à `https://admin.grafana.worlds-tcg.com` avec `admin` et le mot de passe initial configuré. Les volumes Grafana, Prometheus et Loki sont persistants. Ne pas les supprimer pour résoudre un échec de démarrage. Le mot de passe initial initialise seulement une nouvelle base Grafana ; sur une base existante, le changer depuis Grafana.
+
+Les tests `node tests/deploy-validation.mjs` et `node tests/monitoring.integration.mjs` contrôlent les limites, les métriques, les tableaux de bord, les journaux et la stabilité de Grafana dans une pile isolée, sans envoyer de vrais e-mails ni notifications Discord.
+
 ## Debug Visual Studio
 
 Le projet Compose utilise `DockerDevelopmentMode=Regular`, et le profil Dockerfile utilise `ContainerDevelopmentMode=Regular`. L'image complète génère le CSS Tailwind et publie les fichiers statiques sous Linux avant le démarrage du debugger. En Debug, Visual Studio charge aussi `docker-compose.dev.yml` pour activer Development et Mailpit. Les volumes de données sont conservés. Après changement de ces paramètres, arrêtez le debug, reconstruisez le projet Docker Compose, puis relancez F5. La première reconstruction est plus longue que le mode Fast.

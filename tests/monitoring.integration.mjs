@@ -52,7 +52,7 @@ try {
   writeFileSync(join(mon,'alertmanager/config.yml'),JSON.stringify({route:{receiver:'sink'},receivers:[{name:'sink'}]}));
   writeFileSync(join(mon,'config.alloy'),readFileSync(join(mon,'config.alloy'),'utf8').replace('com.docker.compose.project=worlds-tcg',`com.docker.compose.project=${project}`));
   writeFileSync(file,JSON.stringify(config));
-  compose('up','-d','--wait','--wait-timeout','180');
+  compose('up','-d','--wait','--wait-timeout','420');
   const app=`http://127.0.0.1:${port('web-tcg',8080)}`;
   const metrics=`http://127.0.0.1:${port('web-tcg',9091)}/metrics`;
   await get(`${app}/health`);
@@ -88,6 +88,11 @@ try {
   assert.equal(socketStatus('containers/create','--request','POST','--data','{}','--header','Content-Type: application/json'),'403');
   // Query Loki through its Grafana datasource proxy: validates ingestion, not just startup.
   await eventually(async()=>{const value=await (await get(`${grafana}/api/datasources/proxy/uid/loki/loki/api/v1/query_range?query=${encodeURIComponent('{job="worlds-tcg",service="web-tcg"}')}&limit=1`,{headers:auth})).json();assert.ok(value.data.result.length>0);},'journaux collectés',90);
+  const grafanaId=compose('ps','-q','grafana').trim();
+  const grafanaState=JSON.parse(docker(['inspect','--format','{{json .State}}',grafanaId]));
+  assert.equal(grafanaState.Health.Status,'healthy');
+  assert.equal(grafanaState.OOMKilled,false);
+  assert.equal(docker(['inspect','--format','{{.RestartCount}}',grafanaId]).trim(),'0','Grafana doit rester stable pendant la collecte');
   console.log('Supervision : métriques privées, PostgreSQL sans superutilisateur, 5 dashboards authentifiés, logs reçus et API Docker en lecture seule vérifiés.');
 } catch(error) {
   try {console.error(compose('logs','--tail','50','cadvisor').split('\n').filter(x=>!x.includes('Machine:')&&!x.includes('Version:')&&!x.includes('Filesystem partitions:')).join('\n'));console.error(compose('logs','--tail','5','alloy','postgres-exporter','grafana','web-tcg'));}catch{}

@@ -24,8 +24,10 @@ services:
   grafana:
     <<: *monitor
     image: grafana/grafana:13.3.1
-    mem_limit: 256m
-    cpus: 0.5
+    # Le chargement initial des plugins et des API dépasse parfois 256 Mio.
+    mem_limit: 512m
+    memswap_limit: 1g
+    cpus: 1.0
     networks: [monitoring, proxy]
     environment:
       GF_SERVER_DOMAIN: ${GRAFANA_DOMAIN:?}
@@ -45,10 +47,11 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     healthcheck:
-      test: [CMD, wget, -q, -O, /dev/null, http://localhost:3000/api/health]
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:3000/api/health]
+      start_period: 90s
       interval: 15s
-      timeout: 5s
-      retries: 12
+      timeout: 10s
+      retries: 18
   prometheus:
     <<: *monitor
     image: prom/prometheus:v3.16.0

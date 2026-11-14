@@ -30,7 +30,8 @@ if [[ -n "$previous" && "$previous" != "$release" && -f "$previous/runtime.env" 
   mkdir -p "$base/backups"
   "${previous_compose[@]}" exec -T postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$base/backups/$(date -u +%Y%m%dT%H%M%SZ)-$revision.sql"
 fi
-if "${compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 240; then
+# Laisser terminer l'initialisation de Grafana sur les petits VPS.
+if "${compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 420; then
   domain=$(sed -n "s/^APP_DOMAIN='\([^']*\)'$/\1/p" runtime.env)
   if curl --fail --silent --retry 12 --retry-all-errors --retry-delay 5 "https://$domain/health" >/dev/null; then
     monitoring_healthy=true
@@ -46,8 +47,18 @@ if "${compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 240; 
   fi
 fi
 echo 'Échec du démarrage ou du contrôle HTTPS.' >&2
+# Donner le diagnostic du conteneur dans Actions avant un éventuel rollback.
+# Ne jamais afficher runtime.env, les variables des conteneurs ou le Compose résolu.
+"${compose[@]}" ps -a >&2 || true
+if grep -qx "MONITORING_ENABLED='true'" runtime.env; then
+  grafana_id=$("${compose[@]}" ps -a -q grafana 2>/dev/null || true)
+  if [[ -n "$grafana_id" ]]; then
+    docker inspect --format 'Grafana: status={{.State.Status}} OOMKilled={{.State.OOMKilled}} restarts={{.RestartCount}} memory={{.HostConfig.Memory}} health={{json .State.Health}}' "$grafana_id" >&2 || true
+    docker stats --no-stream --format 'Grafana: memory={{.MemUsage}} CPU={{.CPUPerc}}' "$grafana_id" >&2 || true
+  fi
+fi
 if [[ -n "$previous" && "$previous" != "$release" && -f "$previous/runtime.env" ]]; then
-  "${previous_compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 180
+  "${previous_compose[@]}" up -d --no-build --remove-orphans --wait --wait-timeout 420
   echo "Image précédente rétablie. La base n'a pas été restaurée automatiquement." >&2
 fi
 exit 1

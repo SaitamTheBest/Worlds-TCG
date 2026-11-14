@@ -120,7 +120,7 @@ jobs:
   deploy:
     needs: publish
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     environment: production
     concurrency:
       group: production-deployment

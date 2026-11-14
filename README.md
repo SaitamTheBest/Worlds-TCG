@@ -214,7 +214,7 @@ L’absence du secret Discord ne bloque pas la création de la release. Le workf
 
 ## Configuration et confidentialité
 
-La supervision facultative associe Grafana, Prometheus, Loki et des collecteurs PostgreSQL, .NET, Docker et VPS. Elle fournit cinq tableaux de bord et des alertes e-mail/Discord, avec des limites adaptées au VPS de 4 Go. L'accès HTTPS prévu est `admin.grafana.worlds-tcg.com`. Suivre le [guide de supervision OVH et GitHub](deploy/MONITORING.md) pour configurer le DNS, les secrets et l'activation.
+La supervision facultative associe Grafana, Prometheus, Loki et des collecteurs PostgreSQL, .NET, Docker et VPS. Elle fournit cinq tableaux de bord et des alertes e-mail/Discord, avec des limites adaptées au VPS de 4 Go. L'accès HTTPS prévu est `admin.grafana.worlds-tcg.com`. Consulter les [paramètres de supervision](deploy/README.md#supervision-sur-un-vps-de-4-go) pour le démarrage de Grafana et l'activation dans GitHub.
 
 Le fichier `global.json` maintient le SDK sur .NET 10, y compris lorsqu'un SDK .NET 11 est préinstallé sur GitHub Actions. Le projet de vérifications utilise le SDK console avec une référence ASP.NET Core ; il ne génère pas de second bundle d'assets web. La CI affiche et contrôle la version du SDK avant de lancer les tests.
 
