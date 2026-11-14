@@ -11,7 +11,7 @@ EXPOSE 8081
 
 
 # Le CSS généré est exclu de Git et reconstruit dans l'image.
-FROM node:24-alpine AS frontend
+FROM node:25-alpine AS frontend
 WORKDIR /frontend
 COPY web-tcg/package.json web-tcg/package-lock.json ./
 RUN npm ci
