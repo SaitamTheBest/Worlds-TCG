@@ -337,6 +337,7 @@
 
         if (instant) return;
 
+        sounds?.cardFlip();
         playRevealSound(slot);
         gsap.fromTo(visual,
             { opacity: 0, y: 30, scale: .9, rotateY: 80 },
@@ -374,6 +375,9 @@
             done();
             return;
         }
+
+        const stageWidth = Math.max(stage.clientWidth, 1);
+        sounds?.cardSlide(clamp(target.x / (stageWidth * .5), -1, 1));
 
         gsap.timeline({ onComplete: done })
             .to(visual, { y: -10, scale: .96, duration: .12, ease: "power2.out" })
@@ -525,80 +529,120 @@
             return { rarity, cfg: rarityConfig[rarity] ?? rarityConfig.C };
         });
 
+        const panOfFan = i => clamp((i - (total - 1) / 2) / Math.max((total - 1) / 2, 1), -1, 1) * .7;
+        const panOfStar = i => clamp(targets[i].x / Math.max(rect.width * .5, 1), -1, 1);
+        const starSound = starPoints.map((p, i) => ({ rarity: p.rarity, pan: panOfStar(i) }));
+        const zipPans = [-.6, .4, -.1, .9];          // direction de chaque segment de déplacement
+        const warpState = { v: 0 };
+        const pushWarpSpeed = () => sounds?.setWarpSpeed(warpState.v);
+
         stars = createStars(targets);
 
         const tl = gsap.timeline({ onComplete: enterCollection });
 
-        // 1. Le paquet tremble
+        // 1. Tremblement du paquet (les tapotements sont dans packRumble)
         tl.to(pack, { x: 6, rotation: 2.5, duration: .05, yoyo: true, repeat: 13, ease: "none" }, 0)
             .set(pack, { x: 0, rotation: 0 }, .7);
 
-        // 2. Déchirure
-        tl.call(() => spawnParticles(22, ["#f4c430", "#fff1a6", "#ffffff"], .6), null, .7)
+        // 2. Déchirure : scratch, pop, particules, flash
+        tl.call(() => {
+            sounds?.tear(.9);
+            sounds?.pop();
+            spawnParticles(22, ["#f4c430", "#fff1a6", "#ffffff"], .6);
+        }, null, .7)
             .to(packTop, { y: -170, x: -70, rotation: -24, opacity: 0, duration: .7, ease: "power3.in" }, .7)
             .fromTo(flash, { opacity: 0 }, { opacity: .85, duration: .1 }, .7)
             .to(flash, { opacity: 0, duration: .5 }, .8)
             .to([packBody, packGlow, packArtwork].filter(Boolean), { opacity: 0, scale: 1.08, duration: .4, ease: "power2.in" }, 1);
 
-        // 3. Les cartes sortent du paquet vers le haut, en éventail
+        // 3. Cartes qui sortent du paquet en éventail
         visuals.forEach((visual, i) => {
             slots[i].classList.add("is-face-down");
             const fan = i - (total - 1) / 2;
+            const at = 1.05 + i * .1;
             tl.fromTo(visual,
                 { opacity: 0, x: 0, y: 90, scale: .55, rotation: 0 },
                 {
                     opacity: 1, visibility: "visible",
                     x: fan * fanSpacing, y: fanY, scale: 1, rotation: fan * 4,
                     duration: .8, ease: "back.out(1.25)"
-                },
-                1.05 + i * .1);
+                }, at)
+                .call(() => sounds?.cardRise(panOfFan(i), i), null, at);
         });
 
-        // 4. Explosion en étoile : chaque carte devient une étoile
+        // 4. Explosion en étoile
         const burstAt = 2.7;
         visuals.forEach((visual, i) => {
             const t = targets[i];
+            const at = burstAt + i * .03;
             tl.to(visual,
-                { x: t.x, y: t.y, rotation: (i % 2 ? 1 : -1) * (25 + i * 6), scale: .5, duration: .85, ease: "expo.out" },
-                burstAt + i * .03)
+                { x: t.x, y: t.y, rotation: (i % 2 ? 1 : -1) * (25 + i * 6), scale: .5, duration: .85, ease: "expo.out" }, at)
                 .to(visual,
-                    { opacity: 0, scale: .1, duration: .25, ease: "power2.in" },
-                    burstAt + .65 + i * .03)
+                    { opacity: 0, scale: .1, duration: .25, ease: "power2.in" }, burstAt + .65 + i * .03)
                 .fromTo(stars[i],
                     { scale: 0, opacity: 1 },
-                    { scale: 1, duration: .35, ease: "back.out(2.5)" },
-                    burstAt + .6 + i * .03);
+                    { scale: 1, duration: .35, ease: "back.out(2.5)" }, burstAt + .6 + i * .03)
+                .call(() => sounds?.starBurst(panOfStar(i), i === 0), null, at);
         });
 
-        // 5. Chaque étoile prend la palette de sa carte, puis traverse la scène.
-        // Le noyau scintille indépendamment du mouvement : aucune tween ne se bat pour sa position.
-        tl.call(() => stars.forEach((star, i) => startTwinkle(star, starPoints[i].rarity)), null, 3.9);
+        // 5. Couleur, scintillement, warp et déplacements des étoiles
         stars.forEach((star, i) => {
             const cfg = starPoints[i].cfg;
             const t = 4.3 + i * .09;
             const spreadY = Math.min(rect.height * .25, 170);
             const randomY = () => (Math.random() * 2 - 1) * spreadY;
-            tl.to(star,
-                { color: cfg.colors[0], duration: .4 }, 3.65 + i * .06)
+
+            tl.call(() => sounds?.starTint(starPoints[i].rarity, panOfStar(i)), null, 3.65 + i * .06)
+                .to(star, { color: cfg.colors[0], duration: .4 }, 3.65 + i * .06)
                 .to(star.querySelector(".booster-star-tail"), { opacity: .85, scaleX: 1, duration: .3 }, t)
-                .to(star, { x: -rect.width * (.24 + Math.random() * .1), y: randomY(), rotation: -18 + Math.random() * 36,
-                    duration: .65, ease: "sine.inOut", onUpdate: () => emitStarTrail(star) }, t)
-                .to(star, { x: rect.width * (.13 + Math.random() * .1), y: randomY(), rotation: -24 + Math.random() * 48,
-                    color: cfg.colors[1] || cfg.colors[0], duration: .75, ease: "sine.inOut", onUpdate: () => emitStarTrail(star) }, t + .65)
-                .to(star, { x: rect.width * (.02 + Math.random() * .1), y: randomY(), rotation: -15 + Math.random() * 30,
-                    color: cfg.colors[0], duration: .55, ease: "sine.inOut", onUpdate: () => emitStarTrail(star) }, t + 1.4)
+                .to(star, {
+                    x: -rect.width * (.24 + Math.random() * .1), y: randomY(), rotation: -18 + Math.random() * 36,
+                    duration: .65, ease: "sine.inOut", onUpdate: () => emitStarTrail(star)
+                }, t)
+                .to(star, {
+                    x: rect.width * (.13 + Math.random() * .1), y: randomY(), rotation: -24 + Math.random() * 48,
+                    color: cfg.colors[1] || cfg.colors[0], duration: .75, ease: "sine.inOut", onUpdate: () => emitStarTrail(star)
+                }, t + .65)
+                .to(star, {
+                    x: rect.width * (.02 + Math.random() * .1), y: randomY(), rotation: -15 + Math.random() * 30,
+                    color: cfg.colors[0], duration: .55, ease: "sine.inOut", onUpdate: () => emitStarTrail(star)
+                }, t + 1.4)
                 .to(star.querySelector(".booster-star-tail"), { scaleX: 2.2, opacity: 1, duration: .35 }, t + 1.9)
-                .to(star,
-                    { x: rect.width / 2 + 220, y: randomY() * .6, rotation: 0, scale: 1.3,
-                        duration: .75, ease: "power3.in", onUpdate: () => emitStarTrail(star) }, t + 1.95)
+                .to(star, {
+                    x: rect.width / 2 + 220, y: randomY() * .6, rotation: 0, scale: 1.3,
+                    duration: .75, ease: "power3.in", onUpdate: () => emitStarTrail(star)
+                }, t + 1.95)
                 .to(star, { opacity: 0, duration: .18 }, t + 2.55);
+
+            // Un son de balayage par segment : la durée donne la vitesse
+            [[t, .65], [t + .65, .75], [t + 1.4, .55], [t + 1.95, .75]].forEach(([at, d], s) => {
+                tl.call(() => sounds?.zip(clamp(zipPans[s] + panOfStar(i) * .2, -1, 1), d), null, at);
+            });
         });
+
+        // Scintillement : démarre quand les étoiles sont formées
+        tl.call(() => {
+            stars.forEach((star, i) => startTwinkle(star, starPoints[i].rarity));
+            sounds?.twinkleStart(starSound);
+        }, null, 3.9);
+
+        // Warp : vitesse qui monte, retombe, puis explose à la sortie
+        tl.call(() => sounds?.warpStart(), null, 4.3)
+            .to(warpState, { v: .35, duration: .6, ease: "sine.out", onUpdate: pushWarpSpeed }, 4.3)
+            .to(warpState, { v: .6, duration: .9, ease: "sine.inOut", onUpdate: pushWarpSpeed }, 4.9)
+            .to(warpState, { v: .3, duration: .8, ease: "sine.inOut", onUpdate: pushWarpSpeed }, 5.8)
+            .to(warpState, { v: 1, duration: .45, ease: "power3.in", onUpdate: pushWarpSpeed }, 6.6)
+            .to(warpState, { v: 0, duration: .8, ease: "power2.out", onUpdate: pushWarpSpeed }, 7.1)
+            .call(() => sounds?.twinkleStop(), null, 7.2)
+            .call(() => sounds?.warpStop(.5), null, 7.6);
+
         tl.to(fxLayer, { opacity: 0, duration: .25 }, 7.5);
 
         return tl;
     }
 
     function cleanupIntro() {
+        sounds?.stopIntro();
         starTweens.splice(0).forEach(tween => tween.kill());
         gsap.killTweensOf(fxLayer.querySelectorAll("*"));
         idleTweens.forEach(tween => tween.kill());
@@ -647,6 +691,7 @@
 
         sounds?.open();
         if (reducedMotion) { enterCollection(); return; }
+        sounds?.packRumble();
         introTl = buildIntro();
     }
 
@@ -712,6 +757,7 @@
             if (phase !== "collect") return;
             slot.classList.remove("is-face-down");
             hideMysteryCard();
+            sounds?.cardFlip();
 
             slot.classList.remove("is-archived");
             slot.classList.add("is-current");
