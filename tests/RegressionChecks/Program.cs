@@ -10,6 +10,7 @@ if (args.Contains("--friends")) { await FriendsChecks.RunAsync(); return; }
 if (args.Contains("--duels")) { await FriendDuelChecks.RunAsync(); return; }
 if (args.Contains("--currency")) { await CurrencyChecks.RunAsync(); return; }
 if (args.Contains("--inventory")) { await InventoryChecks.RunAsync(); return; }
+if (args.Contains("--home")) { await HomeChecks.RunAsync(); return; }
 
 if (args.Contains("--market"))
 {

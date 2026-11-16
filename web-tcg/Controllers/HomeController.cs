@@ -55,7 +55,7 @@ namespace web_tcg.Controllers
             var registeredPlayers =
                 await _context.Users
                     .AsNoTracking()
-                    .CountAsync();
+                    .CountAsync(x => !x.IsBot);
 
             var cardSets =
                 await releasedSets.CountAsync();
@@ -63,7 +63,7 @@ namespace web_tcg.Controllers
             var boosterOpenings =
                 await _context.BoosterOpenings
                     .AsNoTracking()
-                    .CountAsync();
+                    .CountAsync(x => !x.User.IsBot);
 
             var typeCounts =
                 await catalogCards
@@ -157,6 +157,10 @@ namespace web_tcg.Controllers
                     LocationCards =
                         typeCounts.GetValueOrDefault(
                             CardType.Location),
+
+                    SecretCards =
+                        typeCounts.GetValueOrDefault(
+                            CardType.Secret),
 
                     UserUniqueCards =
                         userUniqueCards,

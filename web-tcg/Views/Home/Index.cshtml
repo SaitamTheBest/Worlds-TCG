@@ -4,495 +4,196 @@
 @{
     ViewData["Title"] = "Accueil";
 
-    var progress = Math.Clamp(
-        Model.CollectionProgress,
-        0,
-        100);
-
-    var progressCss = progress.ToString(
-        "0.##",
-        CultureInfo.InvariantCulture);
-
-    var missingCards = Math.Max(
-        Model.AvailableCards - Model.UserUniqueCards,
-        0);
+    var progress = Math.Clamp(Model.CollectionProgress, 0, 100);
+    var progressCss = progress.ToString("0.##", CultureInfo.InvariantCulture);
+    var missingCards = Math.Max(Model.AvailableCards - Model.UserUniqueCards, 0);
 }
 
-<link rel="stylesheet"
-      href="~/css/home.css"
-      asp-append-version="true" />
+<link rel="stylesheet" href="~/css/home.css" asp-append-version="true" />
 
 @Html.AntiForgeryToken()
 
-<main class="worlds-home">
-    <div class="worlds-home-shell">
+<main class="worlds-home" id="worldsHome">
 
-        <!-- =========================================================
-             HERO
-             ========================================================= -->
+    <header class="wh-title">
+        <a href="/" class="wh-brand"><img src="~/worlds-tcg-logo.png" alt="Worlds TCG" class="wh-logo" /><span>WORLDS <b>TCG</b></span></a>
+        <a asp-controller="Deck" asp-action="Manage" class="wh-header-link">Mes decks <span aria-hidden="true">↗</span></a>
+    </header>
 
-        <section class="worlds-hero">
+    <section class="wh-stage" id="whStage">
+        <div class="wh-stage-grid" aria-hidden="true"></div>
+        <div class="wh-hero" id="whHero">
+            <h1>Bienvenue sur<br /><em>Worlds TCG !</em></h1>
+            <p>TCG orienté humour et politique, PVP disponible.</p>
+            <button type="button" class="wh-btn wh-btn-primary wh-launch" data-open-panel="play">Entrer dans l’arène <span aria-hidden="true">↗</span></button>
+            <a asp-controller="Deck" asp-action="Manage" class="wh-hero-link">Préparer mon deck <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="wh-globe-wrap">
+            <div class="wh-orbit wh-orbit-one" aria-hidden="true"></div><div class="wh-orbit wh-orbit-two" aria-hidden="true"></div>
+            <canvas id="whPlanet" data-countries-url="@Url.Content("~/data/home-countries.json")" aria-label="Globe terrestre interactif. Faites glisser pour le tourner. Les destinations sont aussi accessibles sous le globe."></canvas>
+            <div class="wh-country-readout"><span id="whCountry">Explorez les pays</span></div>
+            <div class="wh-globe-controls"><button type="button" id="whRotation" aria-pressed="false" aria-label="Mettre le globe en pause">Ⅱ</button><button type="button" id="whReset" aria-label="Recentrer le globe sur l’Europe">↺</button></div>
 
-            <div class="worlds-hero-glow"></div>
+        <button type="button" class="wh-pin" data-panel="play" data-lat="46.6" data-lon="2.4" title="Jouer · France">
+            <span class="wh-pin-dot"></span><span class="wh-pin-label">Jouer</span>
+        </button>
+        <button type="button" class="wh-pin" data-panel="collection" data-lat="26" data-lon="30" title="Collection · Égypte">
+            <span class="wh-pin-dot"></span><span class="wh-pin-label">Collection</span>
+        </button>
+        <button type="button" class="wh-pin" data-panel="catalogue" data-lat="35" data-lon="103" title="Catalogue · Chine">
+            <span class="wh-pin-dot"></span><span class="wh-pin-label">Catalogue</span>
+        </button>
+        <button type="button" class="wh-pin" data-panel="boosters" data-lat="-10" data-lon="-52" title="Boosters · Brésil">
+            <span class="wh-pin-dot"></span><span class="wh-pin-label">Boosters</span>
+        </button>
 
-            <div class="worlds-hero-content">
+            <p class="wh-hint">Glissez pour explorer <span aria-hidden="true">·</span> Choisissez votre destination</p>
+        </div>
 
-                <div class="worlds-brand">
+        <!-- ======================= PANNEAUX ======================= -->
 
-                    <div class="worlds-brand-logo-box">
-                        <img src="~/worlds-tcg-logo.png"
-                             alt="Worlds TCG"
-                             class="worlds-brand-logo" />
-                    </div>
+        <div class="wh-panel" id="whPanel-play" data-panel-id="play" hidden>
+            <button type="button" class="wh-close" aria-label="Fermer">×</button>
+            <span class="wh-card-kicker">PARTIE</span>
+            <h2>Jouer une partie</h2>
 
-                    <div class="worlds-brand-copy">
-                        <span class="worlds-kicker">
-                            WORLDS TCG
-                        </span>
+            @if (Model.UserDecks.Count == 0)
+            {
+                <p class="wh-muted">
+                    Vous n'avez pas encore de deck prêt à jouer.
+                    Créez un deck dans le
+                    <a asp-controller="Deck" asp-action="Manage" class="wh-link">gestionnaire de decks</a>.
+                </p>
+            }
 
-                        <h1>
-                            Tableau de bord
-                        </h1>
-
-                        <p>
-                            Suivez votre collection et continuez
-                            à compléter votre catalogue.
-                        </p>
-                    </div>
-
-                </div>
-
-                <div class="worlds-actions">
-
-                    <a asp-controller="Booster"
-                       asp-action="Index"
-                       class="worlds-button worlds-button-primary">
-
-                        <i data-lucide="package-open"></i>
-
-                        <span>
-                            Ouvrir un booster
-                        </span>
-                    </a>
-
-                    <a asp-controller="Inventory"
-                       asp-action="Index"
-                       class="worlds-button worlds-button-secondary">
-
-                        <i data-lucide="library"></i>
-
-                        <span>
-                            Ma collection
-                        </span>
-                    </a>
-
-                </div>
-
+            <div class="wh-field">
+                <label for="worldsDeckSelect">Deck à utiliser</label>
+                <select id="worldsDeckSelect">
+                    @foreach (var deck in Model.UserDecks)
+                    {
+                        <option value="@deck.Id">@deck.Name</option>
+                    }
+                </select>
             </div>
 
-        </section>
+            <div class="wh-actions">
+                <button type="button" id="worldsPlayPvpButton" class="wh-btn wh-btn-primary">Rechercher une partie (PVP)</button>
+                <button type="button" id="worldsPlayAiButton" class="wh-btn wh-btn-secondary">Jouer contre l'IA</button>
+            </div>
 
-        <!-- =========================================================
-             INDICATEURS
-             ========================================================= -->
+            <div class="wh-status" id="worldsPlayStatus"></div>
+            <div class="wh-activity" role="status" aria-live="polite">
+                <span><strong id="matchmakingPlayersInGame">—</strong> joueurs en partie</span>
+                <span><strong id="matchmakingPlayersInQueue">—</strong> en file d’attente</span>
+            </div>
+        </div>
 
-        <section class="worlds-stats">
+        <div class="wh-panel" data-panel-id="collection" hidden>
+            <button type="button" class="wh-close" aria-label="Fermer">×</button>
+            <span class="wh-card-kicker">MA COLLECTION</span>
+            <h2>Progression</h2>
 
-            <article class="worlds-stat">
+            <div class="wh-progress-score">
+                <strong data-count="@progressCss" data-decimals="1">@Model.CollectionProgress.ToString("0.#")</strong><span>%</span>
+            </div>
+            <div class="wh-progress-track">
+                <div class="wh-progress-value" style="width: @(progressCss)%" data-width="@progressCss"></div>
+            </div>
+            <div class="wh-progress-labels">
+                <span>@Model.UserUniqueCards carte@(Model.UserUniqueCards > 1 ? "s" : "") obtenue@(Model.UserUniqueCards > 1 ? "s" : "")</span>
+                <span>@missingCards restante@(missingCards > 1 ? "s" : "")</span>
+            </div>
 
-                <div class="worlds-stat-icon">
-                    <i data-lucide="layers-3"></i>
+            <div class="wh-actions">
+                <a asp-controller="Inventory" asp-action="Index" class="wh-btn wh-btn-primary">Ma collection</a>
+                <a asp-controller="Deck" asp-action="Manage" class="wh-btn wh-btn-secondary">Mes decks</a>
+            </div>
+        </div>
+
+        <div class="wh-panel" data-panel-id="catalogue" hidden>
+            <button type="button" class="wh-close" aria-label="Fermer">×</button>
+            <span class="wh-card-kicker">CATALOGUE</span>
+            <h2>Types de cartes</h2>
+            <p class="wh-muted">Répartition des cartes principales, hors variantes.</p>
+
+            <ul class="wh-types">
+                <li><span>Leaders <small>Présidents</small></span><strong>@Model.LeaderCards</strong></li>
+                <li><span>Personnages <small>Cartes jouables</small></span><strong>@Model.CharacterCards</strong></li>
+                <li><span>Décisions <small>Actions politiques</small></span><strong>@Model.PoliticalDecisionCards</strong></li>
+                <li><span>Lieux <small>Cartes persistantes</small></span><strong>@Model.LocationCards</strong></li>
+                <li><span>Secrètes <small>Cartes de collection</small></span><strong>@Model.SecretCards</strong></li>
+            </ul>
+        </div>
+
+        <div class="wh-panel" data-panel-id="boosters" hidden>
+            <button type="button" class="wh-close" aria-label="Fermer">×</button>
+            <span class="wh-card-kicker">BOOSTERS</span>
+            <h2>Ouvrir un booster</h2>
+            <p class="wh-muted">Complétez votre catalogue en ouvrant de nouveaux boosters.</p>
+            <div class="wh-actions">
+                <a asp-controller="Booster" asp-action="Index" class="wh-btn wh-btn-primary">Ouvrir un booster</a>
+            </div>
+        </div>
+    </section>
+
+    <nav class="wh-destinations" aria-label="Vos destinations">
+        <button type="button" class="wh-destination" data-open-panel="play"><span class="wh-destination-number">01</span><span><strong>L’arène</strong><small>Défiez un joueur ou l’IA</small></span><span class="wh-destination-icon" aria-hidden="true">↗</span></button>
+        <button type="button" class="wh-destination" data-open-panel="collection"><span class="wh-destination-number">02</span><span><strong>Votre collection</strong><small>@Model.UserUniqueCards cartes · @progress.ToString("0.#") % du catalogue</small></span><span class="wh-destination-icon" aria-hidden="true">↗</span></button>
+        <button type="button" class="wh-destination" data-open-panel="catalogue"><span class="wh-destination-number">03</span><span><strong>Le catalogue</strong><small>@Model.AvailableCards cartes à découvrir</small></span><span class="wh-destination-icon" aria-hidden="true">↗</span></button>
+        <button type="button" class="wh-destination" data-open-panel="boosters"><span class="wh-destination-number">04</span><span><strong>Les boosters</strong><small>Votre prochaine surprise</small></span><span class="wh-destination-icon" aria-hidden="true">↗</span></button>
+    </nav>
+
+    <!-- ======================= STATS ======================= -->
+
+    <section class="wh-stats">
+
+        <article class="wh-block wh-block-player">
+            <header>
+                <span class="wh-card-kicker">JOUEUR</span>
+                <h3>Mes statistiques</h3>
+            </header>
+            <div class="wh-block-grid">
+                <div class="wh-stat">
+                    <span>CARTES UNIQUES</span>
+                    <strong data-count="@Model.UserUniqueCards">@Model.UserUniqueCards.ToString("N0")</strong>
                 </div>
+                <div class="wh-stat">
+                    <span>TOTAL POSSÉDÉ</span>
+                    <strong data-count="@Model.UserTotalCards">@Model.UserTotalCards.ToString("N0")</strong>
+                </div>
+                <div class="wh-stat">
+                    <span>COLLECTION</span>
+                    <strong data-count="@progressCss" data-decimals="1" data-suffix="%">@Model.CollectionProgress.ToString("0.#")%</strong>
+                </div>
+            </div>
+        </article>
 
-                <div class="worlds-stat-data">
+        <article class="wh-block wh-block-world">
+            <header>
+                <span class="wh-card-kicker">MONDE</span>
+                <h3>Statistiques globales</h3>
+            </header>
+            <div class="wh-block-grid">
+                <div class="wh-stat">
                     <span>CATALOGUE</span>
-
-                    <strong>
-                        @Model.AvailableCards.ToString("N0")
-                    </strong>
-
-                    <small>
-                        @Model.BaseCards principales ·
-                        @Model.Variants variantes
-                    </small>
+                    <strong data-count="@Model.AvailableCards">@Model.AvailableCards.ToString("N0")</strong>
+                    <small>@Model.BaseCards principales · @Model.Variants variantes</small>
                 </div>
-
-            </article>
-
-            <article class="worlds-stat">
-
-                <div class="worlds-stat-icon">
-                    <i data-lucide="users"></i>
+                <div class="wh-stat">
+                    <span>JOUEURS INSCRITS</span>
+                    <strong data-count="@Model.RegisteredPlayers">@Model.RegisteredPlayers.ToString("N0")</strong>
                 </div>
-
-                <div class="worlds-stat-data">
-                    <span>JOUEURS</span>
-
-                    <strong>
-                        @Model.RegisteredPlayers.ToString("N0")
-                    </strong>
-
-                    <small>
-                        Comptes enregistrés
-                    </small>
-                </div>
-
-            </article>
-
-            <article class="worlds-stat">
-
-                <div class="worlds-stat-icon">
-                    <i data-lucide="package-check"></i>
-                </div>
-
-                <div class="worlds-stat-data">
+                <div class="wh-stat">
                     <span>BOOSTERS OUVERTS</span>
-
-                    <strong>
-                        @Model.BoosterOpenings.ToString("N0")
-                    </strong>
-
-                    <small>
-                        Ouvertures enregistrées
-                    </small>
+                    <strong data-count="@Model.BoosterOpenings">@Model.BoosterOpenings.ToString("N0")</strong>
                 </div>
+            </div>
+        </article>
 
-            </article>
-
-        </section>
-
-        <!-- =========================================================
-             JOUER - PVP / IA
-             ========================================================= -->
-
-        <section class="worlds-play" id="worldsPlaySection">
-
-            <article class="worlds-card worlds-play-card">
-
-                <header class="worlds-card-header">
-
-                    <div>
-                        <span class="worlds-card-kicker">
-                            PARTIE
-                        </span>
-
-                        <h2>
-                            Jouer une partie
-                        </h2>
-                    </div>
-
-                    <div class="worlds-header-icon">
-                        <i data-lucide="swords"></i>
-                    </div>
-
-                </header>
-
-                @if (Model.UserDecks.Count == 0)
-                {
-                    <p class="worlds-play-empty">
-                        Vous n'avez pas encore de deck prêt à jouer.
-                        Créez un deck dans le <a asp-controller="Deck" asp-action="Manage" class="worlds-link">gestionnaire de decks</a> pour pouvoir lancer une partie.
-                    </p>
-                }
-                    <div class="worlds-play-body">
-
-                        <div class="worlds-play-field">
-
-                            <label for="worldsDeckSelect">
-                                Deck à utiliser
-                            </label>
-
-                            <select id="worldsDeckSelect">
-                                @foreach (var deck in Model.UserDecks)
-                                {
-                                    <option value="@deck.Id">
-                                        @deck.Name
-                                    </option>
-                                }
-                            </select>
-
-                        </div>
-
-                        <div class="worlds-play-actions">
-
-                            <button type="button"
-                                    id="worldsPlayPvpButton"
-                                    class="worlds-button worlds-button-primary">
-
-                                <i data-lucide="users"></i>
-
-                                <span>
-                                    Rechercher une partie (PVP)
-                                </span>
-
-                            </button>
-
-                            <button type="button"
-                                    id="worldsPlayAiButton"
-                                    class="worlds-button worlds-button-secondary">
-
-                                <i data-lucide="bot"></i>
-
-                                <span>
-                                    Jouer contre l'IA
-                                </span>
-
-                            </button>
-
-                        </div>
-
-                        <div class="worlds-play-status"
-                             id="worldsPlayStatus">
-                        </div>
-                        <div class="worlds-matchmaking-activity" role="status" aria-live="polite">
-                            <span><strong id="matchmakingPlayersInGame">—</strong> joueurs en partie</span>
-                            <span><strong id="matchmakingPlayersInQueue">—</strong> joueurs en file d’attente</span>
-                        </div>
-
-                    </div>
-
-            </article>
-
-        </section>
-
-        <!-- =========================================================
-             CONTENU
-             ========================================================= -->
-
-        <section class="worlds-dashboard">
-
-            <!-- =====================================================
-                 COLLECTION
-                 ===================================================== -->
-
-            <article class="worlds-card worlds-collection">
-
-                <header class="worlds-card-header">
-
-                    <div>
-                        <span class="worlds-card-kicker">
-                            MA COLLECTION
-                        </span>
-
-                        <h2>
-                            Progression
-                        </h2>
-                    </div>
-
-                    <div class="worlds-progress-score">
-                        <strong>
-                            @Model.CollectionProgress.ToString("0.#")
-                        </strong>
-
-                        <span>%</span>
-                    </div>
-
-                </header>
-
-                <div class="worlds-progress">
-
-                    <div class="worlds-progress-track">
-
-                        <div class="worlds-progress-value"
-                             style="width:@progressCss%">
-                        </div>
-
-                    </div>
-
-                    <div class="worlds-progress-labels">
-
-                        <span>
-                            @Model.UserUniqueCards carte@(Model.UserUniqueCards > 1 ? "s" : "") obtenue@(Model.UserUniqueCards > 1 ? "s" : "")
-                        </span>
-
-                        <span>
-                            @missingCards restante@(missingCards > 1 ? "s" : "")
-                        </span>
-
-                    </div>
-
-                </div>
-
-                <div class="worlds-collection-values">
-
-                    <div class="worlds-collection-value">
-                        <span>
-                            CARTES UNIQUES
-                        </span>
-
-                        <strong>
-                            @Model.UserUniqueCards.ToString("N0")
-                        </strong>
-                    </div>
-
-                    <div class="worlds-collection-value">
-                        <span>
-                            TOTAL POSSÉDÉ
-                        </span>
-
-                        <strong>
-                            @Model.UserTotalCards.ToString("N0")
-                        </strong>
-                    </div>
-
-                </div>
-
-                <div class="worlds-card-footer">
-
-                    <a asp-controller="Inventory"
-                       asp-action="Index"
-                       class="worlds-link">
-
-                        <span>
-                            Voir mon inventaire
-                        </span>
-
-                        <i data-lucide="arrow-right"></i>
-
-                    </a>
-
-                </div>
-
-            </article>
-
-            <!-- =====================================================
-                 TYPES DE CARTES
-                 ===================================================== -->
-
-            <article class="worlds-card worlds-types">
-
-                <header class="worlds-card-header">
-
-                    <div>
-                        <span class="worlds-card-kicker">
-                            CATALOGUE
-                        </span>
-
-                        <h2>
-                            Types de cartes
-                        </h2>
-                    </div>
-
-                    <div class="worlds-header-icon">
-                        <i data-lucide="gallery-vertical-end"></i>
-                    </div>
-
-                </header>
-
-                <div class="worlds-type-list">
-
-                    <div class="worlds-type">
-
-                        <div class="worlds-type-main">
-
-                            <span class="worlds-type-icon">
-                                <i data-lucide="crown"></i>
-                            </span>
-
-                            <div>
-                                <strong>
-                                    Leaders
-                                </strong>
-
-                                <small>
-                                    Présidents
-                                </small>
-                            </div>
-
-                        </div>
-
-                        <span class="worlds-type-value">
-                            @Model.LeaderCards
-                        </span>
-
-                    </div>
-
-                    <div class="worlds-type">
-
-                        <div class="worlds-type-main">
-
-                            <span class="worlds-type-icon">
-                                <i data-lucide="user-round"></i>
-                            </span>
-
-                            <div>
-                                <strong>
-                                    Personnages
-                                </strong>
-
-                                <small>
-                                    Cartes jouables
-                                </small>
-                            </div>
-
-                        </div>
-
-                        <span class="worlds-type-value">
-                            @Model.CharacterCards
-                        </span>
-
-                    </div>
-
-                    <div class="worlds-type">
-
-                        <div class="worlds-type-main">
-
-                            <span class="worlds-type-icon">
-                                <i data-lucide="landmark"></i>
-                            </span>
-
-                            <div>
-                                <strong>
-                                    Décisions
-                                </strong>
-
-                                <small>
-                                    Actions politiques
-                                </small>
-                            </div>
-
-                        </div>
-
-                        <span class="worlds-type-value">
-                            @Model.PoliticalDecisionCards
-                        </span>
-
-                    </div>
-
-                    <div class="worlds-type">
-
-                        <div class="worlds-type-main">
-
-                            <span class="worlds-type-icon">
-                                <i data-lucide="map-pinned"></i>
-                            </span>
-
-                            <div>
-                                <strong>
-                                    Lieux
-                                </strong>
-
-                                <small>
-                                    Cartes persistantes
-                                </small>
-                            </div>
-
-                        </div>
-
-                        <span class="worlds-type-value">
-                            @Model.LocationCards
-                        </span>
-
-                    </div>
-
-                </div>
-
-            </article>
-
-        </section>
-
-    </div>
+    </section>
 </main>
+<noscript><style>.worlds-home .wh-panel[hidden]{display:block!important;position:relative;inset:auto;width:auto;margin:16px}.worlds-home .wh-stage{height:auto}.worlds-home .wh-globe-wrap,.worlds-home .wh-destinations,.worlds-home .wh-launch{display:none}</style></noscript>
 
-<script src="~/js/pvp-lobby.js"
-        asp-append-version="true"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+<script src="~/js/home.js" asp-append-version="true"></script>
+<script src="~/js/pvp-lobby.js" asp-append-version="true"></script>

@@ -70,6 +70,10 @@ jobs:
         env:
           TCG_MARKET_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=market_checks;Username=checks;Password=test-password
         run: dotnet run --project tests/RegressionChecks/RegressionChecks.csproj --no-build -- --inventory
+      - name: Vérifier les statistiques de l’accueil
+        env:
+          TCG_MARKET_TEST_CONNECTION: Host=127.0.0.1;Port=5432;Database=market_checks;Username=checks;Password=test-password
+        run: dotnet run --project tests/RegressionChecks/RegressionChecks.csproj --no-build -- --home
       - name: Valider Compose sans secrets réels
         run: docker compose --env-file .env.example -f docker-compose.yml config --quiet
       - name: Valider la configuration de production sans secrets réels

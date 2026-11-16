@@ -18,6 +18,7 @@
         public int CharacterCards { get; init; }
         public int PoliticalDecisionCards { get; init; }
         public int LocationCards { get; init; }
+        public int SecretCards { get; init; }
         public int UserUniqueCards { get; init; }
         public int UserTotalCards { get; init; }
         public double CollectionProgress { get; init; }
